@@ -1,0 +1,8 @@
+pacc - a compiler compiler
+
+pacc is a compiler compiler, somewhat like yacc (or bison). Its input is
+a description of a grammar, and its output is a C function that
+recognizes strings of that grammar. The significant technical difference
+is this: yacc reads a context-free grammar, and writes a LALR(1)
+parser; pacc reads a parsing expression grammar (PEG), and writes a
+packrat parser.

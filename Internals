@@ -1,0 +1,48 @@
+Source Files
+============
+
+Since pacc is partly written by pacc, it can all get a bit confusing!
+
+ast.c - support for the Abstract Syntax Tree constructed as the grammar
+is read
+
+emit.c - writes the output file from the AST
+
+main.c - command line parsing, other glue
+
+pacc.c - the packrat parser that constructs an AST from a .peg file;
+constructed (by pacc) from pacc.peg
+
+paccman.c - the manually constructed pacc.c that is used for
+bootstrapping
+
+pacc.peg - the grammar description that is converted to pacc.c
+
+
+Other Notes
+===========
+
+The key to (linear) packrat parsing is the memoization table that
+squirrels away every result that the parser discovers about the input as
+it is read. In a naive implementation, this is simply a matrix, with one
+row for each rule of the grammar, and one column for each character of
+the input. However, this matrix is (typically) very sparse, so pacc
+tries to do better.
+
+thoughts...
+
+rows is of the order of 100 - it would be a pretty zany grammar that had
+more than 1000 rules = ~7 bits
+
+columns is of the order of 100000 - we should support inputs of 1
+megabyte (or 10 or even 100 if possible), but most inputs will be *much*
+smaller than that = ~16 bits
+
+(should we consider swapping the memoization table ourselves, like sam?
+or just bung it all in vm and hope for the best?)
+
+so, thinking about a hash function for the matrix, we have about 23
+bits of input, in two integers. that should be enough to do something
+interesting...
+
+
