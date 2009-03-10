@@ -1,0 +1,3 @@
+Grammar=Rule Grammar/
+Rule=Nonterminal/StringLiteral/OPEN Rule CLOSE
+

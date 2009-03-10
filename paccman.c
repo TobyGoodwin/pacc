@@ -9,7 +9,7 @@
 char *string;
 
 enum states {
-    done, grammar, grammar_0, grammar_1
+    done, grammar, grammar_0, grammar_1, rule
 };
 
 enum states st_stack[25];
@@ -45,7 +45,7 @@ int parse(void) {
     enum states cont, st;
     int col;
     struct intermed *cur, *last;
-    st = r0;
+    st = grammar;
     col = 0;
     cont = done;
 
@@ -79,7 +79,8 @@ top:
 	    /* empty */
 	    cur->status = parsed;
 	    cur->remainder = col;
-	    goto contin;
+	}
+	goto contin;
 
     case rule:
 	cur = matrix + col * n_rules + 1;
