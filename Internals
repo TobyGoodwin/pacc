@@ -3,9 +3,6 @@ Source Files
 
 Since pacc is partly written by pacc, it can all get a bit confusing!
 
-ast.c - support for the Abstract Syntax Tree constructed as the grammar
-is read
-
 emit.c - writes the output file from the AST
 
 main.c - command line parsing, other glue
@@ -17,6 +14,9 @@ paccman.c - the manually constructed pacc.c that is used for
 bootstrapping
 
 pacc.peg - the grammar description that is converted to pacc.c
+
+syntax.c - support for the Abstract Syntax Tree constructed as the
+grammar is read
 
 
 Other Notes

@@ -9,7 +9,7 @@
 char *string;
 
 enum states {
-    done, grammar, grammar_0, grammar_1, rule
+    done, grammar, grammar_0, grammar_1, rule, rule_0, stringlit
 };
 
 enum states st_stack[25];
@@ -55,12 +55,8 @@ top:
 	cur = matrix + col * n_rules + 0;
 	if (cur->status == uncomputed) {
 	    cur->status = no_parse;
-	    st = rule;
-	    pushcont(cont); pushm(cur);
-	    cont = grammar_0;
-	    goto top;
-    case grammar_0:
-	    cont = popcont(); last = cur; cur = popm();
+	    st = rule; pushcont(cont); pushm(cur); cont = grammar_0; goto top;
+    case grammar_0: cont = popcont(); last = cur; cur = popm();
 	    if (last->status != parsed)
 		goto contin;
 	    *cur = *last;
@@ -86,8 +82,24 @@ top:
 	cur = matrix + col * n_rules + 1;
 	if (cur->status == uncomputed) {
 	    cur->status = no_parse;
-	    if (! (string[col] == 'a')) 
+	    st = stringlit; pushcont(cont); pushm(cur); cont = rule_0; goto top;
+    case rule_0: cont = popcont(); last = cur; cur = popm();
+	    if (last->status == parsed) {
+		*cur = *last;
+		col = cur->remainder;
 		goto contin;
+	    }
+	}
+
+    case stringlit:
+	cur = matrix + col * n_rules + 2;
+	if (cur->status == uncomputed) {
+	    cur->status = no_parse;
+	    if (! (string[col] == '"')) 
+		goto contin;
+
+	    while (string[++col] != '"') ;
+
 	    cur->remainder = col + 1;
 	    cur->value = 11;
 	    cur->status = parsed;
@@ -127,9 +139,9 @@ void matrix_dump(int n) {
     }
 }
 
-int main(int argc, char **argv) {
+int pparse(char *str) {
     int i, n, matrix_size;
-    string = argv[1];
+    string = str;
     n = strlen(string);
     matrix_size = n_rules * (n + 1);
     matrix = malloc(sizeof(struct intermed) * matrix_size);
