@@ -14,3 +14,5 @@ struct s_node {
     struct s_node *next; /* sibling */
     char *text;
 };
+
+extern void s_dump(struct s_node *);
