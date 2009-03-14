@@ -24,11 +24,11 @@ static void dump(struct s_node *p, int indent) {
     int i;
 
     if (!p) return;
-    for (i = 0; i < indent; ++i) printf("  ");
-    printf("%s: ", decode_type(p->type));
+    for (i = 0; i < indent; ++i) fprintf(stderr, "  ");
+    fprintf(stderr, "%s: ", decode_type(p->type));
     if (s_has_text(p->type))
-	printf("%s ", p->text);
-    printf("\n");
+	fprintf(stderr, "%s ", p->text);
+    fprintf(stderr, "\n");
 
     if (s_has_children(p->type))
 	for (p = p->first; p; p = p->next)
