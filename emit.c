@@ -18,6 +18,7 @@ static void grammar_post(struct s_node *n) {
 }
 
 static void literal(char *t) {
+    printf("cur->status = no_parse;\n");
     printf("if (! (string[col] == '%c')) goto contin;\n", t[0]);
     printf("cur->remainder = ++col;\n");
     printf("cur->status = parsed;\n");
@@ -28,7 +29,6 @@ static void rule_pre(struct s_node *n) {
     printf("case %d:\n", n->id); 
     printf("cur = matrix + col * n_rules + %d;\n", count++);
     printf("if (cur->status == uncomputed) {\n");
-    printf("cur->status = no_parse;\n");
 }
 
 static void rule_post(struct s_node *n) {
@@ -36,8 +36,34 @@ static void rule_post(struct s_node *n) {
     printf("goto contin;\n");
 }
 
+static void node(struct s_node *);
+
+static void alternative(struct s_node *n) {
+    struct s_node *p;
+
+    for (p = n->first; p; p = p->next) {
+	printf("cur->status = no_parse;\n");
+	printf("pushcont(cont); pushm(cur);\n");
+	printf("cont = %d;\n", p->id);
+	node(p);
+	printf("case %d:\n", p->id);
+	printf("cont = popcont();\n");
+	printf("last = cur; cur = popm();\n");
+	printf("if (last->status == parsed) {\n");
+	printf("  cur->remainder = last->remainder;\n");
+	printf("  cur->value = last->value;\n");
+	printf("  cur->status = parsed;\n");
+	printf("  goto contin;\n");
+	printf("}\n");
+    }
+}
+
 static void node(struct s_node *n) {
     struct s_node *p;
+
+    if (n->type == alt) {
+	alternative(n);
+    } else {
     switch (n->type) {
     case grammar:
 	grammar_pre(n);
@@ -63,6 +89,7 @@ static void node(struct s_node *n) {
 	rule_post(n);
 	break;
     default: break;
+    }
     }
 }
 

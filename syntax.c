@@ -4,16 +4,17 @@
 
 char *decode_type(enum s_type t) {
     switch(t) {
-    case grammar:	return "grammar";
-    case rule:		return "rule";
     case alt:		return "alt";
+    case grammar:	return "grammar";
     case lit:		return "lit";
+    case rule:		return "rule";
+    case seq:		return "seq";
     default:		return "[unknown]";
     }
 }
 
 int s_has_children(enum s_type t) {
-    return t == grammar || t == rule;
+    return t == alt || t == grammar || t == rule || t == seq;
 }
 
 int s_has_text(enum s_type t) {
