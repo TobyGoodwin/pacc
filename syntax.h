@@ -1,10 +1,10 @@
 enum s_type {
     grammar,
-    rule,
+    defn,
     alt, seq,
     and, not, /* syntactic predicates */
     binding,
-    lit, any, /* matchers */
+    rule, lit, any, /* matchers */
     opt, rep0, rep1 /* sugar */
 };
 
@@ -13,7 +13,7 @@ struct s_node {
     int id;
     struct s_node *first, *last; /* children */
     struct s_node *next; /* sibling */
-    char *text;
+    char *bind, *text;
 };
 
 extern void s_dump(struct s_node *);

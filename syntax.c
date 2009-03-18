@@ -5,6 +5,7 @@
 char *decode_type(enum s_type t) {
     switch(t) {
     case alt:		return "alt";
+    case defn:	return "defn";
     case grammar:	return "grammar";
     case lit:		return "lit";
     case rule:		return "rule";
@@ -14,11 +15,11 @@ char *decode_type(enum s_type t) {
 }
 
 int s_has_children(enum s_type t) {
-    return t == alt || t == grammar || t == rule || t == seq;
+    return t == alt || t == defn || t == grammar || t == seq;
 }
 
 int s_has_text(enum s_type t) {
-    return t == grammar || t == rule || t == lit;
+    return t == defn || t == grammar || t == rule || t == lit;
 }
 
 static void dump(struct s_node *p, int indent) {
@@ -26,7 +27,7 @@ static void dump(struct s_node *p, int indent) {
 
     if (!p) return;
     for (i = 0; i < indent; ++i) fprintf(stderr, "  ");
-    fprintf(stderr, "%s: ", decode_type(p->type));
+    fprintf(stderr, "%s %d: ", decode_type(p->type), p->id);
     if (s_has_text(p->type))
 	fprintf(stderr, "%s ", p->text);
     fprintf(stderr, "\n");
