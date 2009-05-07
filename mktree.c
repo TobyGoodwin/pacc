@@ -28,8 +28,18 @@ void resolve(struct s_node *g, struct s_node *n) {
 	    resolve(g, p);
 }
         
+#if 0
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
+
+    /* Bryan Ford's trivial grammar:
+     *
+     * Additive <- Multitive '+' Additive / Multitive
+     * Multitive <- Primary '*' Multitive / Primary
+     * Primary <- '(' Additive ')' / Decimal
+     * Decimal <- '0' / '1' / ... / '9'
+     *
+     */
 
     /* Decimal = '0' / '1' / ... / '9' */
     p = new_node(lit); p->text = "9"; p->next = 0; q = p;
@@ -62,6 +72,7 @@ struct s_node *create(void) {
     p = new_node(seq); p->first = q; p->next = s; q = p;
     p = new_node(alt); p->first = q; q = p;
     p = new_node(defn); p->text = "Multitive"; p->first = q; p->next = r; r = p;
+
     /* Additive = Multitive '+' Additive / Multitive */
     p = new_node(rule); p->text = "Multitive"; s = p;
     p = new_node(rule); p->text = "Additive"; q = p;
@@ -77,3 +88,39 @@ struct s_node *create(void) {
 
     return p;
 }
+#else
+
+struct s_node *create(void) {
+    struct s_node *p, *q, *r, *s;
+
+    /* An even trivialer grammar:
+     *
+     * P <- A B / A
+     * A <- 'a'
+     * B <- 'b'
+     *
+     */
+
+    /* B <- 'b' */
+    p = new_node(lit); p->text = "b"; p->next = 0; q = p;
+    p = new_node(defn); p->text = "B"; p->first = q; p->next = 0; r = p;
+
+    /* A <- 'a' */
+    p = new_node(lit); p->text = "a"; p->next = 0; q = p;
+    p = new_node(defn); p->text = "A"; p->first = q; p->next = r; r = p;
+
+    /* P <- A B / A */
+    p = new_node(rule); p->text = "A"; s = p;
+    p = new_node(rule); p->text = "B"; q = p;
+    p = new_node(rule); p->text = "A"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; q = p;
+    p = new_node(alt); p->first = q; q = p;
+    p = new_node(defn); p->text = "P"; p->first = q; p->next = r; r = p;
+
+    p = new_node(grammar); p->text = "yy"; p->first = r;
+
+    resolve(p, p);
+
+    return p;
+}
+#endif
