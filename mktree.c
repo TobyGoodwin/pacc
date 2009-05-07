@@ -43,6 +43,7 @@ struct s_node *create(void) {
 
     /* Decimal = '0' / '1' / ... / '9' */
     p = new_node(lit); p->text = "9"; p->next = 0; q = p;
+    /*
     p = new_node(lit); p->text = "8"; p->next = q; q = p;
     p = new_node(lit); p->text = "7"; p->next = q; q = p;
     p = new_node(lit); p->text = "6"; p->next = q; q = p;
@@ -52,6 +53,7 @@ struct s_node *create(void) {
     p = new_node(lit); p->text = "2"; p->next = q; q = p;
     p = new_node(lit); p->text = "1"; p->next = q; q = p;
     p = new_node(lit); p->text = "0"; p->next = q; q = p;
+    */
     p = new_node(alt); p->first = q; q = p;
     p = new_node(defn); p->text = "Decimal"; p->first = q; p->next = 0; r = p;
 
@@ -95,7 +97,7 @@ struct s_node *create(void) {
 
     /* An even trivialer grammar:
      *
-     * P <- A B / A
+     * P <- A B / A P
      * A <- 'a'
      * B <- 'b'
      *
@@ -109,8 +111,10 @@ struct s_node *create(void) {
     p = new_node(lit); p->text = "a"; p->next = 0; q = p;
     p = new_node(defn); p->text = "A"; p->first = q; p->next = r; r = p;
 
-    /* P <- A B / A */
-    p = new_node(rule); p->text = "A"; s = p;
+    /* P <- A B / A P */
+    p = new_node(rule); p->text = "P"; q = p;
+    p = new_node(rule); p->text = "A"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; s = p;
     p = new_node(rule); p->text = "B"; q = p;
     p = new_node(rule); p->text = "A"; p->next = q; q = p;
     p = new_node(seq); p->first = q; p->next = s; q = p;

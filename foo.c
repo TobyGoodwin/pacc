@@ -8,6 +8,7 @@ int st_stack[25];
 int st_ptr = 0;
 
 void pushcont(int c) {
+    printf("pushcont(%d)\n", c);
     st_stack[st_ptr++] = c;
 }
 int popcont(void) {
@@ -24,7 +25,7 @@ struct intermed {
     int remainder; /* unparsed string */
 };
 
-static int n_rules = 3;
+//static int n_rules = 3;
 struct intermed *matrix;
 
 struct intermed *m_stack[25];

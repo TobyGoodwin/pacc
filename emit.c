@@ -19,14 +19,16 @@ static void grammar_post(struct s_node *n) {
 
 static void literal(char *t) {
     printf("cur->status = no_parse;\n");
+    printf("printf(\"match %%c with %c\\n\", string[col]);\n", t[0]);
     printf("if (! (string[col] == '%c')) goto contin;\n", t[0]);
-    printf("cur->remainder = ++col;\n");
+    printf("cur->remainder = col + 1;\n");
     printf("cur->status = parsed;\n");
 }
 
 static void defn_pre(struct s_node *n) {
     static int count = 0;
-    printf("case %d:\n", n->id); 
+    printf("case %d: /* %s */\n", n->id, n->text); 
+    printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", count, n->text);
     printf("cur = matrix + col * n_rules + %d;\n", count++);
     printf("if (cur->status == uncomputed) {\n");
 }
@@ -42,10 +44,11 @@ static void emit_rule(struct s_node *n) {
     printf("cont = %d;\n", 1000 + n->id); /* XXX */
     printf("st = %d;\n", n->first->id);
     printf("goto top;\n");
-    printf("case %d: /* %s */\n", 1000 + n->id, n->text); /* XXX !!! */
+    printf("case %d: /* subrule: %s */\n", 1000 + n->id, n->text); /* XXX !!! */
     printf("cont = popcont();\n");
     printf("last = cur; cur = popm();\n");
-    printf("if (last->status != parsed) goto contin;\n");
+    //printf("printf(\"%%s\\n\", last->status == parsed ? \"parsed\" : \"not parsed\");\n");
+    printf("if (last->status != parsed) { col = last->remainder; goto contin; }\n");
     printf("col = cur->remainder = last->remainder;\n");
     printf("cur->value = last->value;\n");
     printf("cur->status = parsed;\n");
@@ -57,6 +60,7 @@ static void alternative(struct s_node *n) {
     struct s_node *p;
 
     for (p = n->first; p; p = p->next) {
+	printf("printf(\"alternative...\");\n");
 	printf("cur->status = no_parse;\n");
 	printf("pushcont(cont); pushm(cur);\n");
 	printf("cont = %d;\n", p->id);
@@ -64,6 +68,7 @@ static void alternative(struct s_node *n) {
 	printf("case %d:\n", p->id);
 	printf("cont = popcont();\n");
 	printf("last = cur; cur = popm();\n");
+	printf("printf(last->status==parsed?\"yes\\n\":\"no\\n\");\n");
 	printf("if (last->status == parsed) {\n");
 	printf("  col = cur->remainder = last->remainder;\n");
 	printf("  cur->value = last->value;\n");
