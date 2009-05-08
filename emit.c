@@ -9,7 +9,9 @@ static void grammar_pre(struct s_node *n) {
     for (p = n->first; p; p = p->next)
 	++r;
     printf("#define n_rules %d\n", r);
-    printf("st = %d;\ntop:\nswitch(st) {\n", n->first->id);
+    printf("st = %d;\ntop:\n", n->first->id);
+    printf("printf(\"switch to state %%d\\n\", st);\n");
+    printf("switch(st) {\n");
 }
 
 static void grammar_post(struct s_node *n) {
@@ -19,6 +21,7 @@ static void grammar_post(struct s_node *n) {
 
 static void literal(char *t) {
     printf("cur->status = no_parse;\n");
+    printf("cur->remainder = col;\n");
     printf("printf(\"match %%c with %c\\n\", string[col]);\n", t[0]);
     printf("if (! (string[col] == '%c')) goto contin;\n", t[0]);
     printf("cur->remainder = col + 1;\n");
@@ -61,6 +64,7 @@ static void alternative(struct s_node *n) {
 
     for (p = n->first; p; p = p->next) {
 	printf("printf(\"alternative...\");\n");
+	printf("pushcont(col);\n");
 	printf("cur->status = no_parse;\n");
 	printf("pushcont(cont); pushm(cur);\n");
 	printf("cont = %d;\n", p->id);
@@ -69,6 +73,7 @@ static void alternative(struct s_node *n) {
 	printf("cont = popcont();\n");
 	printf("last = cur; cur = popm();\n");
 	printf("printf(last->status==parsed?\"yes\\n\":\"no\\n\");\n");
+	printf("col = popcont(); printf(\"restoring col to %%d\\n\", col);\n");
 	printf("if (last->status == parsed) {\n");
 	printf("  col = cur->remainder = last->remainder;\n");
 	printf("  cur->value = last->value;\n");

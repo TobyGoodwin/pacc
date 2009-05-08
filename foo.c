@@ -46,6 +46,7 @@ int parse(void) {
     return matrix->status == parsed;
 
 contin:
+    printf("continuing in state %d\n", cont);
     st = cont;
     goto top;
 
