@@ -35,6 +35,7 @@ void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
 struct intermed *popm(void) { return m_stack[--m_ptr]; }
 
 int parse(void) {
+    enum status status;
     int cont, st;
     int col;
     struct intermed *cur, *last;
