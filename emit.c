@@ -45,7 +45,7 @@ static void literal(char *t) {
     printf("}\n");
 }
 
-static void defn_pre(struct s_node *n) {
+static void rule_pre(struct s_node *n) {
     static int count = 0;
     printf("case %d: /* %s */\n", n->id, n->text); 
     printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", count, n->text);
@@ -53,7 +53,7 @@ static void defn_pre(struct s_node *n) {
     printf("if (cur->status == uncomputed) {\n");
 }
 
-static void defn_post(struct s_node *n) {
+static void rule_post(struct s_node *n) {
     printf("    cur->status = status;\n");
     printf("    cur->remainder = col;\n");
     printf("}\n");
@@ -84,13 +84,13 @@ static void seq_post(struct s_node *n) {
 }
 
     
-static void emit_rule(struct s_node *n) {
+static void emit_call(struct s_node *n) {
     printf("cur->status = no_parse;\n");
     printf("pushcont(cont); pushm(cur);\n");
     printf("cont = %d;\n", 1000 + n->id); /* XXX */
     printf("st = %d;\n", n->first->id);
     printf("goto top;\n");
-    printf("case %d: /* subrule: %s */\n", 1000 + n->id, n->text); /* XXX !!! */
+    printf("case %d: /* subcall: %s */\n", 1000 + n->id, n->text); /* XXX !!! */
     printf("cont = popcont();\n");
     printf("last = cur; cur = popm();\n");
     //printf("printf(\"%%s\\n\", last->status == parsed ? \"parsed\" : \"not parsed\");\n");
@@ -136,8 +136,7 @@ static void alt_pre(struct s_node *n) {
 }
 
 static void alt_mid(struct s_node *n) {
-    printf("if (status == parsed)\n");
-    printf("    goto contin;\n");
+    printf("if (status == parsed) { popcont(); goto contin; }\n");
     printf("else col = popcont();\n");
 }
 
@@ -164,14 +163,14 @@ static void node(struct s_node *n) {
     switch (n->type) {
     case grammar:
 	grammar_pre(n); break;
-    case defn:
-	defn_pre(n); break;
+    case rule:
+	rule_pre(n); break;
     case alt:
 	alt_pre(n); break;
     case lit:
 	literal(n->text); break;
-    case rule:
-	emit_rule(n); break;
+    case call:
+	emit_call(n); break;
     case seq:
 	seq_pre(n); break;
     default: break;
@@ -194,8 +193,8 @@ static void node(struct s_node *n) {
     switch(n->type) {
     case grammar:
 	grammar_post(n); break;
-    case defn:
-	defn_post(n); break;
+    case rule:
+	rule_post(n); break;
     case alt:
 	alt_post(n); break;
     case seq:

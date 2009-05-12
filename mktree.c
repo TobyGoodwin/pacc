@@ -15,7 +15,7 @@ struct s_node *new_node(enum s_type t) {
 
 void resolve(struct s_node *g, struct s_node *n) {
     struct s_node *p;
-    if (n->type == rule && !n->first) {
+    if (n->type == call && !n->first) {
 	struct s_node *i;
 	for (i = g->first; i; i = i->next)
 	    if (strcmp(i->text, n->text) == 0)
@@ -40,7 +40,7 @@ struct s_node *create(void) {
 
     /* A <- 'a' */
     p = new_node(lit); p->text = "a"; p->next = 0; q = p;
-    p = new_node(defn); p->text = "A"; p->first = q; r = p;
+    p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
     p = new_node(grammar); p->text = "yy"; p->first = r;
 
@@ -64,7 +64,7 @@ struct s_node *create(void) {
     p = new_node(lit); p->text = "b"; q = p;
     p = new_node(lit); p->text = "a"; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
-    p = new_node(defn); p->text = "A"; p->first = q; r = p;
+    p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
     p = new_node(grammar); p->text = "yy"; p->first = r;
 
@@ -88,7 +88,33 @@ struct s_node *create(void) {
     p = new_node(lit); p->text = "b"; q = p;
     p = new_node(lit); p->text = "a"; p->next = q; q = p;
     p = new_node(alt); p->first = q; q = p;
-    p = new_node(defn); p->text = "A"; p->first = q; r = p;
+    p = new_node(rule); p->text = "A"; p->first = q; r = p;
+
+    p = new_node(grammar); p->text = "yy"; p->first = r;
+
+    resolve(p, p);
+
+    return p;
+}
+#endif
+
+#if 1
+struct s_node *create(void) {
+    struct s_node *p, *q, *r, *s;
+
+    /* A trivial recursion:
+     *
+     * P <- 'a' P / 'a'
+     *
+     */
+
+    /* P <- 'a' P / 'a' */
+    p = new_node(lit); p->text = "a"; r = p;
+    p = new_node(call); p->text = "P"; q = p;
+    p = new_node(lit); p->text = "a"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = r; q = p;
+    p = new_node(alt); p->first = q; q = p;
+    p = new_node(rule); p->text = "P"; p->first = q; r = p;
 
     p = new_node(grammar); p->text = "yy"; p->first = r;
 
@@ -162,7 +188,7 @@ struct s_node *create(void) {
 }
 #endif
 
-#if 1
+#if 0
 
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
@@ -177,21 +203,21 @@ struct s_node *create(void) {
 
     /* B <- 'b' */
     p = new_node(lit); p->text = "b"; p->next = 0; q = p;
-    p = new_node(defn); p->text = "B"; p->first = q; p->next = 0; r = p;
+    p = new_node(rule); p->text = "B"; p->first = q; p->next = 0; r = p;
 
     /* A <- 'a' */
     p = new_node(lit); p->text = "a"; p->next = 0; q = p;
-    p = new_node(defn); p->text = "A"; p->first = q; p->next = r; r = p;
+    p = new_node(rule); p->text = "A"; p->first = q; p->next = r; r = p;
 
     /* P <- A B / A P */
-    p = new_node(rule); p->text = "P"; q = p;
-    p = new_node(rule); p->text = "A"; p->next = q; q = p;
+    p = new_node(call); p->text = "P"; q = p;
+    p = new_node(call); p->text = "A"; p->next = q; q = p;
     p = new_node(seq); p->first = q; s = p;
-    p = new_node(rule); p->text = "B"; q = p;
-    p = new_node(rule); p->text = "A"; p->next = q; q = p;
+    p = new_node(call); p->text = "B"; q = p;
+    p = new_node(call); p->text = "A"; p->next = q; q = p;
     p = new_node(seq); p->first = q; p->next = s; q = p;
     p = new_node(alt); p->first = q; q = p;
-    p = new_node(defn); p->text = "P"; p->first = q; p->next = r; r = p;
+    p = new_node(rule); p->text = "P"; p->first = q; p->next = r; r = p;
 
     p = new_node(grammar); p->text = "yy"; p->first = r;
 

@@ -1,10 +1,10 @@
 enum s_type {
     grammar,
-    defn,
+    rule,
     alt, seq,
     and, not, /* syntactic predicates */
     binding,
-    rule, lit, any, /* matchers */
+    call, lit, any, /* matchers */
     opt, rep0, rep1 /* sugar */
 };
 
