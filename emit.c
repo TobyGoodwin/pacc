@@ -85,19 +85,21 @@ static void seq_post(struct s_node *n) {
 
     
 static void emit_call(struct s_node *n) {
-    printf("cur->status = no_parse;\n");
+    //printf("cur->status = no_parse;\n");
     printf("pushcont(cont); pushm(cur);\n");
-    printf("cont = %d;\n", 1000 + n->id); /* XXX */
+    printf("cont = %d; /* call %s */\n", 1000 + n->id, n->text); /* XXX */
     printf("st = %d;\n", n->first->id);
     printf("goto top;\n");
-    printf("case %d: /* subcall: %s */\n", 1000 + n->id, n->text); /* XXX !!! */
+    printf("case %d: /* return from %s */\n", 1000 + n->id, n->text); /* XXX !!! */
     printf("cont = popcont();\n");
     printf("last = cur; cur = popm();\n");
+    printf("status = last->status;\n");
+    printf("col = last->remainder;\n");
     //printf("printf(\"%%s\\n\", last->status == parsed ? \"parsed\" : \"not parsed\");\n");
-    printf("if (last->status != parsed) { col = last->remainder; goto contin; }\n");
-    printf("col = cur->remainder = last->remainder;\n");
-    printf("cur->value = last->value;\n");
-    printf("cur->status = parsed;\n");
+    //printf("goto contin;\n");
+    //printf("col = cur->remainder = last->remainder;\n");
+    //printf("cur->value = last->value;\n");
+    //printf("cur->status = parsed;\n");
 }
 
 static void node(struct s_node *);
@@ -136,8 +138,11 @@ static void alt_pre(struct s_node *n) {
 }
 
 static void alt_mid(struct s_node *n) {
+    printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
     printf("if (status == parsed) { popcont(); goto contin; }\n");
-    printf("else col = popcont();\n");
+    printf("col = popcont(); pushcont(col);\n");
+    printf("printf(\"col restored to %%d\\n\", col);\n");
+    printf("printf(\"alt %d @ col %%d? (next alternative)\\n\", col);\n", n->id);
 }
 
 static void alt_post(struct s_node *n) {

@@ -8,10 +8,11 @@ int st_stack[25];
 int st_ptr = 0;
 
 void pushcont(int c) {
-    printf("pushcont(%d)\n", c);
+    printf("push(%d) -> stack[%d]\n", c, st_ptr);
     st_stack[st_ptr++] = c;
 }
 int popcont(void) {
+    printf("pop() stack[%d] -> %d\n", st_ptr - 1, st_stack[st_ptr - 1]);
     return st_stack[--st_ptr];
 }
 
