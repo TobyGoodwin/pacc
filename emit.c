@@ -19,23 +19,10 @@ static void grammar_post(struct s_node *n) {
     printf("}\n");
 }
 
-#if 0
-static void literal(char *t) {
-    printf("cur->status = no_parse;\n");
-    printf("cur->remainder = col;\n");
-    printf("printf(\"%%c == %c? \", string[col]);\n", t[0]);
-    printf("if (! (string[col] == '%c')) printf(\"no (col=%%d)\\n\", col);\n", t[0]);
-    printf("if (! (string[col] == '%c')) goto contin;\n", t[0]);
-    printf("printf(\"yes (col=%%d)\\n\", col);");
-    printf("cur->remainder = col + 1;\n");
-    printf("cur->status = parsed;\n");
-}
-#endif
-
 /* literal() currently matches just a single character */
-static void literal(char *t) {
-    printf("printf(\"%%c == %c? \", string[col]);\n", t[0]);
-    printf("if (string[col] == '%c') {\n", t[0]);
+static void literal(struct s_node *n) {
+    printf("printf(\"%%c == %c? \", string[col]);\n", n->text[0]);
+    printf("if (string[col] == '%c') {\n", n->text[0]);
     printf("    status = parsed;\n");
     printf("    ++col;\n");
     printf("    printf(\"yes (col=%%d)\\n\", col);\n");
@@ -83,52 +70,19 @@ static void seq_post(struct s_node *n) {
     printf("printf(\"col is %%d\\n\", col);\n");
 }
 
-    
 static void emit_call(struct s_node *n) {
-    //printf("cur->status = no_parse;\n");
     printf("pushcont(cont); pushm(cur);\n");
-    printf("cont = %d; /* call %s */\n", 1000 + n->id, n->text); /* XXX */
-    printf("st = %d;\n", n->first->id);
+    printf("cont = %d;\n", 1000 + n->id); /* XXX */
+    printf("st = %d; /* call %s */\n", n->first->id, n->text);
     printf("goto top;\n");
     printf("case %d: /* return from %s */\n", 1000 + n->id, n->text); /* XXX !!! */
     printf("cont = popcont();\n");
     printf("last = cur; cur = popm();\n");
     printf("status = last->status;\n");
     printf("col = last->remainder;\n");
-    //printf("printf(\"%%s\\n\", last->status == parsed ? \"parsed\" : \"not parsed\");\n");
-    //printf("goto contin;\n");
-    //printf("col = cur->remainder = last->remainder;\n");
-    //printf("cur->value = last->value;\n");
-    //printf("cur->status = parsed;\n");
 }
 
 static void node(struct s_node *);
-
-#if 0
-static void alternative(struct s_node *n) {
-    struct s_node *p;
-
-    for (p = n->first; p; p = p->next) {
-	printf("printf(\"alternative...\");\n");
-	printf("pushcont(col);\n");
-	printf("cur->status = no_parse;\n");
-	printf("pushcont(cont); pushm(cur);\n");
-	printf("cont = %d;\n", p->id);
-	node(p);
-	printf("case %d:\n", p->id);
-	printf("cont = popcont();\n");
-	printf("last = cur; cur = popm();\n");
-	printf("printf(last->status==parsed?\"yes\\n\":\"no\\n\");\n");
-	printf("col = popcont(); printf(\"restoring col to %%d\\n\", col);\n");
-	printf("if (last->status == parsed) {\n");
-	printf("  col = cur->remainder = last->remainder;\n");
-	printf("  cur->value = last->value;\n");
-	printf("  cur->status = parsed;\n");
-	printf("  goto contin;\n");
-	printf("}\n");
-    }
-}
-#endif
 
 static void alt_pre(struct s_node *n) {
     printf("printf(\"alt %d @ col %%d?\\n\", col);\n", n->id);
@@ -154,60 +108,35 @@ static void alt_post(struct s_node *n) {
     printf("printf(\"col is %%d\\n\", col);\n");
 }
 
+static void (*pre[s_type_max])(struct s_node *);
+static void (*mid[s_type_max])(struct s_node *);
+static void (*post[s_type_max])(struct s_node *);
 
-/* XXX this should all be done in a data-directed stylee (i.e. with
- * function pointers) */
 static void node(struct s_node *n) {
     struct s_node *p;
 
-#if 0
-    if (n->type == alt) {
-	alternative(n);
-    } else {
-#endif
-    switch (n->type) {
-    case grammar:
-	grammar_pre(n); break;
-    case rule:
-	rule_pre(n); break;
-    case alt:
-	alt_pre(n); break;
-    case lit:
-	literal(n->text); break;
-    case call:
-	emit_call(n); break;
-    case seq:
-	seq_pre(n); break;
-    default: break;
-    }
+    if (pre[n->type]) pre[n->type](n);
 
     /* XXX could optimize with seq_last() etc. I think */
     if (s_has_children(n->type))
 	for (p = n->first; p; p = p->next) {
 	    node(p);
 	    if (p->next)
-		switch (n->type) {
-		case alt:
-		    alt_mid(n); break;
-		case seq:
-		    seq_mid(n); break;
-		default: break;
-		}
+		if (mid[n->type]) mid[n->type](n);
 	}
 
-    switch(n->type) {
-    case grammar:
-	grammar_post(n); break;
-    case rule:
-	rule_post(n); break;
-    case alt:
-	alt_post(n); break;
-    case seq:
-	seq_post(n); break;
-    default: break;
-    }
+    if (post[n->type]) post[n->type](n);
 }
 
 void emit(struct s_node *g) {
+    pre[grammar] = grammar_pre; pre[rule] = rule_pre;
+    pre[alt] = alt_pre; pre[lit] = literal;
+    pre[call] = emit_call; pre[seq] = seq_pre;
+
+    mid[alt] = alt_mid; mid[seq] = seq_mid;
+
+    post[grammar] = grammar_post; post[rule] = rule_post;
+    post[alt] = alt_post; post[seq] = seq_post;
+
     node(g);
 }

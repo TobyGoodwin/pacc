@@ -5,7 +5,8 @@ enum s_type {
     and, not, /* syntactic predicates */
     binding,
     call, lit, any, /* matchers */
-    opt, rep0, rep1 /* sugar */
+    opt, rep0, rep1, /* sugar */
+    s_type_max
 };
 
 struct s_node {
