@@ -72,10 +72,10 @@ static void seq_post(struct s_node *n) {
 
 static void emit_call(struct s_node *n) {
     printf("pushcont(cont); pushm(cur);\n");
-    printf("cont = %d;\n", 1000 + n->id); /* XXX */
+    printf("cont = %d;\n", n->id);
     printf("st = %d; /* call %s */\n", n->first->id, n->text);
     printf("goto top;\n");
-    printf("case %d: /* return from %s */\n", 1000 + n->id, n->text); /* XXX !!! */
+    printf("case %d: /* return from %s */\n", n->id, n->text);
     printf("cont = popcont();\n");
     printf("last = cur; cur = popm();\n");
     printf("status = last->status;\n");
