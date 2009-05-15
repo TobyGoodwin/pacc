@@ -129,6 +129,31 @@ struct s_node *create(void) {
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
 
+    /* A trivial action:
+     *
+     * P <- 'a' { printf("Hello, world\n"); }
+     *
+     */
+
+    /* A <- 'a' { printf("Hello, world\n"); } */
+    p = new_node(act); p->text = "printf(\"Hello, world\\n\");"; q = p;
+    p = new_node(lit); p->text = "a"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(rule); p->text = "A"; p->first = q; r = p;
+
+    p = new_node(grammar); p->text = "yy"; p->first = r;
+
+    resolve(p, p);
+
+    return p;
+}
+#endif
+
+
+#if 0
+struct s_node *create(void) {
+    struct s_node *p, *q, *r, *s;
+
     /* Sequence / call combination:
      *
      * P <- A B
@@ -158,6 +183,45 @@ struct s_node *create(void) {
     return p;
 }
 #endif
+
+#if 1
+struct s_node *create(void) {
+    struct s_node *p, *q, *r, *s;
+
+    /* Sequence / action combination:
+     *
+     * P <- A B
+     * A <- 'a' { printf("matched: a\n"); }
+     * B <- 'b' { printf("matched: b\n"); }
+     *
+     */
+
+    /* B <- 'b' { ... } */
+    p = new_node(act); p->text = "{ printf(\"matched: b\\n\"); }"; q = p;
+    p = new_node(lit); p->text = "b"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(rule); p->text = "B"; p->first = q; r = p;
+
+    /* A <- 'a' { ... } */
+    p = new_node(act); p->text = "{ printf(\"matched: a\\n\"); }"; q = p;
+    p = new_node(lit); p->text = "a"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(rule); p->text = "A"; p->first = q; p->next = r; r = p;
+
+    /* P <- A B */
+    p = new_node(call); p->text = "B"; q = p;
+    p = new_node(call); p->text = "A"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(rule); p->text = "P"; p->first = q; p->next = r; r = p;
+
+    p = new_node(grammar); p->text = "yy"; p->first = r;
+
+    resolve(p, p);
+
+    return p;
+}
+#endif
+
 
 #if 0
 struct s_node *create(void) {
@@ -221,7 +285,7 @@ struct s_node *create(void) {
 }
 #endif
 
-#if 1
+#if 0
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
 

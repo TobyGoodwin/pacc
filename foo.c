@@ -16,6 +16,17 @@ int popcont(void) {
     return st_stack[--st_ptr];
 }
 
+int th_stack[25];
+int th_ptr = 0;
+
+void pushthunk(int t) {
+    printf("push(%d) -> th_stack[%d]\n", t, th_ptr);
+    th_stack[th_ptr++] = t;
+}
+int popthunk(void) {
+    printf("pop() th_stack[%d] -> %d\n", th_ptr - 1, th_stack[th_ptr - 1]);
+    return th_stack[--th_ptr];
+}
 enum status {
     no_parse, parsed, uncomputed
 };
@@ -39,11 +50,21 @@ int parse(void) {
     enum status status;
     int cont, st;
     int col;
+    int evaluating;
     struct intermed *cur, *last;
     col = 0;
     cont = -1;
+    evaluating = 0;
 
 #include "gen.c"
+
+    if (parsed && !evaluating) {
+	pushthunk(-1);
+	evaluating = 1;
+	th_ptr = 0;
+	st = th_stack[th_ptr++];
+	goto top;
+    }
 
     return matrix->status == parsed;
 

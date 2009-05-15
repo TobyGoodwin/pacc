@@ -1,11 +1,10 @@
 enum s_type {
-    grammar,
-    rule,
-    alt, seq,
-    and, not, /* syntactic predicates */
-    binding,
-    call, lit, any, /* matchers */
-    opt, rep0, rep1, /* sugar */
+    grammar, rule,	/* scaffolding */
+    alt, seq,		/* fundamentals */
+    and, not,		/* syntactic predicates */
+    act, bind,		/* actions */
+    call, lit, any,	/* matchers */
+    opt, rep0, rep1,	/* sugar */
     s_type_max
 };
 

@@ -70,6 +70,19 @@ static void seq_post(struct s_node *n) {
     printf("printf(\"col is %%d\\n\", col);\n");
 }
 
+static void act_pre(struct s_node *n) {
+    printf("pushthunk(%d);\n", n->id);
+}
+
+static void act_post(struct s_node *n) {
+    printf("case %d:\n", n->id);
+    printf("if (evaluating) {\n");
+    printf("    %s\n", n->text);
+    printf("    st = th_stack[th_ptr++];\n");
+    printf("    goto top;\n");
+    printf("}\n");
+}
+
 static void emit_call(struct s_node *n) {
     printf("pushcont(cont); pushm(cur);\n");
     printf("cont = %d;\n", n->id);
@@ -130,13 +143,15 @@ static void node(struct s_node *n) {
 
 void emit(struct s_node *g) {
     pre[grammar] = grammar_pre; pre[rule] = rule_pre;
-    pre[alt] = alt_pre; pre[lit] = literal;
-    pre[call] = emit_call; pre[seq] = seq_pre;
+    pre[alt] = alt_pre; pre[seq] = seq_pre;
+    pre[act] = act_pre;
+    pre[call] = emit_call; pre[lit] = literal;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
 
     post[grammar] = grammar_post; post[rule] = rule_post;
     post[alt] = alt_post; post[seq] = seq_post;
+    post[act] = act_post;
 
     node(g);
 }
