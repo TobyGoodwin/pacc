@@ -45,4 +45,26 @@ so, thinking about a hash function for the matrix, we have about 23
 bits of input, in two integers. that should be enough to do something
 interesting...
 
+---
 
+Insight: we talk about semantic *actions*, and in ``yacc`` they are ``C``
+program fragments, but really those things are expressions! In ``yacc``,
+of course, the convention is that the program fragment delivers a value
+by assigning to ``$$``. So these things are not really actions at all, but
+*expressions*. They have values, and types.
+
+How might we express this?
+
+int Decimal <- d:'0' / d:'1' / ... { d - '0' }
+int Decimal <- < [0-9] > { d - '0' } ???
+struct Node *cmd <- ...
+                 /  TWIDDLE optcaret s:word p:words { mk(nMatch, s, p) }
+                 / ... 
+
+Problems: braces around expressions look wrong... didn't Ford have a
+different / better syntax? OK, all sorts of stuff coming out here (I
+don't like Piumarta's < > syntax; ...). However, the idea of typing each
+rule seems plausible. And the type of the first rule can become the
+default type.
+
+---
