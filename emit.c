@@ -4,6 +4,13 @@
 
 static char *g_name; /* grammar name */
 static char *bind_name;
+static int cur_rule = 0;
+static int bind_rule;
+
+char *n_stack[25];
+int n_ptr = 0;
+void pushn(char *n) { n_stack[n_ptr++] = n; }
+int popn(void) { return n_stack[--n_ptr]; }
 
 static void grammar_pre(struct s_node *n) {
     int r = 0;
@@ -39,10 +46,10 @@ static void literal(struct s_node *n) {
 }
 
 static void rule_pre(struct s_node *n) {
-    static int count = 0;
     printf("case %d: /* %s */\n", n->id, n->text); 
-    printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", count, n->text);
-    printf("cur = matrix + col * n_rules + %d;\n", count++);
+    printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
+    printf("rule_col = col;\n");
+    printf("cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("if (cur->status == uncomputed) {\n");
 }
 
@@ -51,6 +58,9 @@ static void rule_post(struct s_node *n) {
     printf("    cur->remainder = col;\n");
     printf("}\n");
     printf("goto contin;\n");
+    bind_name = 0;
+    ++cur_rule;
+    n_ptr = 0;
 }
 
 static void seq_pre(struct s_node *n) {
@@ -76,9 +86,11 @@ static void seq_post(struct s_node *n) {
     printf("printf(\"col is %%d\\n\", col);\n");
 }
 
+/* A binding may only contain a call. */
 static void bind_pre(struct s_node *n) {
     printf("/* bind: %s */\n", n->text);
-    bind_name = n->text;
+    pushn(n->text);
+    bind_rule = cur_rule + 1;
 }
 
 static void bind_post(struct s_node *n) {
@@ -86,22 +98,32 @@ static void bind_post(struct s_node *n) {
 }
 
 static void expr_pre(struct s_node *n) {
-    printf("pushthunk(%d, cur);\n", n->id);
+    printf("pushthunk(%d); pushthunk(rule_col);\n", n->id);
 }
 
 static void expr_post(struct s_node *n) {
+    int i;
+
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
-    printf("    int %s = bind_val->value;\n", bind_name);
+    printf("    int mycol = col;\n");
+    for (i = 0; i < n_ptr; ++i)
+	printf("    int %s;\n", n_stack[i]);
+    for (i = 0; i < n_ptr; ++i) {
+	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], bind_rule);
+	printf("    mycol = matrix[mycol * n_rules + %d].remainder;\n", bind_rule);
+    }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
+    printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("    cur->value = %s;\n", n->text);
-    printf("    st = th_stack[th_ptr].t;\n");
-    printf("    cur = th_stack[th_ptr++].c;\n");
+    printf("    st = th_stack[th_ptr++];\n");
+    printf("    col = th_stack[th_ptr++];\n");
     printf("    goto top;\n");
     printf("}\n");
 }
 
 static void emit_call(struct s_node *n) {
+    printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont); pushm(cur);\n");
     printf("cont = %d;\n", n->id);
     printf("st = %d; /* call %s */\n", n->first->id, n->text);
@@ -112,6 +134,7 @@ static void emit_call(struct s_node *n) {
     printf("status = last->status;\n");
     printf("col = last->remainder;\n");
     printf("bind_val = last;\n");
+    printf("rule_col = popcont();\n");
 }
 
 static void node(struct s_node *);

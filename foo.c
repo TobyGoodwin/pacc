@@ -16,14 +16,12 @@ int popcont(void) {
     return st_stack[--st_ptr];
 }
 
-struct th_con { int t; struct intermed *c; };
-struct th_con th_stack[25];
+int th_stack[25];
 int th_ptr = 0;
 
-static void pushthunk(int t, struct intermed *cur) {
+static void pushthunk(int t) {
     printf("push(%d) -> th_stack[%d]\n", t, th_ptr);
-    th_stack[th_ptr].t = t;
-    th_stack[th_ptr++].c = cur;
+    th_stack[th_ptr++] = t;
 }
 /*
 static int popthunk(void) {
@@ -37,11 +35,10 @@ enum status {
 
 struct intermed {
     enum status status;
-    int value; /* semantic value  XXX needs to be generated */
+    int value; /* semantic value  XXX needs to be generated union */
     int remainder; /* unparsed string */
 };
 
-//static int n_rules = 3;
 struct intermed *matrix;
 
 struct intermed *m_stack[25];
@@ -51,11 +48,10 @@ void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
 struct intermed *popm(void) { return m_stack[--m_ptr]; }
 
 int parse(void) {
-    char *bind_name;
     struct intermed *bind_val;
     enum status status;
     int cont, st;
-    int col;
+    int col, rule_col;
     int evaluating;
     struct intermed *cur, *last;
     col = 0;
@@ -65,11 +61,11 @@ int parse(void) {
 #include "gen.c"
 
     if (parsed && !evaluating) {
-	pushthunk(-1, 0);
+	pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
 	th_ptr = 0;
-	st = th_stack[th_ptr].t;
-	cur = th_stack[th_ptr++].c;
+	st = th_stack[th_ptr++];
+	col = th_stack[th_ptr++];
 	goto top;
     }
 
