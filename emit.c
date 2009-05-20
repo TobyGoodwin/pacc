@@ -2,6 +2,9 @@
 
 #include "syntax.h"
 
+static char *g_name; /* grammar name */
+static char *bind_name;
+
 static void grammar_pre(struct s_node *n) {
     int r = 0;
     struct s_node *p;
@@ -9,6 +12,9 @@ static void grammar_pre(struct s_node *n) {
     for (p = n->first; p; p = p->next)
 	++r;
     printf("#define n_rules %d\n", r);
+    g_name = n->text;
+    printf("typedef union { int %stype0; } %stype;\n", g_name, g_name);
+    printf("%stype %svalue;\n", g_name, g_name);
     printf("st = %d;\ntop:\n", n->first->id);
     printf("printf(\"switch to state %%d\\n\", st);\n");
     printf("switch(st) {\n");
@@ -70,15 +76,27 @@ static void seq_post(struct s_node *n) {
     printf("printf(\"col is %%d\\n\", col);\n");
 }
 
-static void act_pre(struct s_node *n) {
-    printf("pushthunk(%d);\n", n->id);
+static void bind_pre(struct s_node *n) {
+    printf("/* bind: %s */\n", n->text);
+    bind_name = n->text;
 }
 
-static void act_post(struct s_node *n) {
+static void bind_post(struct s_node *n) {
+    printf("/* end bind: %s */\n", n->text);
+}
+
+static void expr_pre(struct s_node *n) {
+    printf("pushthunk(%d, cur);\n", n->id);
+}
+
+static void expr_post(struct s_node *n) {
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
-    printf("    %s\n", n->text);
-    printf("    st = th_stack[th_ptr++];\n");
+    printf("    int %s = bind_val->value;\n", bind_name);
+    //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
+    printf("    cur->value = %s;\n", n->text);
+    printf("    st = th_stack[th_ptr].t;\n");
+    printf("    cur = th_stack[th_ptr++].c;\n");
     printf("    goto top;\n");
     printf("}\n");
 }
@@ -93,6 +111,7 @@ static void emit_call(struct s_node *n) {
     printf("last = cur; cur = popm();\n");
     printf("status = last->status;\n");
     printf("col = last->remainder;\n");
+    printf("bind_val = last;\n");
 }
 
 static void node(struct s_node *);
@@ -144,14 +163,14 @@ static void node(struct s_node *n) {
 void emit(struct s_node *g) {
     pre[grammar] = grammar_pre; pre[rule] = rule_pre;
     pre[alt] = alt_pre; pre[seq] = seq_pre;
-    pre[act] = act_pre;
+    pre[bind] = bind_pre; pre[expr] = expr_pre;
     pre[call] = emit_call; pre[lit] = literal;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
 
     post[grammar] = grammar_post; post[rule] = rule_post;
     post[alt] = alt_post; post[seq] = seq_post;
-    post[act] = act_post;
+    post[bind] = bind_post; post[expr] = expr_post;
 
     node(g);
 }

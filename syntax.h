@@ -2,7 +2,7 @@ enum s_type {
     grammar, rule,	/* scaffolding */
     alt, seq,		/* fundamentals */
     and, not,		/* syntactic predicates */
-    act, bind,		/* actions */
+    expr, bind,		/* expressions */
     call, lit, any,	/* matchers */
     opt, rep0, rep1,	/* sugar */
     s_type_max
@@ -11,6 +11,7 @@ enum s_type {
 struct s_node {
     enum s_type type;
     int id;
+    int e_type; /* expression type */
     struct s_node *first, *last; /* children */
     struct s_node *next; /* sibling */
     char *bind, *text;
