@@ -152,7 +152,7 @@ static void alt_pre(struct s_node *n) {
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
     printf("pushcont(col);\n");
-    n_ptr = 0;
+    i_ptr = n_ptr = 0;
 }
 
 static void alt_mid(struct s_node *n) {
@@ -161,7 +161,7 @@ static void alt_mid(struct s_node *n) {
     printf("col = popcont(); pushcont(col);\n");
     printf("printf(\"col restored to %%d\\n\", col);\n");
     printf("printf(\"alt %d @ col %%d? (next alternative)\\n\", col);\n", n->id);
-    n_ptr = 0;
+    i_ptr = n_ptr = 0;
 }
 
 static void alt_post(struct s_node *n) {
