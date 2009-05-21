@@ -4,7 +4,7 @@
 
 char *string;
 
-int st_stack[25];
+int st_stack[50];
 int st_ptr = 0;
 
 void pushcont(int c) {
