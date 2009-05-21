@@ -156,11 +156,6 @@ struct s_node *create(void) {
 
     /* Bryan Ford's trivial grammar with actions:
      *
-     * Additive <- Multitive '+' Additive / Multitive
-     * Multitive <- Primary '*' Multitive / Primary
-     * Primary <- '(' Additive ')' / Decimal
-     * Decimal <- '0' / '1' / ... / '9'
-     *
      * Additive <- m:Multitive '+' a:Additive { m + a } / Multitive
      * Multitive <- p:Primary '*' m:Multitive { p * m } / Primary
      * Primary <- '(' a:Additive ')' -> a / Decimal

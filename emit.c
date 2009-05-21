@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "syntax.h"
 
@@ -73,19 +74,20 @@ static void seq_pre(struct s_node *n) {
     printf("printf(\"seq %d @ col %%d?\\n\", col);\n", n->id);
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
-    printf("pushcont(col);\n");
+    printf("pushcont(col); pushcont(col_ptr);\n");
 }
 
 static void seq_mid(struct s_node *n) {
     printf("if (status != parsed) {\n");
+    printf("    col_ptr = popcont();\n");
     printf("    col = popcont();\n");
     printf("    goto contin;\n");
     printf("}\n");
 }
 
 static void seq_post(struct s_node *n) {
-    printf("if (status != parsed) col = popcont();\n");
-    printf("else popcont();\n");
+    printf("if (status != parsed) { col_ptr = popcont(); col = popcont(); }\n");
+    printf("else { popcont(); popcont(); }\n");
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
     printf("printf(\"seq %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
@@ -99,6 +101,8 @@ static void bind_pre(struct s_node *n) {
     bind_rule = lookup_rule[n->first->first->id];
     pushi(bind_rule);
     printf("/* bind_rule is %d */\n", bind_rule);
+    printf("printf(\"binding with col == %%d\\n\", col);\n");
+    printf("pushcol(col);\n");
 }
 
 static void bind_post(struct s_node *n) {
@@ -117,13 +121,17 @@ static void expr_post(struct s_node *n) {
     if (n_ptr) printf("    int mycol;\n");
     for (i = 0; i < n_ptr; ++i)
 	printf("    int %s;\n", n_stack[i]);
-    for (i = 0; i < n_ptr; ++i) {
-	printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 3);
+    for (i = n_ptr - 1; i >= 0; --i) {
+	//printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 3);
+	printf("    mycol = col_stack[col_ptr++];\n");
+	//printf("    mycol = popcol();\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
+	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
     printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("    cur->value = %s;\n", n->text);
+    printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value, col);\n", cur_rule);
     printf("    st = th_stack[th_ptr++];\n");
     printf("    col = th_stack[th_ptr++];\n");
     printf("    goto top;\n");
@@ -152,21 +160,22 @@ static void alt_pre(struct s_node *n) {
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
     printf("pushcont(col);\n");
+    printf("pushcont(col_ptr);\n");
     i_ptr = n_ptr = 0;
 }
 
 static void alt_mid(struct s_node *n) {
     printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
-    printf("if (status == parsed) { popcont(); goto contin; }\n");
-    printf("col = popcont(); pushcont(col);\n");
+    printf("if (status == parsed) { popcont(); popcont(); goto contin; }\n");
+    printf("col_ptr = popcont(); col = popcont(); pushcont(col); pushcont(col_ptr);\n");
     printf("printf(\"col restored to %%d\\n\", col);\n");
     printf("printf(\"alt %d @ col %%d? (next alternative)\\n\", col);\n", n->id);
     i_ptr = n_ptr = 0;
 }
 
 static void alt_post(struct s_node *n) {
-    printf("if (status != parsed) col = popcont();\n");
-    printf("else popcont();\n");
+    printf("if (status != parsed) { col_ptr = popcont(); col = popcont(); }\n");
+    printf("else { popcont(); popcont(); }\n");
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
     printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);

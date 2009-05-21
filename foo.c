@@ -16,13 +16,18 @@ int popcont(void) {
     return st_stack[--st_ptr];
 }
 
-int th_stack[25];
+int th_stack[50];
 int th_ptr = 0;
-
 static void pushthunk(int t) {
     printf("push(%d) -> th_stack[%d]\n", t, th_ptr);
     th_stack[th_ptr++] = t;
 }
+
+int col_stack[25];
+int col_ptr = 0;
+static void pushcol(int c) { col_stack[col_ptr++] = c; }
+static int popcol(void) { return col_stack[--col_ptr]; }
+
 /*
 static int popthunk(void) {
     printf("pop() th_stack[%d] -> %d\n", th_ptr - 1, th_stack[th_ptr - 1]);
@@ -61,11 +66,13 @@ int parse(void) {
 #include "gen.c"
 
     if (parsed && !evaluating) {
+	printf("PARSED! Time to start eval...\n");
 	pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
 	th_ptr = 0;
 	st = th_stack[th_ptr++];
 	col = th_stack[th_ptr++];
+	col_ptr = 0;
 	goto top;
     }
 
