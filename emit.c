@@ -118,7 +118,7 @@ static void expr_post(struct s_node *n) {
     for (i = 0; i < n_ptr; ++i)
 	printf("    int %s;\n", n_stack[i]);
     for (i = 0; i < n_ptr; ++i) {
-	printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 1);
+	printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 3);
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);

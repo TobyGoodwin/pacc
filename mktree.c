@@ -180,17 +180,34 @@ struct s_node *create(void) {
     p = new_node(lit); p->text = "7"; p->next = q; q = p;
     p = new_node(seq); p->first = q; p->next = s; s = p;
 
-#if 0
-    p = new_node(lit); p->text = "8"; p->next = q; q = p;
-    p = new_node(lit); p->text = "7"; p->next = q; q = p;
+    p = new_node(expr); p->text = "6"; q = p;
     p = new_node(lit); p->text = "6"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; s = p;
+
+    p = new_node(expr); p->text = "5"; q = p;
     p = new_node(lit); p->text = "5"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; s = p;
+
+    p = new_node(expr); p->text = "4"; q = p;
     p = new_node(lit); p->text = "4"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; s = p;
+
+    p = new_node(expr); p->text = "3"; q = p;
     p = new_node(lit); p->text = "3"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; s = p;
+
+    p = new_node(expr); p->text = "2"; q = p;
     p = new_node(lit); p->text = "2"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; s = p;
+
+    p = new_node(expr); p->text = "1"; q = p;
     p = new_node(lit); p->text = "1"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; s = p;
+
+    p = new_node(expr); p->text = "0"; q = p;
     p = new_node(lit); p->text = "0"; p->next = q; q = p;
-#endif
+    p = new_node(seq); p->first = q; p->next = s; s = p;
+
     p = new_node(alt); p->first = s; q = p;
     p = new_node(rule); p->text = "Decimal"; p->first = q; p->next = 0; r = p;
 
