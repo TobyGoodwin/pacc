@@ -70,24 +70,41 @@ static void rule_post(struct s_node *n) {
     ++cur_rule;
 }
 
+static void savecol(void) {
+    printf("printf(\"save column registers\\n\");\n");
+    printf("pushcont(col); pushcont(col_ptr); pushcont(th_ptr);\n");
+}
+
+static void restcol(void) {
+    printf("printf(\"restore column registers\\n\");\n");
+    printf("th_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
+}
+
+static void accept_col(void) {
+    printf("printf(\"accept column registers\\n\");\n");
+    printf("popcont(); popcont(); popcont();\n");
+}
+
 static void seq_pre(struct s_node *n) {
     printf("printf(\"seq %d @ col %%d?\\n\", col);\n", n->id);
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
-    printf("pushcont(col); pushcont(col_ptr);\n");
+    savecol();
 }
 
 static void seq_mid(struct s_node *n) {
     printf("if (status != parsed) {\n");
-    printf("    col_ptr = popcont();\n");
-    printf("    col = popcont();\n");
+    restcol();
     printf("    goto contin;\n");
     printf("}\n");
 }
 
 static void seq_post(struct s_node *n) {
-    printf("if (status != parsed) { col_ptr = popcont(); col = popcont(); }\n");
-    printf("else { popcont(); popcont(); }\n");
+    printf("if (status != parsed) {\n");
+    restcol();
+    printf("} else {\n");
+    accept_col();
+    printf("}\n");
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
     printf("printf(\"seq %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
@@ -159,23 +176,29 @@ static void alt_pre(struct s_node *n) {
     printf("printf(\"alt %d @ col %%d?\\n\", col);\n", n->id);
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
-    printf("pushcont(col);\n");
-    printf("pushcont(col_ptr);\n");
+    savecol();
     i_ptr = n_ptr = 0;
 }
 
 static void alt_mid(struct s_node *n) {
     printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
-    printf("if (status == parsed) { popcont(); popcont(); goto contin; }\n");
-    printf("col_ptr = popcont(); col = popcont(); pushcont(col); pushcont(col_ptr);\n");
+    printf("if (status == parsed) {\n");
+    accept_col();
+    printf("goto contin;\n");
+    printf("}\n");
+    restcol();
+    savecol();
     printf("printf(\"col restored to %%d\\n\", col);\n");
     printf("printf(\"alt %d @ col %%d? (next alternative)\\n\", col);\n", n->id);
     i_ptr = n_ptr = 0;
 }
 
 static void alt_post(struct s_node *n) {
-    printf("if (status != parsed) { col_ptr = popcont(); col = popcont(); }\n");
-    printf("else { popcont(); popcont(); }\n");
+    printf("if (status != parsed) {\n");
+    restcol();
+    printf("} else {\n");
+    accept_col();
+    printf("}\n");
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
     printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
