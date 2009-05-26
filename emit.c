@@ -59,7 +59,7 @@ static void rule_pre(struct s_node *n) {
     printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
     printf("rule_col = col;\n");
     printf("cur = matrix + col * n_rules + %d;\n", cur_rule);
-    printf("if (cur->status == uncomputed) {\n");
+    printf("if (1 /*cur->status == uncomputed*/) {\n");
 }
 
 static void rule_post(struct s_node *n) {
@@ -89,22 +89,15 @@ static void seq_pre(struct s_node *n) {
     printf("printf(\"seq %d @ col %%d?\\n\", col);\n", n->id);
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
-    savecol();
 }
 
 static void seq_mid(struct s_node *n) {
     printf("if (status != parsed) {\n");
-    restcol();
     printf("    goto contin;\n");
     printf("}\n");
 }
 
 static void seq_post(struct s_node *n) {
-    printf("if (status != parsed) {\n");
-    restcol();
-    printf("} else {\n");
-    accept_col();
-    printf("}\n");
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
     printf("printf(\"seq %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
@@ -114,6 +107,7 @@ static void seq_post(struct s_node *n) {
 /* A binding may only contain a call. */
 static void bind_pre(struct s_node *n) {
     printf("/* bind: %s */\n", n->text);
+    printf("printf(\"%%d: bind_pre()\\n\", %d);\n", n->id);
     pushn(n->text);
     bind_rule = lookup_rule[n->first->first->id];
     pushi(bind_rule);
@@ -127,6 +121,7 @@ static void bind_post(struct s_node *n) {
 }
 
 static void expr_pre(struct s_node *n) {
+    printf("printf(\"%%d: expr_pre()\\n\", %d);\n", n->id);
     printf("pushthunk(%d); pushthunk(rule_col);\n", n->id);
 }
 
@@ -140,8 +135,9 @@ static void expr_post(struct s_node *n) {
 	printf("    int %s;\n", n_stack[i]);
     for (i = n_ptr - 1; i >= 0; --i) {
 	//printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 3);
-	printf("    mycol = col_stack[col_ptr++];\n");
-	//printf("    mycol = popcol();\n");
+	//printf("    mycol = col_stack[col_ptr++];\n");
+	printf("    mycol = popcol();\n");
+	//printf("    mycol = th_stack[th_ptr++];\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
 	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
     }

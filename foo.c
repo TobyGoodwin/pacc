@@ -25,7 +25,7 @@ static void pushthunk(int t) {
 
 int col_stack[25];
 int col_ptr = 0;
-static void pushcol(int c) { col_stack[col_ptr++] = c; }
+static void pushcol(int c) { printf("push(%d) -> col_stack[%d]\n", c, col_ptr); col_stack[col_ptr++] = c; }
 static int popcol(void) { return col_stack[--col_ptr]; }
 
 /*
@@ -57,6 +57,7 @@ int parse(void) {
     enum status status;
     int cont, st;
     int col, rule_col;
+    int i;
     int evaluating;
     struct intermed *cur, *last;
     col = 0;
@@ -68,6 +69,13 @@ int parse(void) {
     if (parsed && !evaluating) {
 	printf("PARSED! Time to start eval...\n");
 	pushthunk(-1); pushthunk(-1);
+	printf("thunks: ");
+	for (i = 0; i < th_ptr; ++i)
+	    printf("%d ", th_stack[i]);
+	printf("\ncols: ");
+	for (i = 0; i < col_ptr; ++i)
+	    printf("%d ", col_stack[i]);
+	printf("\n");
 	evaluating = 1;
 	th_ptr = 0;
 	st = th_stack[th_ptr++];
