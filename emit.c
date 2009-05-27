@@ -112,7 +112,7 @@ static void bind_pre(struct s_node *n) {
     bind_rule = lookup_rule[n->first->first->id];
     pushi(bind_rule);
     printf("/* bind_rule is %d */\n", bind_rule);
-    printf("printf(\"binding with col == %%d\\n\", col);\n");
+    printf("printf(\"binding %s at col %%d\\n\", col);\n", n->text);
     printf("pushcol(col);\n");
 }
 
@@ -133,10 +133,11 @@ static void expr_post(struct s_node *n) {
     if (n_ptr) printf("    int mycol;\n");
     for (i = 0; i < n_ptr; ++i)
 	printf("    int %s;\n", n_stack[i]);
-    for (i = n_ptr - 1; i >= 0; --i) {
+    //for (i = n_ptr - 1; i >= 0; --i) {
+    for (i = 0; i < n_ptr; ++i) {
 	//printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 3);
-	//printf("    mycol = col_stack[col_ptr++];\n");
-	printf("    mycol = popcol();\n");
+	printf("    mycol = col_stack[col_ptr++];\n");
+	//printf("    mycol = popcol();\n");
 	//printf("    mycol = th_stack[th_ptr++];\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
 	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
@@ -199,6 +200,7 @@ static void alt_post(struct s_node *n) {
     printf("cont = popcont();\n");
     printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
     printf("printf(\"col is %%d\\n\", col);\n");
+    i_ptr = n_ptr = 0;
 }
 
 static void (*pre[s_type_max])(struct s_node *);
