@@ -120,25 +120,24 @@ static void bind_post(struct s_node *n) {
     printf("/* end bind: %s */\n", n->text);
 }
 
-static void expr_pre(struct s_node *n) {
-    printf("printf(\"%%d: expr_pre()\\n\", %d);\n", n->id);
-    printf("pushthunk(%d); pushthunk(rule_col);\n", n->id);
-}
-
-static void expr_post(struct s_node *n) {
+static void emit_expr(struct s_node *n) {
     int i;
 
+    printf("printf(\"%%d: expr_pre()\\n\", %d);\n", n->id);
+    printf("pushthunk(%d); pushthunk(rule_col);\n", n->id);
+    for (i = 0; i < n_ptr; ++i)
+	printf("pushthunk(popcol());\n");
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
     if (n_ptr) printf("    int mycol;\n");
     for (i = 0; i < n_ptr; ++i)
 	printf("    int %s;\n", n_stack[i]);
-    //for (i = n_ptr - 1; i >= 0; --i) {
-    for (i = 0; i < n_ptr; ++i) {
+    for (i = n_ptr - 1; i >= 0; --i) {
+    //for (i = 0; i < n_ptr; ++i) {
 	//printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 3);
-	printf("    mycol = col_stack[col_ptr++];\n");
+	//printf("    mycol = col_stack[col_ptr++];\n");
 	//printf("    mycol = popcol();\n");
-	//printf("    mycol = th_stack[th_ptr++];\n");
+	printf("    mycol = th_stack[th_ptr++];\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
 	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
     }
@@ -226,14 +225,14 @@ static void node(struct s_node *n) {
 void emit(struct s_node *g) {
     pre[grammar] = grammar_pre; pre[rule] = rule_pre;
     pre[alt] = alt_pre; pre[seq] = seq_pre;
-    pre[bind] = bind_pre; pre[expr] = expr_pre;
+    pre[bind] = bind_pre; pre[expr] = emit_expr;
     pre[call] = emit_call; pre[lit] = literal;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
 
     post[grammar] = grammar_post; post[rule] = rule_post;
     post[alt] = alt_post; post[seq] = seq_post;
-    post[bind] = bind_post; post[expr] = expr_post;
+    post[bind] = bind_post;
 
     node(g);
 }

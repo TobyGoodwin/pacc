@@ -16,7 +16,7 @@ int popcont(void) {
     return st_stack[--st_ptr];
 }
 
-int th_stack[50];
+int th_stack[100];
 int th_ptr = 0;
 static void pushthunk(int t) {
     printf("push(%d) -> th_stack[%d]\n", t, th_ptr);
