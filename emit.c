@@ -59,7 +59,7 @@ static void rule_pre(struct s_node *n) {
     printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
     printf("rule_col = col;\n");
     printf("cur = matrix + col * n_rules + %d;\n", cur_rule);
-    printf("if (1 /*cur->status == uncomputed*/) {\n");
+    printf("if (1 || cur->status == uncomputed) {\n");
 }
 
 static void rule_post(struct s_node *n) {
