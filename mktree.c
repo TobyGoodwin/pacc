@@ -28,7 +28,7 @@ void resolve(struct s_node *g, struct s_node *n) {
 	    resolve(g, p);
 }
 
-#if 1
+#if 0
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
 
@@ -79,7 +79,7 @@ struct s_node *create(void) {
 }
 #endif
 
-#if 0
+#if 1
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
 

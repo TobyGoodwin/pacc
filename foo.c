@@ -16,13 +16,6 @@ int popcont(void) {
     return st_stack[--st_ptr];
 }
 
-int th_stack[100];
-int th_ptr = 0;
-static void pushthunk(int t) {
-    printf("push(%d) -> th_stack[%d]\n", t, th_ptr);
-    th_stack[th_ptr++] = t;
-}
-
 int col_stack[25];
 int col_ptr = 0;
 static void pushcol(int c) { printf("push(%d) -> col_stack[%d]\n", c, col_ptr); col_stack[col_ptr++] = c; }
@@ -34,6 +27,17 @@ static int popthunk(void) {
     return th_stack[--th_ptr];
 }
 */
+
+/* a "thr" is a thunk or a rule/column pair */
+union thr {
+    int thunk;
+    int rulecol[2];
+};
+struct thunkrule {
+    enum { thr_thunk, thr_rule } discrim;
+    union thr x;
+};
+
 enum status {
     no_parse, parsed, uncomputed
 };
@@ -42,7 +46,28 @@ struct intermed {
     enum status status;
     int value; /* semantic value  XXX needs to be generated union */
     int remainder; /* unparsed string */
+    struct thunkrule thrs[20]; /* XXX */
+    int thrs_ptr;
 };
+
+static struct intermed *cur;
+
+//int th_stack[100];
+//int th_ptr = 0;
+static void pushthunk(int t) {
+    printf("pushthunk(%d) -> thrs[%d]\n", t, cur->thrs_ptr);
+    cur->thrs[cur->thrs_ptr].discrim = thr_thunk;
+    cur->thrs[cur->thrs_ptr].x.thunk = t;
+    ++cur->thrs_ptr;
+}
+
+static void pushrule(int rule, int col) {
+    printf("pushrule(%d, %d) -> thrs[%d]\n", rule, col, cur->thrs_ptr);
+    cur->thrs[cur->thrs_ptr].discrim = thr_rule;
+    cur->thrs[cur->thrs_ptr].x.rulecol[0] = rule;
+    cur->thrs[cur->thrs_ptr].x.rulecol[1] = col;
+    ++cur->thrs_ptr;
+}
 
 struct intermed *matrix;
 
@@ -53,22 +78,22 @@ void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
 struct intermed *popm(void) { return m_stack[--m_ptr]; }
 
 int parse(void) {
-    struct intermed *bind_val;
     enum status status;
     int cont, st;
     int col, rule_col;
     int i;
     int evaluating;
-    struct intermed *cur, *last;
+    struct intermed *last;
     col = 0;
     cont = -1;
     evaluating = 0;
 
 #include "gen.c"
 
-    if (parsed && !evaluating) {
+    if (parsed && !evaluating && matrix->status == parsed) {
 	printf("PARSED! Time to start eval...\n");
 	pushthunk(-1); pushthunk(-1);
+#if 0
 	printf("thunks: ");
 	for (i = 0; i < th_ptr; ++i)
 	    printf("%d ", th_stack[i]);
@@ -76,10 +101,11 @@ int parse(void) {
 	for (i = 0; i < col_ptr; ++i)
 	    printf("%d ", col_stack[i]);
 	printf("\n");
+#endif
 	evaluating = 1;
-	th_ptr = 0;
-	st = th_stack[th_ptr++];
-	col = th_stack[th_ptr++];
+	matrix->thrs_ptr = 0;
+	st = matrix->thrs[matrix->thrs_ptr++].x.thunk;
+	col = matrix->thrs[matrix->thrs_ptr++].x.thunk;
 	col_ptr = 0;
 	goto top;
     }

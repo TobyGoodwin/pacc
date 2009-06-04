@@ -72,12 +72,12 @@ static void rule_post(struct s_node *n) {
 
 static void savecol(void) {
     printf("printf(\"save column registers\\n\");\n");
-    printf("pushcont(col); pushcont(col_ptr); pushcont(th_ptr);\n");
+    printf("pushcont(col); pushcont(col_ptr); pushcont(cur->thrs_ptr);\n");
 }
 
 static void restcol(void) {
     printf("printf(\"restore column registers\\n\");\n");
-    printf("th_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
+    printf("cur->thrs_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
 }
 
 static void accept_col(void) {
@@ -132,26 +132,24 @@ static void emit_expr(struct s_node *n) {
     if (n_ptr) printf("    int mycol;\n");
     for (i = 0; i < n_ptr; ++i)
 	printf("    int %s;\n", n_stack[i]);
+    printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
+    //printf("    cur->thrs_ptr = 0;\n");
     for (i = n_ptr - 1; i >= 0; --i) {
-    //for (i = 0; i < n_ptr; ++i) {
-	//printf("    mycol = th_stack[th_ptr - %d];\n", 2 * i + 3);
-	//printf("    mycol = col_stack[col_ptr++];\n");
-	//printf("    mycol = popcol();\n");
-	printf("    mycol = th_stack[th_ptr++];\n");
+	printf("    mycol = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
 	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
-    printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("    cur->value = %s;\n", n->text);
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value, col);\n", cur_rule);
-    printf("    st = th_stack[th_ptr++];\n");
-    printf("    col = th_stack[th_ptr++];\n");
+    printf("    st = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
+    printf("    col = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
     printf("    goto top;\n");
     printf("}\n");
 }
 
 static void emit_call(struct s_node *n) {
+    printf("pushrule(%d, col);\n", n->first->id);
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont); pushm(cur);\n");
     printf("cont = %d;\n", n->id);
@@ -162,11 +160,8 @@ static void emit_call(struct s_node *n) {
     printf("last = cur; cur = popm();\n");
     printf("status = last->status;\n");
     printf("col = last->remainder;\n");
-    printf("bind_val = last;\n");
     printf("rule_col = popcont();\n");
 }
-
-static void node(struct s_node *);
 
 static void alt_pre(struct s_node *n) {
     printf("printf(\"alt %d @ col %%d?\\n\", col);\n", n->id);
