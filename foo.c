@@ -103,11 +103,33 @@ int parse(void) {
 	printf("\n");
 #endif
 	evaluating = 1;
-	matrix->thrs_ptr = 0;
-	st = matrix->thrs[matrix->thrs_ptr++].x.thunk;
-	col = matrix->thrs[matrix->thrs_ptr++].x.thunk;
-	col_ptr = 0;
-	goto top;
+	i = 0;
+	cur = matrix;
+    eval_loop:
+	if (i < cur->thrs_ptr) {
+	    if (cur->thrs[i].discrim == thr_rule) {
+		pushm(cur); pushcont(i);
+		cur = matrix + cur->thrs[i].x.rulecol[1] * n_rules +
+		    cur->thrs[i].x.rulecol[0];
+		i = 0;
+		goto eval_loop;
+	    } else {
+		st = cur->thrs[i++].x.thunk;
+		col = cur->thrs[i++].x.thunk;
+		goto top;
+	    }
+	    goto eval_loop;
+	}
+	if (m_ptr) {
+	    i = popcont(); cur = popm();
+	    ++i;
+	    goto eval_loop;
+	}
+	//matrix->thrs_ptr = 0;
+	//st = matrix->thrs[matrix->thrs_ptr++].x.thunk;
+	//col = matrix->thrs[matrix->thrs_ptr++].x.thunk;
+	//col_ptr = 0;
+	//goto top;
     }
 
     if (matrix->status == parsed) {

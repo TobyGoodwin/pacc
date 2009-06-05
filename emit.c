@@ -59,7 +59,7 @@ static void rule_pre(struct s_node *n) {
     printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
     printf("rule_col = col;\n");
     printf("cur = matrix + col * n_rules + %d;\n", cur_rule);
-    printf("if (1 || cur->status == uncomputed) {\n");
+    printf("if (cur->status == uncomputed) {\n");
 }
 
 static void rule_post(struct s_node *n) {
@@ -135,21 +135,21 @@ static void emit_expr(struct s_node *n) {
     printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
     //printf("    cur->thrs_ptr = 0;\n");
     for (i = n_ptr - 1; i >= 0; --i) {
-	printf("    mycol = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
+	printf("    mycol = cur->thrs[i++].x.thunk;\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
 	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
     printf("    cur->value = %s;\n", n->text);
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value, col);\n", cur_rule);
-    printf("    st = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
-    printf("    col = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
-    printf("    goto top;\n");
+    //printf("    st = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
+    //printf("    col = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
+    printf("    goto eval_loop;\n");
     printf("}\n");
 }
 
 static void emit_call(struct s_node *n) {
-    printf("pushrule(%d, col);\n", n->first->id);
+    printf("pushrule(%d, col);\n", lookup_rule[n->first->id]);
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont); pushm(cur);\n");
     printf("cont = %d;\n", n->id);
