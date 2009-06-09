@@ -15,5 +15,7 @@ pacc.c: paccman.c pacc.peg
 
 foo.o: foo.c gen.c
 
+mktree.o: mktree.c mk-target.c
+
 gen.c: pacc
 	./pacc > gen.c

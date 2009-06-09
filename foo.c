@@ -134,7 +134,7 @@ int parse(void) {
 
     if (matrix->status == parsed) {
 	printf("parsed with value %d\n", matrix->value);
-    }
+    } else printf("not parsed\n");
     return matrix->status == parsed;
 
 contin:
