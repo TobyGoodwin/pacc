@@ -30,7 +30,7 @@ static void grammar_pre(struct s_node *n) {
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
     g_name = n->text;
     printf("typedef union { int %stype0; } %stype;\n", g_name, g_name);
-    printf("%stype %svalue;\n", g_name, g_name);
+    printf("/* not yet... %stype %svalue; */\n", g_name, g_name);
     printf("st = %d;\ntop:\n", n->first->id);
     printf("printf(\"switch to state %%d\\n\", st);\n");
     printf("switch(st) {\n");
@@ -124,32 +124,35 @@ static void emit_expr(struct s_node *n) {
     int i;
 
     printf("printf(\"%%d: expr_pre()\\n\", %d);\n", n->id);
-    printf("pushthunk(%d); pushthunk(rule_col);\n", n->id);
+    printf("pusheval(%d, thr_thunk); pusheval(rule_col, thr_col);\n", n->id);
     for (i = 0; i < n_ptr; ++i)
-	printf("pushthunk(popcol());\n");
+	printf("pusheval(popcol(), thr_col);\n");
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
     if (n_ptr) printf("    int mycol;\n");
     for (i = 0; i < n_ptr; ++i)
 	printf("    int %s;\n", n_stack[i]);
     printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
-    //printf("    cur->thrs_ptr = 0;\n");
     for (i = n_ptr - 1; i >= 0; --i) {
-	printf("    mycol = cur->thrs[i++].x.thunk;\n");
+	printf("    mycol = cur->thrs[i++].x;\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
 	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
     printf("    cur->value = %s;\n", n->text);
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value, col);\n", cur_rule);
-    //printf("    st = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
-    //printf("    col = cur->thrs[cur->thrs_ptr++].x.thunk;\n");
     printf("    goto eval_loop;\n");
     printf("}\n");
 }
 
+/* obviously, the tricky part of a guard is the bindings! */
+static void emit_guard(struct s_node *n) {
+    printf("status = (%s) ? parsed : no_parse;\n", n->text);
+}
+
 static void emit_call(struct s_node *n) {
-    printf("pushrule(%d, col);\n", lookup_rule[n->first->id]);
+    printf("pusheval(%d, thr_rule);\n", lookup_rule[n->first->id]);
+    printf("pusheval(col, thr_col);\n");
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont); pushm(cur);\n");
     printf("cont = %d;\n", n->id);
@@ -221,6 +224,7 @@ void emit(struct s_node *g) {
     pre[grammar] = grammar_pre; pre[rule] = rule_pre;
     pre[alt] = alt_pre; pre[seq] = seq_pre;
     pre[bind] = bind_pre; pre[expr] = emit_expr;
+    pre[guard] = emit_guard;
     pre[call] = emit_call; pre[lit] = literal;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;

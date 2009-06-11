@@ -9,6 +9,7 @@ char *decode_type(enum s_type t) {
     case call:		return "call";
     case expr:		return "expr";
     case grammar:	return "grammar";
+    case guard:		return "guard";
     case lit:		return "lit";
     case rule:		return "rule";
     case seq:		return "seq";
@@ -22,7 +23,7 @@ int s_has_children(enum s_type t) {
 
 int s_has_text(enum s_type t) {
     return t == bind || t == call || t == expr || t == grammar ||
-	t == rule || t == lit;
+	t == guard || t == rule || t == lit;
 }
 
 static void dump(struct s_node *p, int indent) {

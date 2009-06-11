@@ -1,5 +1,11 @@
 #! /bin/sh
 
+build() {
+    echo build $1.c
+    cp $1.c mk-target.c
+    make foo
+}
+
 check() {
     r=`./foo $1 | sed -n '/\(not \|\)parsed\(\| with value \)\(.*\)/s//\3/p'`
     if [ "$r" = "$2" ]; then
@@ -10,47 +16,40 @@ check() {
     fi
 }
 
-cp mk-val0.c mk-target.c
-make foo
+build mk-val0
 check 5 5
 check x ''
 
-cp mk-val1.c mk-target.c
-make foo
+build mk-val1
 check 5 5
 check 6 6
 check x ''
 
-cp mk-val2.c mk-target.c
-make foo
+build mk-val2
 check 5 5
 check 6 6
 check x ''
 
-cp mk-val3.c mk-target.c
-make foo
+build mk-val3
 check 5.5 25
 check 5.6 30
 check 6.5 30
 check 6.6 36
 check 5.x ''
 
-cp mk-val4.c mk-target.c
-make foo
+build mk-val4
 check 5.5 25
 check 5.6 30
 check 6.5 30
 check 6.6 36
 check 5.x ''
 
-cp mk-val5.c mk-target.c
-make foo
+build mk-val5
 check .5 5
 check .6 6
 check .x ''
 
-cp mk-val6.c mk-target.c
-make foo
+build mk-val6
 check 5.5 25
 check 5.6 30
 check 6.5 30
@@ -66,14 +65,16 @@ check 5+x ''
 check 6+x ''
 check 5.+ ''
 
-cp mk-val2.c mk-target.c
-make foo
+build mk-val2
 check 5 5
 check 6 6
 check x ''
 
-cp mk-baf.c mk-target.c
-make foo
+build mk-guard0
+check 5 5
+check x ''
+
+build mk-baf
 check 5 5
 check x ''
 check 2+3 5

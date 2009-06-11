@@ -2,40 +2,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *string;
+static char *string;
 
-int st_stack[100];
-int st_ptr = 0;
+static int st_stack[100];
+static int st_ptr = 0;
 
-void pushcont(int c) {
+static void pushcont(int c) {
     printf("push(%d) -> stack[%d]\n", c, st_ptr);
     st_stack[st_ptr++] = c;
 }
-int popcont(void) {
+static int popcont(void) {
     printf("pop() stack[%d] -> %d\n", st_ptr - 1, st_stack[st_ptr - 1]);
     return st_stack[--st_ptr];
 }
 
-int col_stack[25];
-int col_ptr = 0;
+static int col_stack[25];
+static int col_ptr = 0;
 static void pushcol(int c) { printf("push(%d) -> col_stack[%d]\n", c, col_ptr); col_stack[col_ptr++] = c; }
 static int popcol(void) { return col_stack[--col_ptr]; }
 
-/*
-static int popthunk(void) {
-    printf("pop() th_stack[%d] -> %d\n", th_ptr - 1, th_stack[th_ptr - 1]);
-    return th_stack[--th_ptr];
-}
-*/
-
 /* a "thr" is a thunk or a rule/column pair */
-union thr {
-    int thunk;
-    int rulecol[2];
-};
+enum thr { thr_thunk, thr_rule, thr_col };
 struct thunkrule {
-    enum { thr_thunk, thr_rule } discrim;
-    union thr x;
+    enum thr discrim;
+    int x;
 };
 
 enum status {
@@ -52,32 +42,22 @@ struct intermed {
 
 static struct intermed *cur;
 
-//int th_stack[100];
-//int th_ptr = 0;
-static void pushthunk(int t) {
-    printf("pushthunk(%d) -> thrs[%d]\n", t, cur->thrs_ptr);
-    cur->thrs[cur->thrs_ptr].discrim = thr_thunk;
-    cur->thrs[cur->thrs_ptr].x.thunk = t;
+static void pusheval(int t, enum thr type) {
+    printf("pusheval(%d, %d) -> thrs[%d]\n", t, type, cur->thrs_ptr);
+    cur->thrs[cur->thrs_ptr].discrim = type;
+    cur->thrs[cur->thrs_ptr].x = t;
     ++cur->thrs_ptr;
 }
 
-static void pushrule(int rule, int col) {
-    printf("pushrule(%d, %d) -> thrs[%d]\n", rule, col, cur->thrs_ptr);
-    cur->thrs[cur->thrs_ptr].discrim = thr_rule;
-    cur->thrs[cur->thrs_ptr].x.rulecol[0] = rule;
-    cur->thrs[cur->thrs_ptr].x.rulecol[1] = col;
-    ++cur->thrs_ptr;
-}
+static struct intermed *matrix;
 
-struct intermed *matrix;
+static struct intermed *m_stack[25];
+static int m_ptr = 0;
 
-struct intermed *m_stack[25];
-int m_ptr = 0;
+static void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
+static struct intermed *popm(void) { return m_stack[--m_ptr]; }
 
-void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
-struct intermed *popm(void) { return m_stack[--m_ptr]; }
-
-int parse(void) {
+static int parse(void) {
     enum status status;
     int cont, st;
     int col, rule_col;
@@ -92,44 +72,31 @@ int parse(void) {
 
     if (parsed && !evaluating && matrix->status == parsed) {
 	printf("PARSED! Time to start eval...\n");
-	pushthunk(-1); pushthunk(-1);
-#if 0
-	printf("thunks: ");
-	for (i = 0; i < th_ptr; ++i)
-	    printf("%d ", th_stack[i]);
-	printf("\ncols: ");
-	for (i = 0; i < col_ptr; ++i)
-	    printf("%d ", col_stack[i]);
-	printf("\n");
-#endif
+	//pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
 	i = 0;
 	cur = matrix;
     eval_loop:
 	if (i < cur->thrs_ptr) {
 	    if (cur->thrs[i].discrim == thr_rule) {
+		int col, rule;
+		rule = cur->thrs[i].x; ++i;
+		col = cur->thrs[i].x; ++i;
 		pushm(cur); pushcont(i);
-		cur = matrix + cur->thrs[i].x.rulecol[1] * n_rules +
-		    cur->thrs[i].x.rulecol[0];
+		cur = matrix + col * n_rules + rule;
 		i = 0;
 		goto eval_loop;
 	    } else {
-		st = cur->thrs[i++].x.thunk;
-		col = cur->thrs[i++].x.thunk;
+		st = cur->thrs[i++].x;
+		col = cur->thrs[i++].x;
 		goto top;
 	    }
 	    goto eval_loop;
 	}
 	if (m_ptr) {
 	    i = popcont(); cur = popm();
-	    ++i;
 	    goto eval_loop;
 	}
-	//matrix->thrs_ptr = 0;
-	//st = matrix->thrs[matrix->thrs_ptr++].x.thunk;
-	//col = matrix->thrs[matrix->thrs_ptr++].x.thunk;
-	//col_ptr = 0;
-	//goto top;
     }
 
     if (matrix->status == parsed) {
@@ -144,7 +111,7 @@ contin:
 
 }
 
-void matrix_dump(int n) {
+static void matrix_dump(int n) {
     int r, s;
 
     for (s = 0; s < n + 1; ++s) printf("   %c   ", string[s]);
