@@ -74,6 +74,17 @@ build mk-guard0
 check 5 5
 check x ''
 
+build mk-guard1
+check 5 5
+check 6 ''
+
+build mk-guard2
+check 55 5
+check 66 6
+check 56 ''
+check 65 ''
+check xy ''
+
 build mk-baf
 check 5 5
 check x ''

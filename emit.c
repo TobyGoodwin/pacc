@@ -140,14 +140,45 @@ static void emit_expr(struct s_node *n) {
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
     printf("    cur->value = %s;\n", n->text);
+    printf("    cur->status = evaluated;\n");
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value, col);\n", cur_rule);
     printf("    goto eval_loop;\n");
     printf("}\n");
 }
 
+static void guard_pre(struct s_node *n) {
+    int i;
+    struct s_node *p;
+
+    printf("{\n    struct intermed *guard;\n");
+    for (p = n->first; p; p = p->next) {
+	for (i = 0; i < n_ptr; ++i)
+	    if (strcmp(n_stack[i], p->text) == 0) break;
+	if (i == n_ptr) continue;
+	printf("    int %s;\n", p->text);
+    }
+    printf("    guard = cur; pushm(cur); evaluating = 1;\n");
+    for (p = n->first; p; p = p->next) {
+	for (i = 0; i < n_ptr; ++i)
+	    if (strcmp(n_stack[i], p->text) == 0) break;
+	if (i == n_ptr) continue;
+	printf("    printf(\"bind %s at rule %d, col %%d\\n\", cur->thrs[cur->thrs_ptr - %d].x);\n", p->text, i_stack[i], i);
+	printf("    cur = matrix + guard->thrs[guard->thrs_ptr - %d].x * n_rules + %d;\n", i, i_stack[i]);
+	printf("    if (cur->status != evaluated) {\n");
+	printf("        pushcont(cont); cont = %d;\n", p->id);
+	printf("	i = 0; goto eval_loop;\n");
+	printf("case %d:     cont = popcont();\n", p->id);
+	printf("    }\n");
+	printf("    %s = cur->value;\n", p->text);
+	printf("printf(\"stash %%d to %s\\n\", %s);\n", p->text, p->text);
+    }
+    printf("    cur = popm(); evaluating = 0;\n");
+}
+
 /* obviously, the tricky part of a guard is the bindings! */
-static void emit_guard(struct s_node *n) {
-    printf("status = (%s) ? parsed : no_parse;\n", n->text);
+static void guard_post(struct s_node *n) {
+    printf("    status = (%s) ? parsed : no_parse;\n", n->text);
+    printf("}\n");
 }
 
 static void emit_call(struct s_node *n) {
@@ -224,7 +255,7 @@ void emit(struct s_node *g) {
     pre[grammar] = grammar_pre; pre[rule] = rule_pre;
     pre[alt] = alt_pre; pre[seq] = seq_pre;
     pre[bind] = bind_pre; pre[expr] = emit_expr;
-    pre[guard] = emit_guard;
+    pre[guard] = guard_pre; //pre[ident] = ident_emit;
     pre[call] = emit_call; pre[lit] = literal;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
@@ -232,6 +263,7 @@ void emit(struct s_node *g) {
     post[grammar] = grammar_post; post[rule] = rule_post;
     post[alt] = alt_post; post[seq] = seq_post;
     post[bind] = bind_post;
+    post[guard] = guard_post;
 
     node(g);
 }

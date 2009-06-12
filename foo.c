@@ -29,7 +29,7 @@ struct thunkrule {
 };
 
 enum status {
-    no_parse, parsed, uncomputed
+    no_parse, parsed, evaluated, uncomputed
 };
 
 struct intermed {
@@ -53,9 +53,13 @@ static struct intermed *matrix;
 
 static struct intermed *m_stack[25];
 static int m_ptr = 0;
-
 static void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
 static struct intermed *popm(void) { return m_stack[--m_ptr]; }
+
+static struct intermed *m2_stack[25];
+static int m2_ptr = 0;
+static void pushm2(struct intermed *i) { m2_stack[m2_ptr++] = i; }
+static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
 
 static int parse(void) {
     enum status status;
@@ -82,7 +86,7 @@ static int parse(void) {
 		int col, rule;
 		rule = cur->thrs[i].x; ++i;
 		col = cur->thrs[i].x; ++i;
-		pushm(cur); pushcont(i);
+		pushm2(cur); pushcont(i);
 		cur = matrix + col * n_rules + rule;
 		i = 0;
 		goto eval_loop;
@@ -93,16 +97,17 @@ static int parse(void) {
 	    }
 	    goto eval_loop;
 	}
-	if (m_ptr) {
-	    i = popcont(); cur = popm();
+	if (m2_ptr) {
+	    i = popcont(); cur = popm2();
 	    goto eval_loop;
 	}
+	goto contin;
     }
 
-    if (matrix->status == parsed) {
+    if (matrix->status == evaluated) {
 	printf("parsed with value %d\n", matrix->value);
     } else printf("not parsed\n");
-    return matrix->status == parsed;
+    return matrix->status == evaluated;
 
 contin:
     printf("continuing in state %d\n", cont);
@@ -125,6 +130,9 @@ static void matrix_dump(int n) {
 	    case no_parse:
 		printf("   X   "); break;
 	    case parsed:
+		printf(" ? ,%2d ", matrix[elem].remainder);
+		break;
+	    case evaluated:
 		printf("%3d,%2d ", matrix[elem].value, matrix[elem].remainder);
 		break;
 	    }

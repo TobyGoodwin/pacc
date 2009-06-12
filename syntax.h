@@ -3,7 +3,7 @@ enum s_type {
     alt, seq,		/* fundamentals */
     and, not,		/* syntactic predicates */
     expr, bind,		/* expressions */
-    guard,		/* semantic predicate */
+    guard, ident,	/* semantic predicate */
     call, lit, any,	/* matchers */
     opt, rep0, rep1,	/* sugar */
     s_type_max

@@ -1,9 +1,9 @@
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
 
-    /* Semantic predicate with binding:
+    /* Semantic predicate with two bindings:
      *
-     * P <- a:A &{ a == 5 } { a }
+     * P <- a:A b:A &{ a == b } { a }
      * A <- '5' { 5 } / '6' { 6 }
      *
      */
@@ -18,8 +18,11 @@ struct s_node *create(void) {
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
     p = new_node(expr); p->text = "a"; q = p;
-    p = new_node(ident); p->text = "a"; s = p;
-    p = new_node(guard); p->text = "a == 5"; p->first = s; p->next = q; q = p;
+    p = new_node(ident); p->text = "b"; s = p;
+    p = new_node(ident); p->text = "a"; p->next = s; s = p;
+    p = new_node(guard); p->text = "a == b"; p->first = s; p->next = q; q = p;
+    p = new_node(call); p->text = "A"; s = p;
+    p = new_node(bind); p->text = "b"; p->first = s; p->next = q; q = p;
     p = new_node(call); p->text = "A"; s = p;
     p = new_node(bind); p->text = "a"; p->first = s; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;

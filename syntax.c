@@ -10,6 +10,7 @@ char *decode_type(enum s_type t) {
     case expr:		return "expr";
     case grammar:	return "grammar";
     case guard:		return "guard";
+    case ident:		return "ident";
     case lit:		return "lit";
     case rule:		return "rule";
     case seq:		return "seq";
@@ -18,7 +19,8 @@ char *decode_type(enum s_type t) {
 }
 
 int s_has_children(enum s_type t) {
-    return t == alt || t == bind || t == rule || t == grammar || t == seq;
+    return t == alt || t == bind || t == rule || t == grammar ||
+	t == guard || t == seq;
 }
 
 int s_has_text(enum s_type t) {
