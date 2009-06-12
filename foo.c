@@ -61,6 +61,8 @@ static int m2_ptr = 0;
 static void pushm2(struct intermed *i) { m2_stack[m2_ptr++] = i; }
 static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
 
+static int input_length;
+
 static int parse(void) {
     enum status status;
     int cont, st;
@@ -116,13 +118,13 @@ contin:
 
 }
 
-static void matrix_dump(int n) {
+static void matrix_dump(void) {
     int r, s;
 
-    for (s = 0; s < n + 1; ++s) printf("   %c   ", string[s]);
+    for (s = 0; s < input_length + 1; ++s) printf("   %c   ", string[s]);
     printf("\n");
     for (r = 0; r < n_rules; ++r) {
-	for (s = 0; s < n + 1; ++s) {
+	for (s = 0; s < input_length + 1; ++s) {
 	    int elem = s * n_rules + r;
 	    switch (matrix[elem].status) {
 	    case uncomputed:
@@ -142,16 +144,16 @@ static void matrix_dump(int n) {
 }
 
 int pparse(char *str) {
-    int i, n, matrix_size;
+    int i, matrix_size;
     string = str;
-    n = strlen(string);
-    matrix_size = n_rules * (n + 1);
+    input_length = strlen(string);
+    matrix_size = n_rules * (input_length + 1);
     matrix = malloc(sizeof(struct intermed) * matrix_size);
     for (i = 0; i < matrix_size; ++i)
 	matrix[i].status = uncomputed;
 
     printf("%d\n", parse());
-    matrix_dump(n);
+    matrix_dump();
     return 0;
 }
 

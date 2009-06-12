@@ -44,7 +44,7 @@ static void grammar_post(struct s_node *n) {
 /* literal() currently matches just a single character */
 static void literal(struct s_node *n) {
     printf("printf(\"%%c == %c? \", string[col]);\n", n->text[0]);
-    printf("if (string[col] == '%c') {\n", n->text[0]);
+    printf("if (col < input_length && string[col] == '%c') {\n", n->text[0]);
     printf("    status = parsed;\n");
     printf("    ++col;\n");
     printf("    printf(\"yes (col=%%d)\\n\", col);\n");
@@ -54,12 +54,21 @@ static void literal(struct s_node *n) {
     printf("}\n");
 }
 
+/* currently assumes 1 char == 1 byte (i.e. ASCII encoding) */
+static void any_emit(struct s_node *n) {
+    printf("if (col < input_length) {\n");
+    printf("    status = parsed;\n");
+    printf("    ++col;\n");
+    printf("} else status = no_parse;\n");
+}
+
 static void rule_pre(struct s_node *n) {
     printf("case %d: /* %s */\n", n->id, n->text); 
     printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
     printf("rule_col = col;\n");
     printf("cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("if (cur->status == uncomputed) {\n");
+    i_ptr = n_ptr = 0;
 }
 
 static void rule_post(struct s_node *n) {
@@ -256,7 +265,7 @@ void emit(struct s_node *g) {
     pre[alt] = alt_pre; pre[seq] = seq_pre;
     pre[bind] = bind_pre; pre[expr] = emit_expr;
     pre[guard] = guard_pre; //pre[ident] = ident_emit;
-    pre[call] = emit_call; pre[lit] = literal;
+    pre[call] = emit_call; pre[lit] = literal; pre[any] = any_emit;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
 
