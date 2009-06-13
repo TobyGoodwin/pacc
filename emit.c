@@ -19,7 +19,7 @@ static void pushi(int i) { i_stack[i_ptr++] = i; }
 static int *lookup_rule;
 
 static void grammar_pre(struct s_node *n) {
-    int r = 0;
+    int i, r = 0;
     struct s_node *p;
 
     lookup_rule = malloc(n->id * sizeof(int));
@@ -27,10 +27,23 @@ static void grammar_pre(struct s_node *n) {
 	lookup_rule[p->id] = r;
 	++r;
     }
+    printf("#ifndef DECLS\n"); /* phew! what a loony hack: one day we will write the whole of foo.c from here */
+    printf("#define DECLS 1\n");
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
     g_name = n->text;
-    printf("typedef union { int %stype0; } %stype;\n", g_name, g_name);
+    printf("union %s_union {\n", g_name);
+    for (p = n->first, i = 0; p; p = p->next, ++i) {
+	/* XXX obviously, we need to weed out duplicates, "void", etc. */
+	printf("    %s u%d;\n", p->first->text, i);
+    }
+    printf("};\n");
+    printf("#define TYPE_PRINTF "); /* XXX just for debugging */
+    if (strcmp(n->first->first->text, "int") == 0) printf("\"%%d\"");
+    else if (strcmp(n->first->first->text, "char *") == 0) printf("\"%%s\"");
+    else printf("\"%%d\"");
+    printf("\n");
     printf("/* not yet... %stype %svalue; */\n", g_name, g_name);
+    printf("#else\n");
     printf("st = %d;\ntop:\n", n->first->id);
     printf("printf(\"switch to state %%d\\n\", st);\n");
     printf("switch(st) {\n");
@@ -39,6 +52,7 @@ static void grammar_pre(struct s_node *n) {
 static void grammar_post(struct s_node *n) {
     printf("case -1: break;\n");
     printf("}\n");
+    printf("#endif\n");
 }
 
 /* literal() currently matches just a single character */
@@ -144,13 +158,13 @@ static void emit_expr(struct s_node *n) {
     printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
     for (i = n_ptr - 1; i >= 0; --i) {
 	printf("    mycol = cur->thrs[i++].x;\n");
-	printf("    %s = matrix[mycol * n_rules + %d].value;\n", n_stack[i], i_stack[i]);
+	printf("    %s = matrix[mycol * n_rules + %d].value.u0;\n", n_stack[i], i_stack[i]); /* XXX u0 */
 	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
-    printf("    cur->value = %s;\n", n->text);
+    printf("    cur->value.u0 = %s;\n", n->text); /* XXX u0 */
     printf("    cur->status = evaluated;\n");
-    printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value, col);\n", cur_rule);
+    printf("printf(\"stash \" TYPE_PRINTF \" to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
     printf("    goto eval_loop;\n");
     printf("}\n");
 }
@@ -178,7 +192,7 @@ static void guard_pre(struct s_node *n) {
 	printf("	i = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont();\n", p->id);
 	printf("    }\n");
-	printf("    %s = cur->value;\n", p->text);
+	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
 	printf("printf(\"stash %%d to %s\\n\", %s);\n", p->text, p->text);
     }
     printf("    cur = popm(); evaluating = 0;\n");

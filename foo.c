@@ -32,9 +32,11 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
+#include "gen.c"
+
 struct intermed {
     enum status status;
-    int value; /* semantic value  XXX needs to be generated union */
+    union yy_union value; /* semantic value XXX needs to use g_name */
     int remainder; /* unparsed string */
     struct thunkrule thrs[20]; /* XXX */
     int thrs_ptr;
@@ -107,7 +109,7 @@ static int parse(void) {
     }
 
     if (matrix->status == evaluated) {
-	printf("parsed with value %d\n", matrix->value);
+	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
     } else printf("not parsed\n");
     return matrix->status == evaluated;
 
@@ -135,7 +137,7 @@ static void matrix_dump(void) {
 		printf(" ? ,%2d ", matrix[elem].remainder);
 		break;
 	    case evaluated:
-		printf("%3d,%2d ", matrix[elem].value, matrix[elem].remainder);
+		printf(TYPE_PRINTF ",%2d ", matrix[elem].value.u0, matrix[elem].remainder); /* XXX u0 */
 		break;
 	    }
 	}

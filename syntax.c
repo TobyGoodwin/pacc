@@ -15,6 +15,7 @@ char *decode_type(enum s_type t) {
     case lit:		return "lit";
     case rule:		return "rule";
     case seq:		return "seq";
+    case type:		return "type";
     default:		return "[unknown]";
     }
 }
@@ -26,7 +27,7 @@ int s_has_children(enum s_type t) {
 
 int s_has_text(enum s_type t) {
     return t == bind || t == call || t == expr || t == grammar ||
-	t == guard || t == ident || t == rule || t == lit;
+	t == guard || t == ident || t == lit || t == rule || t == type;
 }
 
 static void dump(struct s_node *p, int indent) {

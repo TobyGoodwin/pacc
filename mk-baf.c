@@ -51,6 +51,7 @@ struct s_node *create(void) {
     p = new_node(seq); p->first = q; p->next = s; s = p;
 
     p = new_node(alt); p->first = s; q = p;
+    p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "Decimal"; p->first = q; p->next = 0; r = p;
 
     /* Primary <- '(' a:Additive ')' -> a / Decimal */
@@ -67,6 +68,7 @@ struct s_node *create(void) {
     p = new_node(seq); p->first = q; p->next = s; q = p;
 
     p = new_node(alt); p->first = q; q = p;
+    p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "Primary"; p->first = q; p->next = r; r = p;
 
     /* Multitive <- p:Primary '*' m:Multitive { p * m } / Primary */
@@ -84,6 +86,7 @@ struct s_node *create(void) {
     p = new_node(seq); p->first = q; p->next = s; q = p;
 
     p = new_node(alt); p->first = q; q = p;
+    p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "Multitive"; p->first = q; p->next = r; r = p;
 
     /* Additive <- m:Multitive '+' a:Additive { m + a } / Multitive */
@@ -101,6 +104,7 @@ struct s_node *create(void) {
     p = new_node(seq); p->first = q; p->next = s; q = p;
 
     p = new_node(alt); p->first = q; q = p;
+    p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "Additive"; p->first = q; p->next = r; r = p;
 
     p = new_node(grammar); p->text = "yy"; p->first = r;

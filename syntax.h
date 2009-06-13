@@ -1,6 +1,6 @@
 enum s_type {
     grammar, rule,	/* scaffolding */
-    alt, seq,		/* fundamentals */
+    type, alt, seq,	/* fundamentals */
     and, not,		/* syntactic predicates */
     expr, bind,		/* expressions */
     guard, ident,	/* semantic predicate */

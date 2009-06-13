@@ -85,6 +85,9 @@ check 56 ''
 check 65 ''
 check xy ''
 
+build mk-type0
+check 5 five
+
 build mk-baf
 check 5 5
 check x ''
