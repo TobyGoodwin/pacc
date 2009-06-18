@@ -12,10 +12,9 @@ enum s_type {
 struct s_node {
     enum s_type type;
     int id;
-    int e_type; /* expression type */
     struct s_node *first, *last; /* children */
     struct s_node *next; /* sibling */
-    char *bind, *text;
+    char *text;
 };
 
 extern void s_dump(struct s_node *);

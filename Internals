@@ -68,3 +68,58 @@ rule seems plausible. And the type of the first rule can become the
 default type.
 
 ---
+
+2009-06-17
+
+Pressing on with semantic expressions. Each rule has a type (worry about
+defaulting later).
+
+Rules of type "void" never yield a value, of course. Should we allow
+expressions that are evaluated for their side effects? I guess so.
+Clearly it is not legal to bind a name to a "void" rule.
+
+Rules of most other types are fine: the semantic expression must yield a
+value of the given type:
+
+  int Additive <- m:Multitive '+' a:Additive { m + a }
+
+But we need at least something else: a way to extract parts of the input
+text. A rule of type [ haven't decided: either "char *", or some special
+type like "text" ] has a default value (in the absence of a semantic
+expression) of [ haven't decided: either the entire text matched by the
+rule, or the concatenation of the parts of it that aren't matched by a
+"void" call, or ... ]. This default value is freshly allocated by a call
+to realloc() - to use your own memory allocator, simply #define realloc
+in the raw code at the top of the file.
+
+And the first decision is instantly made: since this is only a default,
+certainly we should use "char *", and not something special. Hmm... 
+
+  char *Name <- Letter LetterOrDigit*
+
+The value is the text matched. We've said that in general a missing
+expression is an error, unless the only thing happening here is a call,
+in which case the value is simply propagated. So that normally
+
+  A <- B
+
+means
+
+  A <- b:B -> b
+
+But these two defaults can collide. In this grammar:
+
+  char *Name <- NamePlus
+  char *NamePlus <- l:Letter LetterOrDigit* -> l
+
+does Name get the value of all the text it matches, or the value of the
+solitary call? Ways out: 1) introduce "text" and say that solitary call
+is indeed the default for all types except "text", which otherwise
+behaves identically to "char *". 2) Say that, for "char *" only, matched
+text beats solitary call: write "char *Name <- np:NamePlus -> np" when
+that's what you want. 3) Do away with one of the defaults altogether:
+3a) just say that solitary call is not a default; 3b) say that we use
+Piumarta-style bra kets to mark the matched text. 4) Provide a function
+/ macro that means "all the matched text".
+
+I don't like any of these!
