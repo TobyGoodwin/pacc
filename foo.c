@@ -16,6 +16,20 @@ static int popcont(void) {
     return st_stack[--st_ptr];
 }
 
+static char *copy(int from, int to) {
+    char *r;
+    int l;
+printf("copy(%d, %d)\n", from, to);
+    l = to - from;
+    r = realloc(0, l + 1);
+    if (r) {
+	memcpy(r, string + from, l); 
+	r[l] = '\0';
+    }
+    return r;
+}
+#define match() copy(col, cur->remainder)
+
 static int col_stack[25];
 static int col_ptr = 0;
 static void pushcol(int c) { printf("push(%d) -> col_stack[%d]\n", c, col_ptr); col_stack[col_ptr++] = c; }

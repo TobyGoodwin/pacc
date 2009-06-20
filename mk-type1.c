@@ -3,7 +3,7 @@ struct s_node *create(void) {
 
     /* Type char * with match macro:
      *
-     * char *A <- '5' { yy_match() }
+     * char *A <- '5' { match() }
      *
      */
 
@@ -14,7 +14,7 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
-    p = new_node(grammar); p->text = "yy_"; p->first = r;
+    p = new_node(grammar); p->text = "yy"; p->first = r;
 
     resolve(p, p);
 

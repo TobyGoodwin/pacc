@@ -112,6 +112,7 @@ static void seq_pre(struct s_node *n) {
     printf("printf(\"seq %d @ col %%d?\\n\", col);\n", n->id);
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
+    printf("status = parsed;\n"); /* empty sequence */
 }
 
 static void seq_mid(struct s_node *n) {

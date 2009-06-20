@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/sh -e
 
 build() {
     echo build $1.c
@@ -88,12 +88,28 @@ check xy ''
 build mk-type0
 check 5 five
 
-build mk-baf
+build mk-type1
 check 5 5
-check x ''
-check 2+3 5
-check '2*3' 6
-check '2+3+4' 9
-check '2*3+4' 10
-check '2+3*4' 14
-check '2*3*4' 24
+
+build mk-type2
+check a a
+check aa aa
+check aaaaa aaaaa
+check aabaa aa
+
+baf_tests() {
+    check 5 5
+    check x ''
+    check 2+3 5
+    check '2*3' 6
+    check '2+3+4' 9
+    check '2*3+4' 10
+    check '2+3*4' 14
+    check '2*3*4' 24
+}
+
+build mk-baf0
+baf_tests
+
+build mk-baf1
+baf_tests
