@@ -104,7 +104,7 @@ check aa aa
 check aaaaa aaaaa
 check aabaa aa
 
-baf_tests() {
+baf_tests1() {
     check 5 5
     check x ''
     check 2+3 5
@@ -116,7 +116,17 @@ baf_tests() {
 }
 
 build mk-baf0
-baf_tests
+baf_tests1
 
 build mk-baf1
-baf_tests
+baf_tests1
+
+baf_tests2() {
+    check 5 5
+    check x ''
+    check '53*(13+75)' 4664
+}
+
+build mk-baf2
+baf_tests1
+baf_tests2
