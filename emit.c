@@ -4,7 +4,8 @@
 #include "syntax.h"
 
 static char *g_name; /* grammar name */
-static int cur_rule = 0;
+static struct s_node *g_node;
+static int cur_rule = 0; static struct s_node *cur_rule_node;
 static int bind_rule;
 
 static char *n_stack[25];
@@ -22,6 +23,7 @@ static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
 
+    g_node = n;
     lookup_rule = malloc(n->id * sizeof(int));
     for (p = n->first; p; p = p->next) {
 	lookup_rule[p->id] = r;
@@ -77,6 +79,7 @@ static void any_emit(struct s_node *n) {
 }
 
 static void rule_pre(struct s_node *n) {
+    cur_rule_node = n;
     printf("case %d: /* %s */\n", n->id, n->text); 
     printf("printf(\"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
     printf("rule_col = col;\n");
@@ -124,7 +127,7 @@ static void seq_mid(struct s_node *n) {
 static void seq_post(struct s_node *n) {
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
-    printf("printf(\"seq %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
+    printf("printf(\"seq %d @ col %%d => %%s\\n\", rule_col, status==parsed?\"yes\":\"no\");\n", n->id);
     printf("printf(\"col is %%d\\n\", col);\n");
 }
 
@@ -154,16 +157,36 @@ static void emit_expr(struct s_node *n) {
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
     if (n_ptr) printf("    int mycol;\n");
-    for (i = 0; i < n_ptr; ++i)
-	printf("    int %s;\n", n_stack[i]);
+    for (i = 0; i < n_ptr; ++i) {
+	static struct s_node *p;
+	int j;
+    printf("/* rule number is %d */\n", i_stack[i]);
+	p = g_node->first;
+	for (j = 0; j < i_stack[i]; ++j)
+	    p = p->next;
+    printf("/* rule id is %d */\n", p->id);
+    printf("/* type is %s */\n", p->first->text);
+	printf("    %s %s;\n", p->first->text, n_stack[i]);
+    }
     printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
     for (i = n_ptr - 1; i >= 0; --i) {
-	printf("    mycol = cur->thrs[i++].x;\n");
-	printf("    %s = matrix[mycol * n_rules + %d].value.u0;\n", n_stack[i], i_stack[i]); /* XXX u0 */
-	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);", n_stack[i], n_stack[i], i_stack[i]);
+	static struct s_node *p;
+	int j;
+    printf("/* rule number is %d */\n", i_stack[i]);
+	p = g_node->first;
+	for (j = 0; j < i_stack[i]; ++j)
+	    p = p->next;
+    printf("/* rule id is %d */\n", p->id);
+    printf("/* type is %s */\n", p->first->text);
+	printf("    mycol = cur->thrs[_pacc_i++].x;\n");
+	printf("    %s = matrix[mycol * n_rules + %d].value.u%d;\n", n_stack[i], i_stack[i], i_stack[i]);
+	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);\n", n_stack[i], n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
-    printf("    cur->value.u0 = %s;\n", n->text); /* XXX u0 */
+    printf("/* rule number is %d */\n", cur_rule);
+    printf("/* rule id is %d */\n", cur_rule_node->id);
+    printf("/* type is %s */\n", cur_rule_node->first->text);
+    printf("    cur->value.u%d = %s;\n", cur_rule, n->text);
     printf("    cur->status = evaluated;\n");
     printf("printf(\"stash \" TYPE_PRINTF \" to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
     printf("    goto eval_loop;\n");
@@ -176,10 +199,18 @@ static void guard_pre(struct s_node *n) {
 
     printf("{\n    struct intermed *guard;\n");
     for (p = n->first; p; p = p->next) {
+	struct s_node *q;
+	int j;
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-	printf("    int %s;\n", p->text);
+printf("/* i is %d */\n", i);
+	q = g_node->first;
+	for (j = 0; j < i_stack[i]; ++j)
+	    q = q->next;
+    printf("/* rule id is %d */\n", p->id);
+    printf("/* type is %s */\n", q->first->text);
+	printf("    %s %s;\n", q->first->text, n_stack[i]);
     }
     printf("    guard = cur; pushm(cur); evaluating = 1;\n");
     for (p = n->first; p; p = p->next) {
@@ -189,9 +220,9 @@ static void guard_pre(struct s_node *n) {
 	printf("    printf(\"bind %s at rule %d, col %%d\\n\", cur->thrs[cur->thrs_ptr - %d].x);\n", p->text, i_stack[i], i);
 	printf("    cur = matrix + guard->thrs[guard->thrs_ptr - %d].x * n_rules + %d;\n", i, i_stack[i]);
 	printf("    if (cur->status != evaluated) {\n");
-	printf("        pushcont(cont); cont = %d;\n", p->id);
-	printf("	i = 0; goto eval_loop;\n");
-	printf("case %d:     cont = popcont();\n", p->id);
+	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
+	printf("	_pacc_i = 0; goto eval_loop;\n");
+	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
 	printf("printf(\"stash %%d to %s\\n\", %s);\n", p->text, p->text);

@@ -92,6 +92,18 @@ check 56 ''
 check 65 ''
 check xy ''
 
+build mk-guard3
+check a a
+check q q
+check z z
+check A ''
+check '%' ''
+
+build mk-guard4
+check a9 9
+check z3 3
+check zx ''
+
 build mk-type0
 check 5 five
 

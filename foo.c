@@ -83,7 +83,7 @@ static int parse(void) {
     enum status status;
     int cont, st;
     int col, rule_col;
-    int i;
+    int _pacc_i;
     int evaluating;
     struct intermed *last;
     col = 0;
@@ -96,27 +96,27 @@ static int parse(void) {
 	printf("PARSED! Time to start eval...\n");
 	//pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
-	i = 0;
+	_pacc_i = 0;
 	cur = matrix;
     eval_loop:
-	if (i < cur->thrs_ptr) {
-	    if (cur->thrs[i].discrim == thr_rule) {
+	if (_pacc_i < cur->thrs_ptr) {
+	    if (cur->thrs[_pacc_i].discrim == thr_rule) {
 		int col, rule;
-		rule = cur->thrs[i].x; ++i;
-		col = cur->thrs[i].x; ++i;
-		pushm2(cur); pushcont(i);
+		rule = cur->thrs[_pacc_i].x; ++_pacc_i;
+		col = cur->thrs[_pacc_i].x; ++_pacc_i;
+		pushm2(cur); pushcont(_pacc_i);
 		cur = matrix + col * n_rules + rule;
-		i = 0;
+		_pacc_i = 0;
 		goto eval_loop;
 	    } else {
-		st = cur->thrs[i++].x;
-		col = cur->thrs[i++].x;
+		st = cur->thrs[_pacc_i++].x;
+		col = cur->thrs[_pacc_i++].x;
 		goto top;
 	    }
 	    goto eval_loop;
 	}
 	if (m2_ptr) {
-	    i = popcont(); cur = popm2();
+	    _pacc_i = popcont(); cur = popm2();
 	    goto eval_loop;
 	}
 	goto contin;

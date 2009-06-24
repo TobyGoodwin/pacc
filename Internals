@@ -10,8 +10,7 @@ main.c - command line parsing, other glue
 pacc.c - the packrat parser that constructs an AST from a .peg file;
 constructed (by pacc) from pacc.peg
 
-paccman.c - the manually constructed pacc.c that is used for
-bootstrapping
+paccman.c - constructs an AST manually for bootstrapping
 
 pacc.peg - the grammar description that is converted to pacc.c
 

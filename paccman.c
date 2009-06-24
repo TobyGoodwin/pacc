@@ -1,154 +1,109 @@
-/* A manually generated, explicit-control packrat parser for the (pacc's
- * version of) peg input files.
- */
+/* For bootstrapping:
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+Rule ← AltRule
+char *AltRule ← SeqRule (SLASH SeqRule)*
+char *SeqRule ← Identifier -- Not really!
 
-char *string;
+char *Identifier	← IdentStart IdentCont* { match() }
+void IdentStart		← c:Char &{ (c>='a'&&c<='z') || (c>='A'&&c<='Z') || c == '_' }
+void IdentCont		← IdentStart / c:Char &{ c >= '0' && c <= '9' }
 
-enum states {
-    done, grammar, grammar_0, grammar_1, rule, rule_0, stringlit
-};
+char *Char		← . { match() }
+void SLASH		← '/'
 
-enum states st_stack[25];
-int st_ptr = 0;
+*/
 
-void pushcont(enum states c) {
-    st_stack[st_ptr++] = c;
-}
-enum states popcont(void) {
-    return st_stack[--st_ptr];
-}
+struct s_node *create(void) {
+    struct s_node *p, *q, *r, *s, *t;
 
-enum status {
-    no_parse, parsed, uncomputed
-};
+    /* void SLASH ← '/' */
+    p = new_node(lit); p->text = "/"; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(type); p->text = "int"; p->next = q; q = p;
+    p = new_node(rule); p->text = "SLASH"; p->first = q; r = p;
 
-struct intermed {
-    enum status status;
-    int value; /* semantic value */
-    int remainder; /* unparsed string */
-};
+    /* char *Char		← . { match() } */
+    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(any); p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "Char"; p->first = q; p->next = r; r = p;
 
-static int n_rules = 3;
-struct intermed *matrix;
+    /* void IdentCont		← IdentStart / c:Char &{ c >= '0' && c <= '9' } */
+    p = new_node(ident); p->text = "c"; s = p;
+    p = new_node(guard); p->text = "*c >= '0' && *c <= '9'"; p->first = s; q = p;
+    p = new_node(call); p->text = "Char"; s = p;
+    p = new_node(bind); p->text = "c"; p->first = s; p->next = q; q = p;
+    p = new_node(seq); p->first = q; s = p;
+    p = new_node(call); p->text = "IdentStart"; q = p;
+    p = new_node(seq); p->first = q; p->next = s; q = p;
+    p = new_node(alt); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "IdentCont"; p->first = q; p->next = r; r = p;
 
-struct intermed *m_stack[25];
-int m_ptr = 0;
+    /* void IdentStart		← c:Char &{ (c>='a'&&c<='z') || (c>='A'&&c<='Z') || c == '_' } */
+    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(ident); p->text = "c"; s = p;
+    p = new_node(guard); p->text = "(*c >= 'a' && *c <= 'z') || (*c >= 'A' && *c <= 'Z') || *c == '_'"; p->first = s; p->next = q; q = p;
+    p = new_node(call); p->text = "Char"; s = p;
+    p = new_node(bind); p->text = "c"; p->first = s; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "IdentStart"; p->first = q; p->next = r; r = p;
 
-void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
-struct intermed *popm(void) { return m_stack[--m_ptr]; }
+    /* char *Identifier	← IdentStart IdentCont* { match() } */
+    p = new_node(seq); s = p;
+    p = new_node(call); p->text = "IdentConts0"; q = p;
+    p = new_node(call); p->text = "IdentCont"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; q = p;
+    p = new_node(alt); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "IdentConts0"; p->first = q; p->next = r; r = p;
 
-int parse(void) {
-    enum states cont, st;
-    int col;
-    struct intermed *cur, *last;
-    st = grammar;
-    col = 0;
-    cont = done;
+    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(call); p->text = "IdentConts0"; p->next = q; q = p;
+    p = new_node(call); p->text = "IdentStart"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "Identifier"; p->first = q; p->next = r; r = p;
 
-top:
-    switch (st) {
-    case grammar:
-	cur = matrix + col * n_rules + 0;
-	if (cur->status == uncomputed) {
-	    cur->status = no_parse;
-	    st = rule; pushcont(cont); pushm(cur); cont = grammar_0; goto top;
-    case grammar_0: cont = popcont(); last = cur; cur = popm();
-	    if (last->status != parsed)
-		goto contin;
-	    *cur = *last;
-	    col = cur->remainder;
-	    st = grammar;
-	    pushcont(cont); pushm(cur);
-	    cont = grammar_1;
-	    goto top;
-    case grammar_1:
-	    cont = popcont(); last = cur; cur = popm();
-	    if (last->status == parsed) {
-		*cur = *last;
-		col = cur->remainder;
-		goto contin;
-	    }
-	    /* empty */
-	    cur->status = parsed;
-	    cur->remainder = col;
-	}
-	goto contin;
+    /* char *SeqRule ← Identifier -- Not really! */
+    p = new_node(expr); p->text = "i"; q = p;
+    p = new_node(call); p->text = "Identifier"; s = p;
+    p = new_node(bind); p->text = "i"; p->first = s; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "SeqRule"; p->first = q; p->next = r; r = p;
 
-    case rule:
-	cur = matrix + col * n_rules + 1;
-	if (cur->status == uncomputed) {
-	    cur->status = no_parse;
-	    st = stringlit; pushcont(cont); pushm(cur); cont = rule_0; goto top;
-    case rule_0: cont = popcont(); last = cur; cur = popm();
-	    if (last->status == parsed) {
-		*cur = *last;
-		col = cur->remainder;
-		goto contin;
-	    }
-	}
+    /* char *AltRule ← SeqRule (SLASH SeqRule)* */
+    /* but we don't have star (yet?) so rewrite to:
+     * char *AltRule ← SeqRule SeqRules0
+     * char *SeqRules0 ← SLASH SeqRule SeqRules1 / ε
+     */
+    p = new_node(seq); s = p;
+    p = new_node(call); p->text = "SeqRules0"; q = p;
+    p = new_node(call); p->text = "SeqRule"; p->next = q; q = p;
+    p = new_node(call); p->text = "SLASH"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "SeqRules0"; p->first = q; p->next = r; r = p;
 
-    case stringlit:
-	cur = matrix + col * n_rules + 2;
-	if (cur->status == uncomputed) {
-	    cur->status = no_parse;
-	    if (! (string[col] == '"')) 
-		goto contin;
+    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(call); p->text = "SeqRules0"; p->next = q; q = p;
+    p = new_node(call); p->text = "SeqRule"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "AltRule"; p->first = q; p->next = r; r = p;
 
-	    while (string[++col] != '"') ;
+    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(call); p->text = "Identifier"; p->next = q; q = p;
+    p = new_node(seq); p->first = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
 
-	    cur->remainder = col + 1;
-	    cur->value = 11;
-	    cur->status = parsed;
-	}
-	goto contin;
+    p = new_node(grammar); p->text = "yy"; p->first = r;
 
-    case done:
-	break;
-    }
-    return matrix->status == parsed;
+    resolve(p, p);
 
-contin:
-    st = cont;
-    goto top;
-
-}
-
-void matrix_dump(int n) {
-    int r, s;
-
-    for (s = 0; s < n + 1; ++s) printf("   %c   ", string[s]);
-    printf("\n");
-    for (r = 0; r < n_rules; ++r) {
-	for (s = 0; s < n + 1; ++s) {
-	    int elem = s * n_rules + r;
-	    switch (matrix[elem].status) {
-	    case uncomputed:
-		printf("   _   "); break;
-	    case no_parse:
-		printf("   X   "); break;
-	    case parsed:
-		printf("%3d,%2d ", matrix[elem].value, matrix[elem].remainder);
-		break;
-	    }
-	}
-	printf("\n");
-    }
-}
-
-int pparse(char *str) {
-    int i, n, matrix_size;
-    string = str;
-    n = strlen(string);
-    matrix_size = n_rules * (n + 1);
-    matrix = malloc(sizeof(struct intermed) * matrix_size);
-    for (i = 0; i < matrix_size; ++i)
-	matrix[i].status = uncomputed;
-
-    printf("%d\n", parse());
-    matrix_dump(n);
-    return 0;
+    return p;
 }
