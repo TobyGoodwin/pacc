@@ -3,7 +3,7 @@ struct s_node *create(void) {
 
     /* Semantic predicates, calls, and any matchers:
      *
-     * P <- a:A &{ *a >= 'a' && *a <= 'z' } b:A &{ *b >= '0' && *b <= '9' } { b }
+     * int P <- a:A &{ *a >= 'a' && *a <= 'z' } b:A &{ *b >= '0' && *b <= '9' } { b }
      * char *A <- . { match() }
      *
      */

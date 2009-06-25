@@ -9,7 +9,7 @@ build() {
     # describes a chain of dependencies from foo to mk-target.c. So why
     # does make need this helping hand? My best guess is that to have a
     # .c depending on a binary interferes with implicit rules.
-    rm mktree.o pacc foo gen.c foo.o
+    rm mktree.o pacc foo gen.c foo.o || true
     make foo
 }
 
@@ -103,6 +103,14 @@ build mk-guard4
 check a9 9
 check z3 3
 check zx ''
+
+build mk-guard5
+check q q
+check qux qux
+check q39a q39a
+check q. q
+check q3. q3
+check 37 ''
 
 build mk-type0
 check 5 five

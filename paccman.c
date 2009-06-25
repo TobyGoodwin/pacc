@@ -76,7 +76,7 @@ struct s_node *create(void) {
     p = new_node(rule); p->text = "SeqRule"; p->first = q; p->next = r; r = p;
 
     /* char *AltRule ← SeqRule (SLASH SeqRule)* */
-    /* but we don't have star (yet?) so rewrite to:
+    /* but we don't have star yet so rewrite to:
      * char *AltRule ← SeqRule SeqRules0
      * char *SeqRules0 ← SLASH SeqRule SeqRules1 / ε
      */
@@ -95,8 +95,9 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "AltRule"; p->first = q; p->next = r; r = p;
 
-    p = new_node(expr); p->text = "match()"; q = p;
-    p = new_node(call); p->text = "Identifier"; p->next = q; q = p;
+    p = new_node(expr); p->text = "i"; q = p;
+    p = new_node(call); p->text = "AltRule"; s = p;
+    p = new_node(bind); p->text = "i"; p->first = s; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Start"; p->first = q; p->next = r; r = p;

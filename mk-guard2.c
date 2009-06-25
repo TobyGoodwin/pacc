@@ -3,8 +3,8 @@ struct s_node *create(void) {
 
     /* Semantic predicate with two bindings:
      *
-     * P <- a:A b:A &{ a == b } { a }
-     * A <- '5' { 5 } / '6' { 6 }
+     * int P ← a:A b:A &{ a == b } { a }
+     * int A ← '5' { 5 } / '6' { 6 }
      *
      */
 

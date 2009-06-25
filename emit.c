@@ -119,7 +119,7 @@ static void seq_pre(struct s_node *n) {
 }
 
 static void seq_mid(struct s_node *n) {
-    printf("if (status != parsed) {\n");
+    printf("if (status == no_parse) {\n");
     printf("    goto contin;\n");
     printf("}\n");
 }
@@ -127,7 +127,7 @@ static void seq_mid(struct s_node *n) {
 static void seq_post(struct s_node *n) {
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
-    printf("printf(\"seq %d @ col %%d => %%s\\n\", rule_col, status==parsed?\"yes\":\"no\");\n", n->id);
+    printf("printf(\"seq %d @ col %%d => %%s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("printf(\"col is %%d\\n\", col);\n");
 }
 
@@ -138,8 +138,7 @@ static void bind_pre(struct s_node *n) {
     pushn(n->text);
     bind_rule = lookup_rule[n->first->first->id];
     pushi(bind_rule);
-    printf("/* bind_rule is %d */\n", bind_rule);
-    printf("printf(\"binding %s at col %%d\\n\", col);\n", n->text);
+    printf("printf(\"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, bind_rule);
     printf("pushcol(col);\n");
 }
 
@@ -197,6 +196,7 @@ static void guard_pre(struct s_node *n) {
     int i;
     struct s_node *p;
 
+    printf("/* %d: guard_pre() */\n", n->id);
     printf("{\n    struct intermed *guard;\n");
     for (p = n->first; p; p = p->next) {
 	struct s_node *q;
@@ -217,8 +217,8 @@ printf("/* i is %d */\n", i);
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-	printf("    printf(\"bind %s at rule %d, col %%d\\n\", cur->thrs[cur->thrs_ptr - %d].x);\n", p->text, i_stack[i], i);
-	printf("    cur = matrix + guard->thrs[guard->thrs_ptr - %d].x * n_rules + %d;\n", i, i_stack[i]);
+	printf("    printf(\"bind %s at rule %d, col %%d\\n\", guard->thrs[guard->thrs_ptr - %d].x);\n", p->text, i_stack[i], 2 * n_ptr - 2 * i - 1);
+	printf("    cur = matrix + guard->thrs[guard->thrs_ptr - %d].x * n_rules + %d;\n", 2 * n_ptr - 2 * i - 1, i_stack[i]);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
 	printf("	_pacc_i = 0; goto eval_loop;\n");
@@ -261,8 +261,8 @@ static void alt_pre(struct s_node *n) {
 }
 
 static void alt_mid(struct s_node *n) {
-    printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
-    printf("if (status == parsed) {\n");
+    printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
+    printf("if (status != no_parse) {\n");
     accept_col();
     printf("goto contin;\n");
     printf("}\n");
@@ -274,14 +274,14 @@ static void alt_mid(struct s_node *n) {
 }
 
 static void alt_post(struct s_node *n) {
-    printf("if (status != parsed) {\n");
+    printf("if (status == no_parse) {\n");
     restcol();
     printf("} else {\n");
     accept_col();
     printf("}\n");
     printf("case %d:\n", n->id);
     printf("cont = popcont();\n");
-    printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status==parsed?\"yes\":\"no\");\n", n->id);
+    printf("printf(\"alt %d @ col %%d => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("printf(\"col is %%d\\n\", col);\n");
     i_ptr = n_ptr = 0;
 }

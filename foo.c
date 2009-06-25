@@ -36,7 +36,7 @@ static void pushcol(int c) { printf("push(%d) -> col_stack[%d]\n", c, col_ptr); 
 static int popcol(void) { return col_stack[--col_ptr]; }
 
 /* a "thr" is a thunk or a rule/column pair */
-enum thr { thr_thunk, thr_rule, thr_col };
+enum thr { thr_thunk = 71, thr_rule, thr_col };
 struct thunkrule {
     enum thr discrim;
     int x;
