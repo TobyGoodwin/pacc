@@ -28,7 +28,8 @@ printf("copy(%d, %d)\n", from, to);
     }
     return r;
 }
-#define match() copy(col, cur->remainder)
+#define match() copy(col, col_expr)
+#define rmatch() copy(col_expr, cur->remainder)
 
 static int col_stack[25];
 static int col_ptr = 0;
@@ -82,7 +83,7 @@ static int input_length;
 static int parse(void) {
     enum status status;
     int cont, st;
-    int col, rule_col;
+    int col, rule_col, col_expr;
     int _pacc_i;
     int evaluating;
     struct intermed *last;
@@ -111,6 +112,7 @@ static int parse(void) {
 	    } else {
 		st = cur->thrs[_pacc_i++].x;
 		col = cur->thrs[_pacc_i++].x;
+		col_expr = cur->thrs[_pacc_i].x; ++_pacc_i;
 		goto top;
 	    }
 	    goto eval_loop;

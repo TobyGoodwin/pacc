@@ -151,6 +151,7 @@ static void emit_expr(struct s_node *n) {
 
     printf("printf(\"%%d: expr_pre()\\n\", %d);\n", n->id);
     printf("pusheval(%d, thr_thunk); pusheval(rule_col, thr_col);\n", n->id);
+    printf("pusheval(col, thr_col);\n");
     for (i = 0; i < n_ptr; ++i)
 	printf("pusheval(popcol(), thr_col);\n");
     printf("case %d:\n", n->id);

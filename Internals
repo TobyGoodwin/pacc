@@ -66,9 +66,8 @@ don't like Piumarta's < > syntax; ...). However, the idea of typing each
 rule seems plausible. And the type of the first rule can become the
 default type.
 
----
-
 2009-06-17
+----------
 
 Pressing on with semantic expressions. Each rule has a type (worry about
 defaulting later).
@@ -122,3 +121,73 @@ Piumarta-style bra kets to mark the matched text. 4) Provide a function
 / macro that means "all the matched text".
 
 I don't like any of these!
+
+2009-06-26
+----------
+
+OK, what I have right now is a "match()" macro, which returns the text
+matched by the entire rule. It's kinda groovy, but considering cases
+like this:
+
+  char *Ident ← IdentStart IdentCont* { match() } Spacing
+  void Spacing ← (' ' / '\t')*
+
+it's a pity that match() will return the Spacing too.
+
+(By the way, I think it would be insane to have anything like match() as
+a default! It allocates memory...)
+
+It would be easy to store the column where an expression is encountered
+so that the above would work. (I was considering lmatch(), rmatch(), and
+match(), which respectively match everything before, after the
+expression; or the entire text matched by the rule. In fact, it would be
+simpler just to have match() and rmatch(), which match to the left and
+right respectively; if you want the entire expression, put match() at
+the end - or rmatch() at the beginning.)
+
+Arguably, Piumarta's bra & ket syntax is even more flexible, and there
+are times when that flexibility is warranted.
+
+  char *String ← '"' < [^"]* > '"' Spacing
+
+(Note that this doesn't allow a string to contain " characters.)
+
+  char *String ← '"' d:StrEsc '"' Spacing → d
+  StrEsc ← ( '\\' . / . )* { match() }
+
+Combination of match() with stashing col_expr handles all the simple
+cases. And particularly if we allow binding to anything (by generating
+extra rules), you can get this, which is barely even any longer.
+
+  char *String ← '"' d:([^"]*) '"' Spacing → d
+
+Here's a wacky one: why not phrase that as
+
+  char *String ← '"' =:([^"]*) '"' Spacing
+
+Oh dear, oh dear. Stop it now. Make match() work as you said you could,
+and move on. We can always revisit this later.
+
+OK, match() means lmatch(), and rmatch() exists. Cool.
+
+
+Here's a bit of a puzzle that I really don't know the answer to. First,
+is it permitted to have more than one expression per rule? For example,
+what about something like this.
+
+  char *Concat ← Word { a = match() } '^' { b = rmatch() } Word { strcat(a,b) }
+
+Well, no, it certainly will never be possible to bind names in an
+expression. At best, all bar the rightmost expression are evaluated - as
+expressions - in a void context, as if left-hand operands of ",".
+
+Anycase, the obvious thing to do at this stage is to say that there can
+only be one expression per rule. Or rather, one active expression per
+rule: we need this to work.
+
+  int Digit ← '5' { 5 } / '6' { 6 }
+
+So the top-level of a rule can be an alt, in which case each leg of the
+alt can have its own expr. But what about non-top-level alts?
+
+  <example here>

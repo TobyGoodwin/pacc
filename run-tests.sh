@@ -124,6 +124,12 @@ check aa aa
 check aaaaa aaaaa
 check aabaa aa
 
+build mk-match0
+check 567 56
+
+build mk-match1
+check 567 7
+
 baf_tests1() {
     check 5 5
     check x ''
