@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "syntax.h"
 
@@ -31,6 +32,7 @@ static void grammar_pre(struct s_node *n) {
     }
     printf("#ifndef DECLS\n"); /* phew! what a loony hack: one day we will write the whole of foo.c from here */
     printf("#define DECLS 1\n");
+    if (prefix) printf("%s\n", prefix);
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
     g_name = n->text;
     printf("union %s_union {\n", g_name);

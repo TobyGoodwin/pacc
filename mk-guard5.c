@@ -1,3 +1,7 @@
+#include "syntax.h"
+
+char *prefix = 0;
+
 /*
  * char *Identifier ← IdentStart IdentCont* { match() } 
  * void IdentStart ← c:Char &{ *c >= 'a' && *c <= 'z' }

@@ -1,3 +1,7 @@
+#include "syntax.h"
+
+char *prefix = 0;
+
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
 

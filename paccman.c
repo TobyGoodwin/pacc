@@ -2,25 +2,41 @@
 
 Rule ← AltRule
 char *AltRule ← SeqRule (SLASH SeqRule)*
-char *SeqRule ← Identifier -- Not really!
+char *SeqRule ← Identifier { }
 
-char *Identifier	← IdentStart IdentCont* { match() }
+char *Identifier	← IdentStart IdentCont* { match() } -
 void IdentStart		← c:Char &{ (c>='a'&&c<='z') || (c>='A'&&c<='Z') || c == '_' }
 void IdentCont		← IdentStart / c:Char &{ c >= '0' && c <= '9' }
 
 char *Char		← . { match() }
-void SLASH		← '/'
+void SLASH		← '/' -
+-			← ' ' - / ε
 
 */
+
+/* Hmm. What are we going to do about the raw code prefix? It could be a
+ * node in the tree, but that hardly seems worthwhile.
+ */
+char *prefix = "#include \"syntax.h\"\n";
 
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s, *t;
 
-    /* void SLASH ← '/' */
-    p = new_node(lit); p->text = "/"; q = p;
+    /* void - ← ' ' - / ε */
+    p = new_node(seq); s = p;
+    p = new_node(call); p->text = "-"; q = p;
+    p = new_node(lit); p->text = " "; p->next = q; q = p;
+    p = new_node(seq); p->first = q; p->next = s; q = p;
+    p = new_node(alt); p->first = q;
+    p = new_node(type); p->text = "int"; p->next = q; q = p;
+    p = new_node(rule); p->text = "-"; p->first = q; r = p;
+
+    /* void SLASH ← '/' - */
+    p = new_node(call); p->text = "-"; q = p;
+    p = new_node(lit); p->text = "/"; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "int"; p->next = q; q = p;
-    p = new_node(rule); p->text = "SLASH"; p->first = q; r = p;
+    p = new_node(rule); p->text = "SLASH"; p->first = q; p->next = r; r = p;
 
     /* char *Char		← . { match() } */
     p = new_node(expr); p->text = "match()"; q = p;
@@ -51,7 +67,7 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "IdentStart"; p->first = q; p->next = r; r = p;
 
-    /* char *Identifier	← IdentStart IdentCont* { match() } */
+    /* char *Identifier	← IdentStart IdentCont* { match() } - */
     p = new_node(seq); s = p;
     p = new_node(call); p->text = "IdentConts0"; q = p;
     p = new_node(call); p->text = "IdentCont"; p->next = q; q = p;
@@ -60,7 +76,8 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "IdentConts0"; p->first = q; p->next = r; r = p;
 
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(call); p->text = "-"; q = p;
+    p = new_node(expr); p->text = "match()"; p->next = q; q = p;
     p = new_node(call); p->text = "IdentConts0"; p->next = q; q = p;
     p = new_node(call); p->text = "IdentStart"; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;

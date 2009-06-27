@@ -4,12 +4,12 @@ build() {
     # Oh. Seems that commandline -e doesn't apply to functions.
     set -e
     echo build $1.c
-    cp $1.c mk-target.c
+    cp $1.c mktree.c
     # The rm line below distresses me. As far as I can see, the Makefile
-    # describes a chain of dependencies from foo to mk-target.c. So why
+    # describes a chain of dependencies from foo to mktree.c. So why
     # does make need this helping hand? My best guess is that to have a
     # .c depending on a binary interferes with implicit rules.
-    rm mktree.o pacc foo gen.c foo.o || true
+    rm -f mktree.o pacc foo gen.c foo.o
     make foo
 }
 

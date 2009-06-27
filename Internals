@@ -191,3 +191,26 @@ So the top-level of a rule can be an alt, in which case each leg of the
 alt can have its own expr. But what about non-top-level alts?
 
   <example here>
+
+2009-06-27
+----------
+
+A showstopper?
+
+I'm starting to close the loop, since pacc is almost clever enough to
+emit a parser that can read its own grammar. However...
+
+    char *Item ← s:Whatever { n = s_new(rule); n->text = s; n; }
+
+The idea of semantic expressions starts to look a bit murky.
+
+We could just say that we don't care: you must define functions like
+
+    struct s_node *new_rule(char *t) {
+	struct s_node *r = s_new(rule);
+	if (r) r->text = t;
+    }
+
+    char *Item ← s:Whatever { new_rule(s) }
+
+Is that too draconian?

@@ -17,6 +17,14 @@ struct s_node {
     char *text;
 };
 
+/* building trees */
+extern struct s_node *s_new(enum s_type);
+#define new_node(t) s_new(t)
+extern void s_resolve(struct s_node *, struct s_node *);
+#define resolve(g, n) s_resolve(g, n)
+
 extern void s_dump(struct s_node *);
 extern int s_has_children(enum s_type);
 extern int s_has_text(enum s_type);
+
+extern char *prefix;
