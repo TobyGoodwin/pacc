@@ -2,7 +2,7 @@
 
 Rule ← AltRule
 char *AltRule ← SeqRule (SLASH SeqRule)*
-char *SeqRule ← Identifier { }
+char *SeqRule ← i:Identifier { mkrule(i) }
 
 char *Identifier	← IdentStart IdentCont* { match() } -
 void IdentStart		← c:Char &{ (c>='a'&&c<='z') || (c>='A'&&c<='Z') || c == '_' }
