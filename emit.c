@@ -5,9 +5,18 @@
 #include "syntax.h"
 
 static char *g_name; /* grammar name */
-static struct s_node *g_node;
+static struct s_node *g_node; /* grammar root */
+/* Rule numbers can be confusing. At the moment, each rule has both an
+ * id (from the tree), and a number. The numbers start at 0 for the
+ * start rule, and these numbers are used to index the array of
+ * intermediate results.
+ *
+ * In the future, we will instead store intermed results in a hash
+ * table, at which point we can - I think - drop the numbering, and just
+ * hash on the rule id. The array lookup_rule maps from ids to numbers.
+ */
 static int cur_rule = 0; static struct s_node *cur_rule_node;
-static int bind_rule;
+
 
 static char *n_stack[25];
 static int n_ptr = 0;
@@ -135,6 +144,8 @@ static void seq_post(struct s_node *n) {
 
 /* A binding may only contain a call. */
 static void bind_pre(struct s_node *n) {
+    int bind_rule;
+
     printf("/* bind: %s */\n", n->text);
     printf("printf(\"%%d: bind_pre()\\n\", %d);\n", n->id);
     pushn(n->text);

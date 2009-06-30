@@ -214,3 +214,18 @@ We could just say that we don't care: you must define functions like
     char *Item ← s:Whatever { new_rule(s) }
 
 Is that too draconian?
+
+2009-06-30
+----------
+
+Blimey. Here's something really mad. If we keep the number of specials
+in the grammar really small, then instead of this::
+
+     int Additive <- m:Multitive PLUS a:Additive { m + a } / Multitive
+
+you could instead say this::
+
+     int Additive <- m:Multitive + a:Additive { m + a } / Multitive
+
+This is a really groovy idea, but we almost certainly do need at least
+the characters ?*+.(){}/<>-"!: which doesn't leave many. Darn.
