@@ -19,7 +19,7 @@ foo: foo.o
 foo.o: foo.c gen.c
 	$(CC) $(CFLAGS) -c foo.c
 
-mktree.o: mktree.c mk-target.c syntax.h
+mktree.o: mktree.c syntax.h
 	$(CC) $(CFLAGS) -c mktree.c
 
 syntax.o: syntax.c syntax.h
