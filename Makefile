@@ -13,8 +13,8 @@ pacc: $(OBJS)
 
 emit.o: syntax.h
 
-foo: foo.o
-	$(CC) $(LDFLAGS) $< -o $@
+foo: foo.o syntax.o
+	$(CC) $(LDFLAGS) $^ -o $@
 
 foo.o: foo.c gen.c
 	$(CC) $(CFLAGS) -c foo.c

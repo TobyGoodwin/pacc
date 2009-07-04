@@ -4,7 +4,7 @@ build() {
     # Oh. Seems that commandline -e doesn't apply to functions.
     set -e
     echo build $1.c
-    cp $1.c mktree.c
+    cp test/$1.c mktree.c
     # The rm line below distresses me. As far as I can see, the Makefile
     # describes a chain of dependencies from foo to mktree.c. So why
     # does make need this helping hand? My best guess is that to have a
@@ -14,7 +14,7 @@ build() {
 }
 
 check() {
-    r=`./foo $1 | sed -n '/\(not \|\)parsed\(\| with value \)\(.*\)/s//\3/p'`
+    r=`./foo "$1" | sed -n '/\(not \|\)parsed\(\| with value \)\(.*\)/s//\3/p'`
     if [ "$r" = "$2" ]; then
 	echo "PASS: $1 ==> $2"
     else
@@ -148,11 +148,17 @@ build mk-baf1
 baf_tests1
 
 baf_tests2() {
-    check 5 5
-    check x ''
+    baf_tests1
     check '53*(13+75)' 4664
 }
 
 build mk-baf2
-baf_tests1
 baf_tests2
+
+baf_tests3() {
+    baf_tests2
+    check ' 456 + 123 * ( 543 + 7 * (987 + 2) + 6) ' 919512
+}
+
+build mk-baf3
+baf_tests3

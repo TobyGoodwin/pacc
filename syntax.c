@@ -4,16 +4,43 @@
 
 #include "syntax.h"
 
+static void nomem(void) {
+    fprintf(stderr, "fatal: out of memory\n");
+    exit(1);
+}
+
 struct s_node *s_new(enum s_type t) {
     static int id = 100;
     struct s_node *n;
     n = malloc(sizeof *n);
-    if (n) {
-	n->id = id++; n->type = t;
-	n->first = n->last = n->next = 0;
-	n->text = 0;
-    }
+    if (!n) nomem();
+    n->id = id++; n->type = t;
+    n->first = n->last = n->next = 0;
+    n->text = 0;
     return n;
+}
+
+struct s_node *mkcall(char *name) {
+    struct s_node *r;
+    r = s_new(call);
+    if (!r) nomem();
+    r->text = name;
+    return r;
+}
+
+struct s_node *mkrule(char *name, struct s_node *what) {
+    struct s_node *r;
+    r = s_new(rule);
+    if (!r) nomem();
+    r->text = name;
+    r->first = what;
+    return r;
+}
+
+struct s_node *cons(struct s_node *a, struct s_node *d) {
+    printf("!!! cons(%p, %p)\n", a, d);
+    a->next = d;
+    return a;
 }
 
 void resolve(struct s_node *g, struct s_node *n) {

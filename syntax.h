@@ -23,6 +23,10 @@ extern struct s_node *s_new(enum s_type);
 extern void s_resolve(struct s_node *, struct s_node *);
 #define resolve(g, n) s_resolve(g, n)
 
+extern struct s_node *mkcall(char *);
+extern struct s_node *mkrule(char *, struct s_node *);
+extern struct s_node *cons(struct s_node *, struct s_node *);
+
 extern void s_dump(struct s_node *);
 extern int s_has_children(enum s_type);
 extern int s_has_text(enum s_type);

@@ -193,15 +193,16 @@ static void emit_expr(struct s_node *n) {
     printf("/* type is %s */\n", p->first->text);
 	printf("    mycol = cur->thrs[_pacc_i++].x;\n");
 	printf("    %s = matrix[mycol * n_rules + %d].value.u%d;\n", n_stack[i], i_stack[i], i_stack[i]);
-	printf("printf(\"assign %%d from (%%d, %%d) to %s\\n\", %s, mycol, %d);\n", n_stack[i], n_stack[i], i_stack[i]);
+	printf("printf(\"assign %%p from (%%d, %%d) to %s\\n\", %s, mycol, %d);\n", n_stack[i], n_stack[i], i_stack[i]);
     }
     //printf("    %svalue.%stype%d = %s;\n", g_name, g_name, n->e_type, n->text);
     printf("/* rule number is %d */\n", cur_rule);
     printf("/* rule id is %d */\n", cur_rule_node->id);
     printf("/* type is %s */\n", cur_rule_node->first->text);
-    printf("    cur->value.u%d = %s;\n", cur_rule, n->text);
+    printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
     printf("    cur->status = evaluated;\n");
-    printf("printf(\"stash \" TYPE_PRINTF \" to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
+    //printf("printf(\"stash \" TYPE_PRINTF \" to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
+    printf("printf(\"stash %%p to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
     printf("    goto eval_loop;\n");
     printf("}\n");
 }

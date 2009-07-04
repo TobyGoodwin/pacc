@@ -125,7 +125,8 @@ static int parse(void) {
     }
 
     if (matrix->status == evaluated) {
-	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
+	//printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
+	s_dump(matrix->value.u0);
     } else printf("not parsed\n");
     return matrix->status == evaluated;
 
