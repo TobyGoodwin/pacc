@@ -301,6 +301,44 @@ static void alt_post(struct s_node *n) {
     i_ptr = n_ptr = 0;
 }
 
+static void rep_pre(struct s_node *n) {
+    int min, max;
+
+    min = (n->number & 0xffff0000) >> 16;
+    max = n->number & 0xffff;
+    printf("printf(\"rep %d @ col %%d?\\n\", col);\n", n->id);
+    if (min > 0) savecol();
+    printf("pushcont(_pacc_rep);\n");
+    printf("_pacc_rep = 0;\n");
+    printf("case %d:\n", n->id);
+}
+
+static void rep_post(struct s_node *n) {
+    int min, max;
+
+    min = (n->number & 0xffff0000) >> 16;
+    max = n->number & 0xffff;
+    printf("if (status == no_parse) {\n");
+    printf("    if (_pacc_rep >= %d", min);
+    if (max)
+	printf(" && _pacc_rep <= %d", max);
+    printf(") {\n", min);
+    printf("        status = parsed;\n");
+    if (min > 0) accept_col();
+    printf("    } else {\n");
+    if (min > 0) restcol();
+    printf("    }\n");
+    printf("} else {\n");
+    printf("    ++_pacc_rep;\n");
+    if (max) printf("    if (_pacc_rep < %d) {\n", max);
+    printf("        st = %d; goto top;\n", n->id);
+    if (max) printf("    }\n");
+    if (min > 0) accept_col();
+    printf("}\n");
+    printf("_pacc_rep = popcont();\n");
+    printf("printf(\"rep %d @ col %%d => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
+}
+
 static void (*pre[s_type_max])(struct s_node *);
 static void (*mid[s_type_max])(struct s_node *);
 static void (*post[s_type_max])(struct s_node *);
@@ -327,6 +365,7 @@ void emit(struct s_node *g) {
     pre[bind] = bind_pre; pre[expr] = emit_expr;
     pre[guard] = guard_pre; //pre[ident] = ident_emit;
     pre[call] = emit_call; pre[lit] = literal; pre[any] = any_emit;
+    pre[rep] = rep_pre;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
 
@@ -334,6 +373,7 @@ void emit(struct s_node *g) {
     post[alt] = alt_post; post[seq] = seq_post;
     post[bind] = bind_post;
     post[guard] = guard_post;
+    post[rep] = rep_post;
 
     node(g);
 }

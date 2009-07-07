@@ -84,7 +84,7 @@ static int parse(void) {
     enum status status;
     int cont, st;
     int col, rule_col, col_expr;
-    int _pacc_i;
+    int _pacc_i, _pacc_rep;
     int evaluating;
     struct intermed *last;
     col = 0;
@@ -125,8 +125,8 @@ static int parse(void) {
     }
 
     if (matrix->status == evaluated) {
-	//printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	s_dump(matrix->value.u0);
+	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
+	//s_dump(matrix->value.u0);
     } else printf("not parsed\n");
     return matrix->status == evaluated;
 

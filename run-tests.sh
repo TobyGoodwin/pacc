@@ -77,6 +77,27 @@ check 5 5
 check 6 6
 check x ''
 
+build mk-rep0
+check xx xx
+check xyx xyx
+check xyyx xyyx
+check xyyyx xyyyx
+check xyyyyyyyyyyx xyyyyyyyyyyx
+
+build mk-rep1
+check xx ''
+check xyx xyx
+check xyyx xyyx
+check xyyyx xyyyx
+check xyyyyyyyyyyx xyyyyyyyyyyx
+
+build mk-rep2
+check xx xx
+check xyx xyx
+check xyyx ''
+check xyyyx ''
+check xyyyyyyyyyyx ''
+
 build mk-guard0
 check 5 5
 check x ''
