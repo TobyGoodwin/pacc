@@ -62,6 +62,7 @@ void resolve(struct s_node *g, struct s_node *n) {
 char *decode_type(enum s_type t) {
     switch(t) {
     case alt:		return "alt";
+    case and:		return "and";
     case any:		return "any";
     case bind:		return "bind";
     case call:		return "call";
@@ -70,6 +71,7 @@ char *decode_type(enum s_type t) {
     case guard:		return "guard";
     case ident:		return "ident";
     case lit:		return "lit";
+    case not:		return "not";
     case rep:		return "rep";
     case rule:		return "rule";
     case seq:		return "seq";
@@ -79,8 +81,8 @@ char *decode_type(enum s_type t) {
 }
 
 int s_has_children(enum s_type t) {
-    return t == alt || t == bind || t == rule || t == grammar ||
-	t == guard || t == rep || t == seq;
+    return t == alt || t == and || t == bind || t == rule || t == grammar ||
+	t == guard || t == not || t == rep || t == seq;
 }
 
 int s_has_number(enum s_type t) {

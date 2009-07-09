@@ -4,7 +4,7 @@
 
 static char *string;
 
-static int st_stack[200];
+static int st_stack[2000];
 static int st_ptr = 0;
 
 static void pushcont(int c) {
@@ -127,6 +127,8 @@ static int parse(void) {
     if (matrix->status == evaluated) {
 	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
 	//s_dump(matrix->value.u0);
+    } else if (matrix->status == parsed) {
+	printf("parsed with void value\n");
     } else printf("not parsed\n");
     return matrix->status == evaluated;
 

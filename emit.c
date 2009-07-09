@@ -68,6 +68,7 @@ static void grammar_post(struct s_node *n) {
     printf("#endif\n");
 }
 
+
 /* literal() currently matches just a single character */
 static void literal(struct s_node *n) {
     printf("printf(\"%%c == %c? \", string[col]);\n", n->text[0]);
@@ -140,6 +141,36 @@ static void seq_post(struct s_node *n) {
     printf("cont = popcont();\n");
     printf("printf(\"seq %d @ col %%d => %%s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("printf(\"col is %%d\\n\", col);\n");
+}
+
+static void debug_pre(char *type, struct s_node *n) {
+    printf("printf(\"%s %d @ col %%d?\\n\", col);\n", type, n->id);
+}
+
+static void debug_post(char *type, struct s_node *n) {
+    printf("printf(\"%s %d @ col %%d => %%s\\n\", col, status != no_parse ? \"yes\" : \"no\");\n",
+	    type, n->id);
+}
+
+static void and_pre(struct s_node *n) {
+    debug_pre("and", n);
+    savecol();
+}
+
+static void and_post(struct s_node *n) {
+    restcol();
+    debug_post("and", n);
+}
+
+static void not_pre(struct s_node *n) {
+    debug_pre("not", n);
+    savecol();
+}
+
+static void not_post(struct s_node *n) {
+    printf("status = (status == no_parse) ? parsed : no_parse;\n");
+    restcol();
+    debug_post("not", n);
 }
 
 /* A binding may only contain a call. */
@@ -301,16 +332,21 @@ static void alt_post(struct s_node *n) {
     i_ptr = n_ptr = 0;
 }
 
+/* I rather like this implementation of rep, but according to both Bryan
+ * Ford and Robert Grimm treating rep as anything other than sugar can
+ * introduce non-linearity into the parser. I've yet to produce a
+ * convincing example of this.
+ */
 static void rep_pre(struct s_node *n) {
     int min, max;
 
     min = (n->number & 0xffff0000) >> 16;
     max = n->number & 0xffff;
     printf("printf(\"rep %d @ col %%d?\\n\", col);\n", n->id);
-    if (min > 0) savecol();
     printf("pushcont(_pacc_rep);\n");
     printf("_pacc_rep = 0;\n");
     printf("case %d:\n", n->id);
+    savecol();
 }
 
 static void rep_post(struct s_node *n) {
@@ -319,21 +355,19 @@ static void rep_post(struct s_node *n) {
     min = (n->number & 0xffff0000) >> 16;
     max = n->number & 0xffff;
     printf("if (status == no_parse) {\n");
+    restcol();
     printf("    if (_pacc_rep >= %d", min);
     if (max)
 	printf(" && _pacc_rep <= %d", max);
-    printf(") {\n", min);
+    printf(") {\n");
     printf("        status = parsed;\n");
-    if (min > 0) accept_col();
-    printf("    } else {\n");
-    if (min > 0) restcol();
     printf("    }\n");
     printf("} else {\n");
+    accept_col();
     printf("    ++_pacc_rep;\n");
     if (max) printf("    if (_pacc_rep < %d) {\n", max);
     printf("        st = %d; goto top;\n", n->id);
     if (max) printf("    }\n");
-    if (min > 0) accept_col();
     printf("}\n");
     printf("_pacc_rep = popcont();\n");
     printf("printf(\"rep %d @ col %%d => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
@@ -362,6 +396,7 @@ static void node(struct s_node *n) {
 void emit(struct s_node *g) {
     pre[grammar] = grammar_pre; pre[rule] = rule_pre;
     pre[alt] = alt_pre; pre[seq] = seq_pre;
+    pre[and] = and_pre; pre[not] = not_pre;
     pre[bind] = bind_pre; pre[expr] = emit_expr;
     pre[guard] = guard_pre; //pre[ident] = ident_emit;
     pre[call] = emit_call; pre[lit] = literal; pre[any] = any_emit;
@@ -371,6 +406,7 @@ void emit(struct s_node *g) {
 
     post[grammar] = grammar_post; post[rule] = rule_post;
     post[alt] = alt_post; post[seq] = seq_post;
+    post[and] = and_post; post[not] = not_post;
     post[bind] = bind_post;
     post[guard] = guard_post;
     post[rep] = rep_post;

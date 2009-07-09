@@ -10,12 +10,12 @@ struct s_node *create(void) {
      * char *Atoms ← ( Atom Space ) * → { match() }
      * Atom ← Letter +
      * Letter ← 'a' / 'b' / 'c'
-     * Space ← ' ' +
+     * Space ← ' ' *
      *
      */
 
     p = new_node(lit); p->text = " "; s = p;
-    p = new_node(rep); p->number = 0x10000; p->first = s; q = p;
+    p = new_node(rep); p->number = 0; p->first = s; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Space"; p->first = q; r = p;
@@ -36,6 +36,15 @@ struct s_node *create(void) {
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Atom"; p->first = q; p->next = r; r = p;
+
+#if 0
+    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(call); p->text = "Space"; s = p;
+    p = new_node(call); p->text = "Atom"; p->next = s; s = p;
+    p = new_node(seq); p->first = s; p->next = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(rule); p->text = "Atoms"; p->first = q; p->next = r; r = p;
+#endif
 
     p = new_node(expr); p->text = "match()"; q = p;
     p = new_node(call); p->text = "Space"; s = p;
