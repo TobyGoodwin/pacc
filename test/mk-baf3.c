@@ -7,19 +7,26 @@ struct s_node *create(void) {
 
     /* Bryan Ford's trivial grammar with integers and spacing:
      *
-     * int Sum ← Space a:Additive → a
-     * int Additive <- m:Multitive Plus a:Additive { m + a } / Multitive
-     * int Multitive <- p:Primary Times m:Multitive { p * m } / Primary
-     * int Primary <- '(' a:Additive ')' -> a / Decimal
-     * int Decimal ← Digits1 { atoi(match()) } Space
-     * int Digits1 ← Digit Digits1 / Digit
-     * int Digit <- '0' / '1' / ... / '9'
+     * int Sum ← Space a:Additive End → a
+     * Additive <- m:Multitive Plus a:Additive { m + a } / Multitive
+     * Multitive <- p:Primary Times m:Multitive { p * m } / Primary
+     * Primary <- Left a:Additive Right -> a / Decimal
+     * Decimal ← Digits1 { atoi(match()) } Space
+     * Digits1 ← Digit Digits1 / Digit
+     * Digit <- '0' / '1' / ... / '9'
      * void Left ← '(' Space
-     * void Right ← ')' Space
-     * void Plus ← '+' Space
-     * void Times ← '*' Space
-     * void Space ← ' ' Space / ε
+     * Right ← ')' Space
+     * Plus ← '+' Space
+     * Times ← '*' Space
+     * Space ← ' ' Space / ε
+     * End ← ! .
      */
+
+    /* void End ← ! . */
+    p = new_node(any); q = p;
+    p = new_node(not); p->first = q; q = p;
+    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(rule); p->text = "End"; p->first = q; r = p;
 
     /* void Space ← ' ' Space / ε */
     p = new_node(seq); s = p;
@@ -28,7 +35,7 @@ struct s_node *create(void) {
     p = new_node(seq); p->first = q; p->next = s; q = p;
     p = new_node(alt); p->first = q;
     p = new_node(type); p->text = "int"; p->next = q; q = p;
-    p = new_node(rule); p->text = "Space"; p->first = q; r = p;
+    p = new_node(rule); p->text = "Space"; p->first = q; p->next = r; r = p;
 
     /* void Times ← '*' Space */
     p = new_node(call); p->text = "Space"; q = p;
@@ -156,6 +163,7 @@ struct s_node *create(void) {
 
     /* int Sum ← Space a:Additive → a */
     p = new_node(expr); p->text = "a"; q = p;
+    p = new_node(call); p->text = "End"; p->next = q; q = p;
     p = new_node(call); p->text = "Additive"; t = p;
     p = new_node(bind); p->text = "a"; p->first = t; p->next = q; q = p;
     p = new_node(call); p->text = "Space"; p->next = q; q = p;
