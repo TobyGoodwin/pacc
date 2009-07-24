@@ -248,4 +248,16 @@ Now, the only possible hitch here is that we now need a s_node of type
 them with char *text? Or have some kinda "number" s_type, that we can
 hang off "rep", like "call"s hang off "bind"s?
 
+2009-07-24
+----------
+
+Well, repetitions work as advertised. However, I believe that although
+the direct implementation is very straightforward, we must in fact
+desugar repetitions into alts and seqs. If not, we risk the parser
+becoming non-linear. (I need to cook up a test case which does in fact
+show non-linearity here.) Basically the point is that only an entire
+rule is memoized; if repetitions don't utilize rules, they are not
+memoized. I'm inclined to leave the working repetition code for the time
+being, though.
+
 
