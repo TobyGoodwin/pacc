@@ -5,7 +5,7 @@ enum s_type {
     expr, bind,		/* expressions */
     guard, ident,	/* semantic predicate */
     call, lit, any,	/* matchers */
-    opt, rep0, rep1,	/* sugar */
+    rep, 		/* sugar */
     s_type_max
 };
 
@@ -15,6 +15,7 @@ struct s_node {
     struct s_node *first, *last; /* children */
     struct s_node *next; /* sibling */
     char *text;
+    int number;
 };
 
 /* building trees */

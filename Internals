@@ -229,3 +229,35 @@ you could instead say this::
 
 This is a really groovy idea, but we almost certainly do need at least
 the characters ?*+.(){}/<>-"!: which doesn't leave many. Darn.
+
+2009-07-07
+----------
+
+Repetition: star, plus, query. I'm minded to implement a generic
+repetition operator, that matches any number of reps between a given min
+and max (with max = 0 implying infinity). Thus query is rep(0,1), plus
+is rep(1,0), and star is rep(0,0). (Interesting that this covers 3 out
+of four quadrants: the fourth - rep(1,1) - is simply a normal match.)
+
+This would also allow rep(2,3), for instance, although we currently
+don't have a syntax for that. Errm, I guess "x @ 2 3" would do at least
+as a straw man.
+
+Now, the only possible hitch here is that we now need a s_node of type
+"rep" to hold two integers. Do we just add them into struct? Or union
+them with char *text? Or have some kinda "number" s_type, that we can
+hang off "rep", like "call"s hang off "bind"s?
+
+2009-07-24
+----------
+
+Well, repetitions work as advertised. However, I believe that although
+the direct implementation is very straightforward, we must in fact
+desugar repetitions into alts and seqs. If not, we risk the parser
+becoming non-linear. (I need to cook up a test case which does in fact
+show non-linearity here.) Basically the point is that only an entire
+rule is memoized; if repetitions don't utilize rules, they are not
+memoized. I'm inclined to leave the working repetition code for the time
+being, though.
+
+

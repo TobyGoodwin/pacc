@@ -72,10 +72,48 @@ check 5+x ''
 check 6+x ''
 check 5.+ ''
 
-build mk-val2
-check 5 5
-check 6 6
-check x ''
+build mk-and0
+check ab a
+check ac ''
+
+build mk-not0
+check a a
+check ac a
+check ab ''
+
+build mk-not1
+check f ''
+check fo ''
+check foo yes
+check food ''
+
+build mk-rep0
+check xx xx
+check xyx xyx
+check xyyx xyyx
+check xyyyx xyyyx
+check xyyyyyyyyyyx xyyyyyyyyyyx
+
+build mk-rep1
+check xx ''
+check xyx xyx
+check xyyx xyyx
+check xyyyx xyyyx
+check xyyyyyyyyyyx xyyyyyyyyyyx
+
+build mk-rep2
+check xx xx
+check xyx xyx
+check xyyx ''
+check xyyyx ''
+check xyyyyyyyyyyx ''
+
+# This test needs to do something more clever with the results,
+# otherwise we're not really proving that we're doing nested reps.
+build mk-rep3
+check a a
+check 'a b' 'a b'
+check 'a  b' 'a  b'
 
 build mk-guard0
 check 5 5
