@@ -26,6 +26,7 @@ extern void s_resolve(struct s_node *, struct s_node *);
 
 extern struct s_node *mkalt(struct s_node *);
 extern struct s_node *mkcall(char *);
+extern struct s_node *mklit(char *);
 extern struct s_node *mkrule(char *, struct s_node *);
 extern struct s_node *mkseq(struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);

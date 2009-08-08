@@ -36,6 +36,14 @@ struct s_node *mkcall(char *name) {
     return r;
 }
 
+struct s_node *mklit(char *t) {
+    struct s_node *r;
+    r = s_new(lit);
+    if (!r) nomem();
+    r->text = t;
+    return r;
+}
+
 struct s_node *mkrule(char *name, struct s_node *what) {
     struct s_node *r;
     r = s_new(rule);
