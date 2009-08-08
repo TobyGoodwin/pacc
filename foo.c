@@ -172,7 +172,7 @@ int pparse(char *str) {
 	matrix[i].status = uncomputed;
 
     printf("%d\n", parse());
-    matrix_dump();
+    //matrix_dump();
     return 0;
 }
 

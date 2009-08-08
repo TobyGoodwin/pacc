@@ -20,6 +20,14 @@ struct s_node *s_new(enum s_type t) {
     return n;
 }
 
+struct s_node *mkalt(struct s_node *l) {
+    struct s_node *r;
+    r = s_new(alt);
+    if (!r) nomem();
+    r->first = l;
+    return r;
+}
+
 struct s_node *mkcall(char *name) {
     struct s_node *r;
     r = s_new(call);
@@ -34,6 +42,14 @@ struct s_node *mkrule(char *name, struct s_node *what) {
     if (!r) nomem();
     r->text = name;
     r->first = what;
+    return r;
+}
+
+struct s_node *mkseq(struct s_node *l) {
+    struct s_node *r;
+    r = s_new(seq);
+    if (!r) nomem();
+    r->first = l;
     return r;
 }
 
