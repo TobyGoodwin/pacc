@@ -260,4 +260,43 @@ rule is memoized; if repetitions don't utilize rules, they are not
 memoized. I'm inclined to leave the working repetition code for the time
 being, though.
 
+2009-09-17
+----------
 
+OK, so there's been a bit of a hiatus, but now I'm back on the case. The
+file paccman.c contains code to build, manually, a tree that will
+represent a parser for PEG itself. This needs to be copied to mktree.c
+(and there is also a slightly customised foo.c to go with it for now).
+
+Call the (fully-featured) language that pacc will understand tPEG. Call
+a simplified version of this sPEG. Then the code in paccman.c builds a
+parser for sPEG. 
+
+We will also need a definition of tPEG written in sPEG. This will be
+called, say, pacc.pacc. The parser built by paccman.c will read
+pacc.pacc, and build a parser for tPEG.
+
+What, if any, are the differences between sPEG and tPEG? Obvious
+candidates include constructs that will eventually be desugared, such as
+repetitions. And where there are alternate syntaxes, for example "←" or
+"<-", sPEG need only support one alternative. And sPEG need not
+understand defaults, such as default types, nor comments.
+
+So it's going to be useful actually to *define* sPEG and tPEG. OK.
+
+There's some other stuff going on too. In syntax.c we are starting to
+acquire tree builders (with unsatisfactory names like mkcall(); would
+not s_new_call() or s_call() do as well, if not better?). These are
+necessary because we have semantic *expressions*, not actions, in pacc.
+So for example, the matcher that calls another rule definition is
+expressed like this.
+
+    struct s_node *SeqRule ← i:Identifier { mkcall(i) }
+
+Thing is, these tree builders are mighty useful. We ought to use them in
+paccman.c itself. In fact, we ought to rewrite *all* the examples and
+test cases we have so far to utilize the tree builders.
+
+Or maybe not. After all, they need to be convenient to express trees as
+built by pacc, not manually. Let's get the parser going first, then see
+if we want to rewrite anything!
