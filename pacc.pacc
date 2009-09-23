@@ -1,0 +1,100 @@
+{
+
+#include "syntax.h"
+
+}
+
+Grammar :: struct s_node *
+    ← _ p:Preamble ds:Defns { s_grammar(p, ds) }
+
+Preamble
+    ← r:RawCode _ → r
+
+Defns
+    ← d:Defn ds:Defns { cons(d, ds) }
+    / ε { 0 }
+
+Defn
+    ← n:Name t:TypeOptional lArrow r:Rule _ { s_rule(n, t, r) }
+
+Rule
+    ← s:SeqRule Slash r:Rule { rule_cons(s, r) }
+    / s:SeqRule → s
+
+SeqRule
+    ← s:Sequence → s
+    / u:UnaryRule → u
+
+UnaryRule
+    ← p:PrimRule Query { s_query(p) }
+    / p:PrimRule Star { s_star(p) }
+    / p:PrimRule Plus { s_plus(p) }
+    / p:PrimRule → p
+
+PrimRule
+    ← n:Name { s_call(n) }
+    / l:Literal { s_lit(l) }
+    / lParen r:Rule rParen → r
+
+Sequence
+    ← m:Matchers rArrow? r:Result { s_seq(snoc(m, r)) }
+
+Matchers
+    ← m:Matcher ms:Matchers { cons(m, ms) }
+    / ε { 0 }
+
+Matcher
+    ← n:Name Colon u:UnaryRule { s_bind(n, u) }
+    / And u:UnaryRule { s_and(u) }
+    / Not u:UnaryRule { s_not(u) }
+    / And r:RawCode { s_guard(r) }
+    / u:UnaryRule → u
+
+Result
+    ← n:Name → s_expr(n)
+    / r:RawCode → s_expr(r)
+
+Name :: char *
+    ← NameStart NameCont* { match() } _
+
+RawCode
+    ← "{" (c:Char &{ *c /= 0x7d)* } "}" { match() } _
+
+TypeOptional
+    ← "::" _ TypeElement+ { stash_type(match()) }
+    / ε { stashed_type() }
+
+Char ← . { match() }
+
+StringLit ← "\"" q:QuotedChars "\"" _ → q
+
+QuotedChars ← (!"\"" QuotedChar)* { match() }
+
+QuotedChar :: void
+    ← "\\n" / "\\\\" / "\\\"" / !"\\" Char
+
+NameStart
+    ← c:Char &{ isalpha(*c) || *c == '_' }
+
+NameCont
+    ← c:Char &{ isalnum(*c) || c == '_' }
+
+TypeElement
+    ← Name _ / "*" _
+
+Comment
+    ← "#" (c:Char &{ *c /= '\n' })* "\n"
+
+_
+    ← (" " / "\n" / Comment) *
+
+And ← "&" _
+lArrow  ← ("←" / "<-") _
+rArrow  ← ("→" / "->") _
+Not ← "!" _
+lParen ← "(" _
+rParen ← ")" _
+Plus ← "+" _
+Query ← "?" _
+Slash ← "/" _
+Star ← "*" _
