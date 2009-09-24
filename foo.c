@@ -53,7 +53,7 @@ struct intermed {
     enum status status;
     union yy_union value; /* semantic value XXX needs to use g_name */
     int remainder; /* unparsed string */
-    struct thunkrule thrs[20]; /* XXX */
+    struct thunkrule thrs[40]; /* XXX */
     int thrs_ptr;
 };
 
@@ -68,14 +68,21 @@ static void pusheval(int t, enum thr type) {
 
 static struct intermed *matrix;
 
-static struct intermed *m_stack[25];
+#define M_STACK_BODGE 25
+static struct intermed *m_stack[M_STACK_BODGE];
 static int m_ptr = 0;
-static void pushm(struct intermed *i) { m_stack[m_ptr++] = i; }
+static void pushm(struct intermed *i) {
+    if (m_ptr == M_STACK_BODGE) { printf("out of m stack space\n"); exit(0); }
+    m_stack[m_ptr++] = i;
+}
 static struct intermed *popm(void) { return m_stack[--m_ptr]; }
 
-static struct intermed *m2_stack[25];
+static struct intermed *m2_stack[M_STACK_BODGE];
 static int m2_ptr = 0;
-static void pushm2(struct intermed *i) { m2_stack[m2_ptr++] = i; }
+static void pushm2(struct intermed *i) {
+    if (m2_ptr == M_STACK_BODGE) { printf("out of m2 stack space\n"); exit(0); }
+    m2_stack[m2_ptr++] = i;
+}
 static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
 
 static int input_length;

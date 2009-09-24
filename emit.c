@@ -70,13 +70,21 @@ static void grammar_post(struct s_node *n) {
 
 
 static void literal(struct s_node *n) {
-    char *esc;
+    char *p;
     int l;
 
     l = strlen(n->text);
     printf("printf(\"lit %d @ col %%d => \", col);\n", n->id);
     printf("if (col + %d <= input_length &&\n", l);
-    printf("        strncmp(\"%s\", string + col, %d) == 0) {\n", n->text, l);
+    printf("        strncmp(\"");
+    for (p = n->text; *p; ++p)
+	switch (*p) {
+	    case '\"': case '\\':
+		printf("\\%c", *p); break;
+	    case '\n': printf("\\n"); break;
+	    default: printf("%c", *p); break;
+	}
+    printf("\", string + col, %d) == 0) {\n", l);
     printf("    status = parsed;\n");
     printf("    col += %d;\n", l);
     printf("    printf(\"yes (col=%%d)\\n\", col);\n");
@@ -246,6 +254,7 @@ static void guard_pre(struct s_node *n) {
     int i;
     struct s_node *p;
 
+    printf("printf(\"r%d @ c%%d: guard %d?\\n\", col);\n", cur_rule, n->id);
     printf("/* %d: guard_pre() */\n", n->id);
     printf("{\n    struct intermed *guard;\n");
     for (p = n->first; p; p = p->next) {
@@ -283,6 +292,7 @@ printf("/* i is %d */\n", i);
 /* obviously, the tricky part of a guard is the bindings! */
 static void guard_post(struct s_node *n) {
     printf("    status = (%s) ? parsed : no_parse;\n", n->text);
+    printf("printf(\"@ %d, %%d: guard %d => %%s\\n\", col, status == parsed ? \"yes\" : \"no\");\n", cur_rule, n->id);
     printf("}\n");
 }
 

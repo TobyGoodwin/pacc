@@ -5,10 +5,7 @@
 }
 
 Grammar :: struct s_node *
-    ← _ p:Preamble ds:Defns { s_grammar(p, ds) }
-
-Preamble
-    ← r:RawCode _ → r
+    ← _ p:Preamble ds:Defns End { s_grammar(p, ds) }
 
 Defns
     ← d:Defn ds:Defns { cons(d, ds) }
@@ -18,7 +15,7 @@ Defn
     ← n:Name t:TypeOptional lArrow r:Rule _ { s_rule(n, t, r) }
 
 Rule
-    ← s:SeqRule Slash r:Rule { rule_cons(s, r) }
+    ← s:SeqRule Slash r:Rule { s_rule_cons(s, r) }
     / s:SeqRule → s
 
 SeqRule
@@ -33,7 +30,7 @@ UnaryRule
 
 PrimRule
     ← n:Name { s_call(n) }
-    / l:Literal { s_lit(l) }
+    / l:StringLit { s_lit(l) }
     / lParen r:Rule rParen → r
 
 Sequence
@@ -57,12 +54,16 @@ Result
 Name :: char *
     ← NameStart NameCont* { match() } _
 
+Preamble
+    ← r:RawCode _ → r
+    / ε { 0 }
+
 RawCode
-    ← "{" (c:Char &{ *c /= 0x7d)* } "}" { match() } _
+    ← "{" (c:Char &{ *c != 0x7d)* } "}" { match() } _
 
 TypeOptional
-    ← "::" _ TypeElement+ { stash_type(match()) }
-    / ε { stashed_type() }
+    ← "::" _ TypeElement+ { s_stash_type(match()) }
+    / ε { s_stashed_type() }
 
 Char ← . { match() }
 
@@ -98,3 +99,5 @@ Plus ← "+" _
 Query ← "?" _
 Slash ← "/" _
 Star ← "*" _
+
+End ← !.

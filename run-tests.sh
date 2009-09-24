@@ -154,6 +154,11 @@ check q. q
 check q3. q3
 check 37 ''
 
+build mk-guard6
+check '{}' '{}'
+check '{ any chars here }' '{ any chars here }'
+check '{ no' ''
+
 build mk-type0
 check 5 five
 

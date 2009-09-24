@@ -20,6 +20,72 @@ struct s_node *s_new(enum s_type t) {
     return n;
 }
 
+struct s_node *s_grammar(char *preamble, struct s_node *defns) {
+    struct s_node *r = s_new(grammar);
+    r->text = preamble;
+    r->first = defns;
+    return r;
+}
+
+struct s_node *s_rule(void) {
+    return 0;
+}
+
+struct s_node *s_rule_cons(void) {
+    return 0;
+}
+
+struct s_node *s_query(void) {
+    return 0;
+}
+
+struct s_node *s_star(void) {
+    return 0;
+}
+
+struct s_node *s_plus(void) {
+    return 0;
+}
+
+struct s_node *s_call(void) {
+    return 0;
+}
+
+struct s_node *s_lit(void) {
+    return 0;
+}
+
+struct s_node *s_bind(void) {
+    return 0;
+}
+
+struct s_node *s_and(void) {
+    return 0;
+}
+
+struct s_node *s_not(void) {
+    return 0;
+}
+
+struct s_node *s_guard(void) {
+    return 0;
+}
+
+struct s_node *s_expr(void) {
+    return 0;
+}
+
+static char *t;
+
+char *s_stash_type(char *type) {
+    t = type;
+    return type;
+}
+
+char *s_stashed_type(void) {
+    return t;
+}
+
 struct s_node *mkalt(struct s_node *l) {
     struct s_node *r;
     r = s_new(alt);

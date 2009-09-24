@@ -12,6 +12,15 @@ struct s_node *create(void) {
     */
 
     /*
+	End ← !.
+    */
+
+    p = new_node(any); q = p;
+    p = new_node(not); p->first = q; q = p;
+    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(rule); p->text = "End"; p->first = q; r = p;
+
+    /*
 	Star  ← "*" _
     */
 
@@ -22,7 +31,7 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "Star"; p->first = q; p->next = r; r = p;
 
     /*
-	Query  ← "?" _
+	Query ← "?" _
     */
 
     p = s_new(call); p->text = "_"; q = p;
@@ -197,11 +206,12 @@ struct s_node *create(void) {
 	QuotedChars ← (!"\"" QuotedChar)* { match() }
     */
 
-    p = s_new(expr); p->text = "match()"; q = p;
-    p = s_new(call); p->text = "QuotedChar"; t = p;
-    p = s_new(lit); p->text = "\""; q = p;
-    p = s_new(not); p->first = q; p->next = t; t = p;
-    p = s_new(rep); p->number = 0; p->first = t; p->next = q; q = p;
+    p = s_new(expr); p->text = "match()"; t = p;
+    p = s_new(call); p->text = "QuotedChar"; q = p;
+    p = s_new(lit); p->text = "\""; s = p;
+    p = s_new(not); p->first = s; p->next = q; q = p;
+    p = s_new(seq); p->first = q; q = p;
+    p = s_new(rep); p->number = 0; p->first = q; p->next = t; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "QuotedChars"; p->first = q; p->next = r; r = p;
@@ -230,13 +240,13 @@ struct s_node *create(void) {
 
     /*
 	TypeOptional
-	    ← "::" _ TypeElement+ { stash_type(match()) }
-	    / ε { stashed_type() }
+	    ← "::" _ TypeElement+ { s_stash_type(match()) }
+	    / ε { s_stashed_type() }
     */
-    p = s_new(expr); p->text = "stashed_type()"; q = p;
+    p = s_new(expr); p->text = "s_stashed_type()"; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(expr); p->text = "stash_type(match())"; q = p;
+    p = s_new(expr); p->text = "s_stash_type(match())"; q = p;
     p = s_new(call); p->text = "TypeElement"; s = p;
     p = s_new(rep); p->number = 0x10000; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "_"; p->next = q; s = p;
@@ -249,21 +259,41 @@ struct s_node *create(void) {
 
     /*
 	RawCode
-	    ← "{" c:Char &{ *c /= 0x7d } "}" { match() } _
+	    ← "{" c:Char &{ *c != 0x7d } "}" { match() } _
     */
 
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(expr); p->text = "match()"; p->next = q; q = p;
     p = s_new(lit); p->text = "}"; p->next = q; t = p;
     p = s_new(ident); p->text = "c"; s = p;
-    p = s_new(guard); p->text = "*c /= 0x7d"; p->first = s; q = p;
+    p = s_new(guard); p->text = "*c != 0x7d"; p->first = s; q = p;
     p = s_new(call); p->text = "Char"; s = p;
     p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
+    p = s_new(seq); p->first = q; q = p;
     p = s_new(rep); p->number = 0; p->first = q; p->next = t; q = p;
     p = s_new(lit); p->text = "{"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "RawCode"; p->first = q; p->next = r; r = p;
+
+    /*
+	Preamble
+	    ← r:RawCode _ → r
+	    / ε { 0 }
+    */
+
+    p = s_new(expr); p->text = "0"; q = p;
+    p = s_new(seq); p->first = q; t = p;
+
+    p = s_new(expr); p->text = "r"; q = p;
+    p = s_new(call); p->text = "_"; p->next = q; q = p;
+    p = s_new(call); p->text = "RawCode"; s = p;
+    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
+    p = s_new(seq); p->first = q; p->next = t; t = p;
+
+    p = s_new(alt); p->first = t; q = p;
+    p = s_new(type); p->text = "char *"; p->next = q; q = p;
+    p = s_new(rule); p->text = "Preamble"; p->first = q; p->next = r; r = p;
 
     /*
 	Name :: char *
@@ -379,7 +409,7 @@ struct s_node *create(void) {
     /*
 	PrimRule
 	    ← n:Name { s_call(n) }
-	    / l:Literal { s_lit(l) }
+	    / l:StringLit { s_lit(l) }
 	    / lParen r:Rule rParen → r
     */
     p = s_new(expr); p->text="r"; q = p;
@@ -457,7 +487,7 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "SeqRule"; p->first = q; p->next = r; r = p;
 
     /* Rule
-	← s:SeqRule Slash r:Rule { rule_cons(s, r) }
+	← s:SeqRule Slash r:Rule { s_rule_cons(s, r) }
 	/ s:SeqRule → s
     */
     p = s_new(expr); p->text="s"; q = p;
@@ -465,7 +495,7 @@ struct s_node *create(void) {
     p = s_new(bind); p->text = "s"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(expr); p->text="rule_cons(s, r)"; q = p;
+    p = s_new(expr); p->text="s_rule_cons(s, r)"; q = p;
     p = s_new(call); p->text = "Rule"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Slash"; s = p;
@@ -507,17 +537,12 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Defns"; p->first = q; p->next = r; r = p;
 
-    /* Preamble ← r:RawCode _ → r */
-    p = s_new(expr); p->text = "r"; q = p;
-    p = s_new(call); p->text = "_"; p->next = q; q = p;
-    p = s_new(call); p->text = "RawCode"; s = p;
-    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "Preamble"; p->first = q; p->next = r; r = p;
-
-    /* Grammar :: struct s_node * ← _ p:Preamble ds:Defns { s_grammar(p, ds) } */
+    /*
+	Grammar :: struct s_node *
+	    ← _ p:Preamble ds:Defns End { s_grammar(p, ds) }
+    */
     p = s_new(expr); p->text = "s_grammar(p, ds)"; q = p;
+    p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "Defns"; s = p;
     p = s_new(bind); p->text = "ds"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Preamble"; s = p;
@@ -526,6 +551,14 @@ struct s_node *create(void) {
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
+
+    /* start anywhere... */
+    p = s_new(expr); p->text = "match()"; q = p;
+    p = s_new(call); p->text = "End"; p->next = q; q = p;
+    p = s_new(call); p->text = "Matcher"; p->next = q; q = p;
+    p = s_new(seq); p->first = q; q = p;
+    p = s_new(type); p->text = "char *"; p->next = q; q = p;
+    p = s_new(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
 
     p = s_new(grammar); p->text = "yy"; p->first = r;
 
