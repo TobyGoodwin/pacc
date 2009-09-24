@@ -72,6 +72,10 @@ check 5+x ''
 check 6+x ''
 check 5.+ ''
 
+build mk-lit0
+check foo foo
+check bar ''
+
 build mk-and0
 check ab a
 check ac ''

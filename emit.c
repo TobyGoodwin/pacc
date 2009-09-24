@@ -69,19 +69,16 @@ static void grammar_post(struct s_node *n) {
 }
 
 
-/* literal() currently matches just a single character */
 static void literal(struct s_node *n) {
     char *esc;
-    switch (n->text[0]) {
-	case '\"': esc = "\\\""; break;
-	case '\\': esc = "\\\\"; break;
-	case '\n': esc = "\\n"; break;
-	default: esc = n->text;
-    }
-    printf("printf(\"%%c == %s? \", string[col]);\n", esc);
-    printf("if (col < input_length && string[col] == '%s') {\n", esc);
+    int l;
+
+    l = strlen(n->text);
+    printf("printf(\"lit %d @ col %%d => \", col);\n", n->id);
+    printf("if (col + %d <= input_length &&\n", l);
+    printf("        strncmp(\"%s\", string + col, %d) == 0) {\n", n->text, l);
     printf("    status = parsed;\n");
-    printf("    ++col;\n");
+    printf("    col += %d;\n", l);
     printf("    printf(\"yes (col=%%d)\\n\", col);\n");
     printf("} else {\n");
     printf("    status = no_parse;\n");
