@@ -553,11 +553,12 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
 
     /* start anywhere... */
-    p = s_new(expr); p->text = "match()"; q = p;
+    p = s_new(expr); p->text = "r"; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
-    p = s_new(call); p->text = "Matcher"; p->next = q; q = p;
+    p = s_new(call); p->text = "PrimRule"; s = p;
+    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "char *"; p->next = q; q = p;
+    p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
 
     p = s_new(grammar); p->text = "yy"; p->first = r;

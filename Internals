@@ -300,3 +300,27 @@ test cases we have so far to utilize the tree builders.
 Or maybe not. After all, they need to be convenient to express trees as
 built by pacc, not manually. Let's get the parser going first, then see
 if we want to rewrite anything!
+
+2009-09-30
+----------
+
+Major progress on the parser, but I've run into a tricky problem with
+bind / guard. When a name is bound, bind_pre() calls pushcol() to record
+the column where it will be bound. Then emit_expr() popcol()s each
+column from col_stack to do the actual binding. Note that emit_expr()
+assumes that all names in scope will be bound.
+
+Guards, on the other hand, declare which identifiers they will bind, and
+guard_pre() uses this information to bind only those, *without* calling
+popcol(). It finds the appropriate column from the thrs stack. Needless
+to say, this means that there are more pushes than pops of the
+col_stack, and hilarity ensues.
+
+Obviously the right fix is to make exprs follow guards, and declare
+which identifiers they need bound. (Apart from anything else, what
+happens if you have two exprs in a seq?)
+
+This is easy enough to do, but the hard part is that almost every test
+case, and certainly every rule in paccman.c will need to be rewritten.
+So, just for a temporary workaround, I've made guard_pre() call popcol()
+once for each binding.

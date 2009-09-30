@@ -33,8 +33,14 @@ printf("copy(%d, %d)\n", from, to);
 
 static int col_stack[25];
 static int col_ptr = 0;
-static void pushcol(int c) { printf("push(%d) -> col_stack[%d]\n", c, col_ptr); col_stack[col_ptr++] = c; }
-static int popcol(void) { return col_stack[--col_ptr]; }
+static void pushcol(int c) {
+    printf("push(%d) -> col_stack[%d]\n", c, col_ptr);
+    col_stack[col_ptr++] = c;
+}
+static int popcol(void) {
+    printf("pop() col_stack[%d] -> %d\n", col_ptr - 1, col_stack[col_ptr - 1]);
+    return col_stack[--col_ptr];
+}
 
 /* a "thr" is a thunk or a rule/column pair */
 enum thr { thr_thunk = 71, thr_rule, thr_col };
@@ -133,7 +139,7 @@ static int parse(void) {
 
     if (matrix->status == evaluated) {
 	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	//s_dump(matrix->value.u0);
+	s_dump(matrix->value.u0);
     } else if (matrix->status == parsed) {
 	printf("parsed with void value\n");
     } else printf("not parsed\n");

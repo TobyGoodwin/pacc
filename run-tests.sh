@@ -209,3 +209,6 @@ baf_tests3() {
 
 build mk-baf3
 baf_tests3
+
+build mk-regress0
+check 'fred' 'fred'

@@ -47,8 +47,11 @@ struct s_node *s_plus(void) {
     return 0;
 }
 
-struct s_node *s_call(void) {
-    return 0;
+struct s_node *s_call(char *n) {
+    struct s_node *r = s_new(call);
+    r->text = n;
+    printf("s_call(\"%s\")\n", n);
+    return r;
 }
 
 struct s_node *s_lit(void) {

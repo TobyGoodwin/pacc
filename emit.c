@@ -270,6 +270,7 @@ printf("/* i is %d */\n", i);
     printf("/* rule id is %d */\n", p->id);
     printf("/* type is %s */\n", q->first->text);
 	printf("    %s %s;\n", q->first->text, n_stack[i]);
+	printf("popcol();\n"); /* XXX: bind shouldn't actually pushcol()! */
     }
     printf("    guard = cur; pushm(cur); evaluating = 1;\n");
     for (p = n->first; p; p = p->next) {
