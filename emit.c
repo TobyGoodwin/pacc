@@ -202,6 +202,56 @@ static void bind_post(struct s_node *n) {
     printf("/* end bind: %s */\n", n->text);
 }
 
+static void declarations(struct s_node *n) {
+    int i;
+    struct s_node *p;
+
+    for (p = n->first; p; p = p->next) {
+	struct s_node *q;
+	int j;
+	for (i = 0; i < n_ptr; ++i)
+	    if (strcmp(n_stack[i], p->text) == 0) break;
+	if (i == n_ptr) continue;
+printf("/* i is %d */\n", i);
+	q = g_node->first;
+	for (j = 0; j < i_stack[i]; ++j)
+	    q = q->next;
+    printf("/* rule id is %d */\n", p->id);
+    printf("/* type is %s */\n", q->first->text);
+	printf("    %s %s;\n", q->first->text, n_stack[i]);
+    }
+}
+
+static void bindings(struct s_node *n) {
+    int i;
+    struct s_node *p;
+
+    for (p = n->first; p; p = p->next) {
+	for (i = 0; i < n_ptr; ++i)
+	    if (strcmp(n_stack[i], p->text) == 0) break;
+	if (i == n_ptr) continue;
+	printf("    printf(\"bind %s at rule %d, col %%d\\n\", guard->thrs[guard->thrs_ptr - %d].x);\n", p->text, i_stack[i], 2 * n_ptr - 2 * i - 1);
+	printf("    cur = matrix + guard->thrs[guard->thrs_ptr - %d].x * n_rules + %d;\n", 2 * n_ptr - 2 * i - 1, i_stack[i]);
+	printf("    if (cur->status != evaluated) {\n");
+	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
+	printf("	_pacc_i = 0; goto eval_loop;\n");
+	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
+	printf("    }\n");
+	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
+	printf("printf(\"stash %%d to %s\\n\", %s);\n", p->text, p->text);
+    }
+}
+
+static void emit_expr(struct s_node *n) {
+    printf("printf(\"%%d: emit_expr()\\n\", %d);\n", n->id);
+    printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
+    printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
+    printf("    cur->status = evaluated;\n");
+    printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
+    printf("    goto eval_loop;\n");
+}
+
+#if 0
 static void emit_expr(struct s_node *n) {
     int i;
 
@@ -249,6 +299,7 @@ static void emit_expr(struct s_node *n) {
     printf("    goto eval_loop;\n");
     printf("}\n");
 }
+#endif
 
 static void guard_pre(struct s_node *n) {
     int i;
@@ -257,36 +308,9 @@ static void guard_pre(struct s_node *n) {
     printf("printf(\"r%d @ c%%d: guard %d?\\n\", col);\n", cur_rule, n->id);
     printf("/* %d: guard_pre() */\n", n->id);
     printf("{\n    struct intermed *guard;\n");
-    for (p = n->first; p; p = p->next) {
-	struct s_node *q;
-	int j;
-	for (i = 0; i < n_ptr; ++i)
-	    if (strcmp(n_stack[i], p->text) == 0) break;
-	if (i == n_ptr) continue;
-printf("/* i is %d */\n", i);
-	q = g_node->first;
-	for (j = 0; j < i_stack[i]; ++j)
-	    q = q->next;
-    printf("/* rule id is %d */\n", p->id);
-    printf("/* type is %s */\n", q->first->text);
-	printf("    %s %s;\n", q->first->text, n_stack[i]);
-	printf("popcol();\n"); /* XXX: bind shouldn't actually pushcol()! */
-    }
+    declarations(n);
     printf("    guard = cur; pushm(cur); evaluating = 1;\n");
-    for (p = n->first; p; p = p->next) {
-	for (i = 0; i < n_ptr; ++i)
-	    if (strcmp(n_stack[i], p->text) == 0) break;
-	if (i == n_ptr) continue;
-	printf("    printf(\"bind %s at rule %d, col %%d\\n\", guard->thrs[guard->thrs_ptr - %d].x);\n", p->text, i_stack[i], 2 * n_ptr - 2 * i - 1);
-	printf("    cur = matrix + guard->thrs[guard->thrs_ptr - %d].x * n_rules + %d;\n", 2 * n_ptr - 2 * i - 1, i_stack[i]);
-	printf("    if (cur->status != evaluated) {\n");
-	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
-	printf("	_pacc_i = 0; goto eval_loop;\n");
-	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
-	printf("    }\n");
-	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
-	printf("printf(\"stash %%d to %s\\n\", %s);\n", p->text, p->text);
-    }
+    bindings(n);
     printf("    cur = popm(); evaluating = 0;\n");
 }
 

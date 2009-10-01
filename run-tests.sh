@@ -72,9 +72,10 @@ check 5+x ''
 check 6+x ''
 check 5.+ ''
 
-build mk-lit0
-check foo foo
-check bar ''
+# missing from git repo
+#build mk-lit0
+#check foo foo
+#check bar ''
 
 build mk-and0
 check ab a
@@ -128,25 +129,29 @@ check 5 5
 check 6 ''
 
 build mk-guard2
+check 5 5
+check 6 ''
+
+build mk-guard3
 check 55 5
 check 66 6
 check 56 ''
 check 65 ''
 check xy ''
 
-build mk-guard3
+build mk-guard4
 check a a
 check q q
 check z z
 check A ''
 check '%' ''
 
-build mk-guard4
+build mk-guard5
 check a9 9
 check z3 3
 check zx ''
 
-build mk-guard5
+build mk-guard6
 check q q
 check qux qux
 check q39a q39a
@@ -154,7 +159,7 @@ check q. q
 check q3. q3
 check 37 ''
 
-build mk-guard6
+build mk-guard7
 check '{}' '{}'
 check '{ any chars here }' '{ any chars here }'
 check '{ no' ''

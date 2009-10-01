@@ -113,6 +113,7 @@ static int parse(void) {
 	_pacc_i = 0;
 	cur = matrix;
     eval_loop:
+	printf("eval loop with _pacc_i == %d\n", _pacc_i);
 	if (_pacc_i < cur->thrs_ptr) {
 	    if (cur->thrs[_pacc_i].discrim == thr_rule) {
 		int col, rule;
@@ -134,12 +135,13 @@ static int parse(void) {
 	    _pacc_i = popcont(); cur = popm2();
 	    goto eval_loop;
 	}
+	printf("eval finished\n");
 	goto contin;
     }
 
     if (matrix->status == evaluated) {
 	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	s_dump(matrix->value.u0);
+	//s_dump(matrix->value.u0);
     } else if (matrix->status == parsed) {
 	printf("parsed with void value\n");
     } else printf("not parsed\n");
@@ -187,7 +189,7 @@ int pparse(char *str) {
 	matrix[i].status = uncomputed;
 
     printf("%d\n", parse());
-    //matrix_dump();
+    matrix_dump();
     return 0;
 }
 
