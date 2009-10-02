@@ -61,6 +61,7 @@ struct intermed {
     int remainder; /* unparsed string */
     struct thunkrule thrs[40]; /* XXX */
     int thrs_ptr;
+    int rule, col; /* XXX: redundant, but handy for debugging */
 };
 
 static struct intermed *cur;
@@ -119,6 +120,7 @@ static int parse(void) {
 		int col, rule;
 		rule = cur->thrs[_pacc_i].x; ++_pacc_i;
 		col = cur->thrs[_pacc_i].x; ++_pacc_i;
+printf("eval loop: r%d @ c%d\n", rule, col);
 		pushm2(cur); pushcont(_pacc_i);
 		cur = matrix + col * n_rules + rule;
 		_pacc_i = 0;
@@ -180,13 +182,17 @@ static void matrix_dump(void) {
 }
 
 int pparse(char *str) {
-    int i, matrix_size;
+    int i, j, matrix_size;
     string = str;
     input_length = strlen(string);
     matrix_size = n_rules * (input_length + 1);
     matrix = malloc(sizeof(struct intermed) * matrix_size);
-    for (i = 0; i < matrix_size; ++i)
-	matrix[i].status = uncomputed;
+    for (i = 0; i < n_rules; ++i)
+	for (j = 0; j < input_length + 1; ++j) {
+	    matrix[j * n_rules + i].status = uncomputed;
+	    matrix[j * n_rules + i].rule = i;
+	    matrix[j * n_rules + i].col = j;
+	}
 
     printf("%d\n", parse());
     matrix_dump();

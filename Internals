@@ -324,3 +324,10 @@ This is easy enough to do, but the hard part is that almost every test
 case, and certainly every rule in paccman.c will need to be rewritten.
 So, just for a temporary workaround, I've made guard_pre() call popcol()
 once for each binding.
+
+2009-10-02
+----------
+
+Ugly hacking session, all is confusion. I have a feeling that the
+intermediate results matrix is built funny. I don't really care, since
+it's going away soon, but it doesn't help my head!

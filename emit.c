@@ -230,7 +230,7 @@ static void bindings(struct s_node *n) {
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-	printf("    printf(\"bind %s at rule %d, col %%d\\n\", guard->thrs[guard->thrs_ptr - %d].x);\n", p->text, i_stack[i], 2 * n_ptr - 2 * i - 1);
+	printf("    printf(\"bind %s to r%d @ c%%d\\n\", guard->thrs[guard->thrs_ptr - %d].x);\n", p->text, i_stack[i], 2 * n_ptr - 2 * i - 1);
 	printf("    cur = matrix + guard->thrs[guard->thrs_ptr - %d].x * n_rules + %d;\n", 2 * n_ptr - 2 * i - 1, i_stack[i]);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
@@ -238,17 +238,29 @@ static void bindings(struct s_node *n) {
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
-	printf("printf(\"stash %%d to %s\\n\", %s);\n", p->text, p->text);
+	printf("printf(\"bound %s to r%d @ c%%d ==> %%d\\n\", guard->thrs[guard->thrs_ptr - %d].x, cur->value.u0);\n", p->text, i_stack[i], 2 * n_ptr - 2 * i - 1);
     }
 }
 
 static void emit_expr(struct s_node *n) {
     printf("printf(\"%%d: emit_expr()\\n\", %d);\n", n->id);
+    /* uh, no, we need to push a col for each variable, like decls() and
+     * bindings() do */
+    printf("pusheval(%d, thr_thunk); pusheval(rule_col, thr_col);\n", n->id);
+    //printf("pusheval(col, thr_col);\n");
+    printf("case %d:\n", n->id);
+    printf("if (evaluating) {\n");
+    printf("    struct intermed *guard;\n");
+    declarations(n);
+    printf("    guard = cur; pushm(cur); evaluating = 1;\n");
+    bindings(n);
     printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
     printf("    cur->status = evaluated;\n");
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
+    printf("    cur = popm();\n");
     printf("    goto eval_loop;\n");
+    printf("}\n");
 }
 
 #if 0
@@ -317,7 +329,7 @@ static void guard_pre(struct s_node *n) {
 /* obviously, the tricky part of a guard is the bindings! */
 static void guard_post(struct s_node *n) {
     printf("    status = (%s) ? parsed : no_parse;\n", n->text);
-    printf("printf(\"@ %d, %%d: guard %d => %%s\\n\", col, status == parsed ? \"yes\" : \"no\");\n", cur_rule, n->id);
+    printf("printf(\"r%d @ c%%d: guard %d => %%s\\n\", col, status == parsed ? \"yes\" : \"no\");\n", cur_rule, n->id);
     printf("}\n");
 }
 

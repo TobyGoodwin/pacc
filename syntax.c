@@ -175,7 +175,7 @@ char *decode_type(enum s_type t) {
 
 int s_has_children(enum s_type t) {
     return t == alt || t == and || t == bind || t == rule || t == grammar ||
-	t == guard || t == not || t == rep || t == seq;
+	t == expr || t == guard || t == not || t == rep || t == seq;
 }
 
 int s_has_number(enum s_type t) {

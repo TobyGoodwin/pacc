@@ -22,9 +22,10 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
-    p = new_node(expr); p->text = "a"; s = p;
-    p = new_node(call); p->text = "A"; q = p;
-    p = new_node(bind); p->text = "a"; p->first = q; p->next = s; q = p;
+    p = s_new(ident); p->text = "a"; s = p;
+    p = new_node(expr); p->text = "a"; p->first = s; q = p;
+    p = new_node(call); p->text = "A"; s = p;
+    p = new_node(bind); p->text = "a"; p->first = s; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "P"; p->first = q; p->next = r; r = p;
