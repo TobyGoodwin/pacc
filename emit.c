@@ -122,17 +122,17 @@ static void rule_post(struct s_node *n) {
 
 static void savecol(void) {
     printf("printf(\"save column registers\\n\");\n");
-    printf("pushcont(col); pushcont(col_ptr); pushcont(cur->thrs_ptr);\n");
+    printf("pushcont(col); pushcont(col_ptr); pushcont(bcol_ptr); pushcont(cur->thrs_ptr);\n");
 }
 
 static void restcol(void) {
     printf("printf(\"restore column registers\\n\");\n");
-    printf("cur->thrs_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
+    printf("cur->thrs_ptr = popcont(); bcol_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
 }
 
 static void accept_col(void) {
     printf("printf(\"accept column registers\\n\");\n");
-    printf("popcont(); popcont(); popcont();\n");
+    printf("popcont(); popcont(); popcont(); popcont();\n");
 }
 
 static void seq_pre(struct s_node *n) {
@@ -195,11 +195,32 @@ static void bind_pre(struct s_node *n) {
     bind_rule = lookup_rule[n->first->first->id];
     pushi(bind_rule);
     printf("printf(\"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, bind_rule);
-    printf("pushcol(col);\n");
+    printf("pushbcol(col);\n");
 }
 
 static void bind_post(struct s_node *n) {
     printf("/* end bind: %s */\n", n->text);
+}
+
+static void promises(struct s_node *n) {
+    int i;
+    struct s_node *p;
+
+printf("/* promises() */\n");
+    for (p = n->first; p; p = p->next) {
+	struct s_node *q;
+	int j;
+printf("/* var is %s */\n", p->text);
+	for (i = 0; i < n_ptr; ++i)
+	    fprintf(stderr, "var %s @ pos %d\n", n_stack[i], i);
+	for (i = 0; i < n_ptr; ++i)
+	    if (strcmp(n_stack[i], p->text) == 0) break;
+	if (i == n_ptr) continue;
+printf("/* pos is %d */\n", i);
+	printf("printf(\"promise of %s: pos %d holds col %%d\\n\", bcol_stack[%d]);\n", p->text, i, i);
+	printf("pusheval(bcol_stack[%d], thr_col);\n", i);
+    }
+printf("/* promises() done */\n");
 }
 
 static void declarations(struct s_node *n) {
@@ -247,6 +268,7 @@ static void emit_expr(struct s_node *n) {
     /* uh, no, we need to push a col for each variable, like decls() and
      * bindings() do */
     printf("pusheval(%d, thr_thunk); pusheval(rule_col, thr_col);\n", n->id);
+    promises(n);
     //printf("pusheval(col, thr_col);\n");
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");

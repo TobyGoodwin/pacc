@@ -42,6 +42,18 @@ static int popcol(void) {
     return col_stack[--col_ptr];
 }
 
+/* surely not another stack! this one holds bind columns */
+static int bcol_stack[25];
+static int bcol_ptr = 0;
+static void pushbcol(int c) {
+    printf("push(%d) -> bcol_stack[%d]\n", c, bcol_ptr);
+    bcol_stack[bcol_ptr++] = c;
+}
+static int popbcol(void) {
+    printf("pop() bcol_stack[%d] -> %d\n", bcol_ptr - 1, bcol_stack[bcol_ptr - 1]);
+    return bcol_stack[--bcol_ptr];
+}
+
 /* a "thr" is a thunk or a rule/column pair */
 enum thr { thr_thunk = 71, thr_rule, thr_col };
 struct thunkrule {

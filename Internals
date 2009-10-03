@@ -331,3 +331,27 @@ once for each binding.
 Ugly hacking session, all is confusion. I have a feeling that the
 intermediate results matrix is built funny. I don't really care, since
 it's going away soon, but it doesn't help my head!
+
+2009-10-03
+----------
+
+OK, so the problem is with getting the right column for bindings.
+Suppose we decide that the parse we are working on will need to evaluate
+a thunk, which binds names "a" and "c"... we need to push onto the
+thr_stack the columns at which those names were bound. (Note that we
+must be prepared to undo this if we abandon this parse, but I think
+that's handled fine already by restoring thrs_ptr.)
+
+So, when we see the binding of "a", we need to record the current
+column. This can't simply go straight onto the stack already, because we
+don't know what thunk(s) are coming up, nor yet what names they will
+need. (What about "b", which was bound, but is unused in a given thunk?)
+
+Currently, there is a single list of names encountered and the columns
+at which they occur (oh, well, actually two coupled lists). That might
+work, but we will need to save / restore its pointer along with all the
+others. Hmm... let's have another look.
+
+No, it's hairier than that. What col we are at is dynamic (in the
+parser), whereas what names are bound is static (in the
+parser-generator).
