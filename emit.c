@@ -26,6 +26,8 @@ int i_stack[25];
 int i_ptr = 0;
 static void pushi(int i) { i_stack[i_ptr++] = i; }
 
+int binding = 0;
+
 /* should be temporary - nuke when we have hashing */
 static int *lookup_rule;
 
@@ -194,16 +196,18 @@ static void bind_pre(struct s_node *n) {
     pushn(n->text);
     bind_rule = lookup_rule[n->first->first->id];
     pushi(bind_rule);
+    binding = 1;
     printf("printf(\"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, bind_rule);
     printf("pushbcol(col);\n");
 }
 
 static void bind_post(struct s_node *n) {
+    binding = 0;
     printf("/* end bind: %s */\n", n->text);
 }
 
 static void promises(struct s_node *n) {
-    int i;
+    int i, j, pos;
     struct s_node *p;
 
 printf("/* promises() */\n");
@@ -216,9 +220,15 @@ printf("/* var is %s */\n", p->text);
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-printf("/* pos is %d */\n", i);
-	printf("printf(\"promise of %s: pos %d holds col %%d\\n\", bcol_stack[%d]);\n", p->text, i, i);
-	printf("pusheval(bcol_stack[%d], thr_col);\n", i);
+	pos = 0;
+	printf("_pacc_i = %d + 1;\n", i);
+	printf("for (pos = 0; pos < cur->thrs_ptr; ++pos) {\n");
+	printf("    if (cur->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
+	printf("    if (_pacc_i == 0) break;\n");
+	printf("}\n");
+	printf("++pos;\n");
+	printf("printf(\"promise of %s: pos %%d holds col %%d\\n\", pos, cur->thrs[pos].x);\n", p->text);
+	printf("pusheval(cur->thrs[pos].x, thr_col);\n", i);
     }
 printf("/* promises() done */\n");
 }
@@ -356,7 +366,10 @@ static void guard_post(struct s_node *n) {
 }
 
 static void emit_call(struct s_node *n) {
-    printf("pusheval(%d, thr_rule);\n", lookup_rule[n->first->id]);
+    if (binding)
+	printf("pusheval(%d, thr_bound);\n", lookup_rule[n->first->id]);
+    else
+	printf("pusheval(%d, thr_rule);\n", lookup_rule[n->first->id]);
     printf("pusheval(col, thr_col);\n");
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont); pushm(cur);\n");

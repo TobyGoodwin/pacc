@@ -55,7 +55,7 @@ static int popbcol(void) {
 }
 
 /* a "thr" is a thunk or a rule/column pair */
-enum thr { thr_thunk = 71, thr_rule, thr_col };
+enum thr { thr_thunk = 71, thr_bound, thr_rule, thr_col };
 struct thunkrule {
     enum thr discrim;
     int x;
@@ -116,6 +116,7 @@ static int parse(void) {
     col = 0;
     cont = -1;
     evaluating = 0;
+    int pos;
 
 #include "gen.c"
 
@@ -128,7 +129,8 @@ static int parse(void) {
     eval_loop:
 	printf("eval loop with _pacc_i == %d\n", _pacc_i);
 	if (_pacc_i < cur->thrs_ptr) {
-	    if (cur->thrs[_pacc_i].discrim == thr_rule) {
+	    if (cur->thrs[_pacc_i].discrim == thr_rule ||
+		    cur->thrs[_pacc_i].discrim == thr_bound) {
 		int col, rule;
 		rule = cur->thrs[_pacc_i].x; ++_pacc_i;
 		col = cur->thrs[_pacc_i].x; ++_pacc_i;
