@@ -278,8 +278,8 @@ static void emit_expr(struct s_node *n) {
     /* uh, no, we need to push a col for each variable, like decls() and
      * bindings() do */
     printf("pusheval(%d, thr_thunk); pusheval(rule_col, thr_col);\n", n->id);
+    printf("pusheval(col, thr_col);\n");
     promises(n);
-    //printf("pusheval(col, thr_col);\n");
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
     printf("    struct intermed *guard;\n");
