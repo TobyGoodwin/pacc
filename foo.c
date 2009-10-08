@@ -59,6 +59,7 @@ enum thr { thr_thunk = 71, thr_bound, thr_rule, thr_col };
 struct thunkrule {
     enum thr discrim;
     int x;
+    int col;
 };
 
 enum status {
@@ -78,10 +79,11 @@ struct intermed {
 
 static struct intermed *cur;
 
-static void pusheval(int t, enum thr type) {
-    printf("pusheval(%d, %d) -> thrs[%d]\n", t, type, cur->thrs_ptr);
+static void pusheval(int t, int col, enum thr type) {
+    printf("pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
     cur->thrs[cur->thrs_ptr].discrim = type;
     cur->thrs[cur->thrs_ptr].x = t;
+    cur->thrs[cur->thrs_ptr].col = col;
     ++cur->thrs_ptr;
 }
 
@@ -132,17 +134,18 @@ static int parse(void) {
 	    if (cur->thrs[_pacc_i].discrim == thr_rule ||
 		    cur->thrs[_pacc_i].discrim == thr_bound) {
 		int col, rule;
-		rule = cur->thrs[_pacc_i].x; ++_pacc_i;
-		col = cur->thrs[_pacc_i].x; ++_pacc_i;
+		rule = cur->thrs[_pacc_i].x; col = cur->thrs[_pacc_i].col;
+		++_pacc_i;
 printf("eval loop: r%d @ c%d\n", rule, col);
 		pushm2(cur); pushcont(_pacc_i);
 		cur = matrix + col * n_rules + rule;
 		_pacc_i = 0;
 		goto eval_loop;
 	    } else {
-		st = cur->thrs[_pacc_i++].x;
-		col = cur->thrs[_pacc_i++].x;
-		col_expr = cur->thrs[_pacc_i].x; ++_pacc_i;
+		st = cur->thrs[_pacc_i].x; col = cur->thrs[_pacc_i].col;
+		++_pacc_i;
+		col_expr = cur->thrs[_pacc_i].col;
+		++_pacc_i;
 		goto top;
 	    }
 	    goto eval_loop;

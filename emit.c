@@ -198,7 +198,7 @@ static void bind_pre(struct s_node *n) {
     pushi(bind_rule);
     binding = 1;
     printf("printf(\"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, bind_rule);
-    printf("pushbcol(col);\n");
+    //printf("pushbcol(col);\n");
 }
 
 static void bind_post(struct s_node *n) {
@@ -207,7 +207,7 @@ static void bind_post(struct s_node *n) {
 }
 
 static void promises(struct s_node *n) {
-    int i, j, pos;
+    int i, j;
     struct s_node *p;
 
 printf("/* promises() */\n");
@@ -220,15 +220,12 @@ printf("/* var is %s */\n", p->text);
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-	pos = 0;
 	printf("_pacc_i = %d + 1;\n", i);
 	printf("for (pos = 0; pos < cur->thrs_ptr; ++pos) {\n");
 	printf("    if (cur->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
 	printf("}\n");
-	printf("++pos;\n");
-	printf("printf(\"promise of %s: pos %%d holds col %%d\\n\", pos, cur->thrs[pos].x);\n", p->text);
-	printf("pusheval(cur->thrs[pos].x, thr_col);\n", i);
+	printf("printf(\"promise of %s: pos %%d holds col %%d\\n\", pos, cur->thrs[pos].col);\n", p->text);
     }
 printf("/* promises() done */\n");
 }
@@ -258,6 +255,33 @@ static void bindings(struct s_node *n) {
     struct s_node *p;
 
     for (p = n->first; p; p = p->next) {
+
+	printf("/* binding %s */\n", p->text);
+	for (i = 0; i < n_ptr; ++i)
+	    fprintf(stderr, "var %s @ pos %d\n", n_stack[i], i);
+	for (i = 0; i < n_ptr; ++i)
+	    if (strcmp(n_stack[i], p->text) == 0) break;
+	if (i == n_ptr) continue;
+	printf("pushcont(_pacc_i);\n");
+	printf("_pacc_i = %d + 1;\n", i);
+	printf("for (pos = 0; pos < expr->thrs_ptr; ++pos) {\n");
+	printf("    if (expr->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
+	printf("    if (_pacc_i == 0) break;\n");
+	printf("}\n");
+	printf("printf(\"promise of %s: pos %%d holds col %%d\\n\", pos, expr->thrs[pos].col);\n", p->text);
+	printf("_pacc_i = popcont();\n");
+
+	printf("    printf(\"bind %s to r%d @ c%%d\\n\", expr->thrs[pos].col);\n", p->text, i_stack[i]);
+	printf("    cur = matrix + expr->thrs[pos].col * n_rules + %d;\n",
+		i_stack[i]);
+	printf("    if (cur->status != evaluated) {\n");
+	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
+	printf("	_pacc_i = 0; goto eval_loop;\n");
+	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
+	printf("    }\n");
+	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
+	printf("    printf(\"bound %s to r%d @ c%%d ==> %%d\\n\", expr->thrs[pos].col, cur->value.u0);\n", p->text, i_stack[i]);
+#if 0
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
@@ -270,6 +294,8 @@ static void bindings(struct s_node *n) {
 	printf("    }\n");
 	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
 	printf("printf(\"bound %s to r%d @ c%%d ==> %%d\\n\", guard->thrs[guard->thrs_ptr - %d].x, cur->value.u0);\n", p->text, i_stack[i], 2 * n_ptr - 2 * i - 1);
+#endif
+
     }
 }
 
@@ -277,16 +303,18 @@ static void emit_expr(struct s_node *n) {
     printf("printf(\"%%d: emit_expr()\\n\", %d);\n", n->id);
     /* uh, no, we need to push a col for each variable, like decls() and
      * bindings() do */
-    printf("pusheval(%d, thr_thunk); pusheval(rule_col, thr_col);\n", n->id);
-    printf("pusheval(col, thr_col);\n");
-    promises(n);
+    printf("pusheval(%d, rule_col, thr_thunk);\n", n->id);
+    printf("pusheval(0, col, thr_col);\n");
+    //printf("pusheval(col, thr_col);\n");
+    //promises(n);
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
-    printf("    struct intermed *guard;\n");
+    printf("    struct intermed *expr;\n");
     declarations(n);
-    printf("    guard = cur; pushm(cur); evaluating = 1;\n");
-    bindings(n);
     printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
+    printf("    expr = cur; pushm(cur); evaluating = 1;\n");
+    bindings(n);
+    printf("    cur = expr;\n", cur_rule);
     printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
     printf("    cur->status = evaluated;\n");
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
@@ -366,11 +394,13 @@ static void guard_post(struct s_node *n) {
 }
 
 static void emit_call(struct s_node *n) {
-    if (binding)
-	printf("pusheval(%d, thr_bound);\n", lookup_rule[n->first->id]);
-    else
-	printf("pusheval(%d, thr_rule);\n", lookup_rule[n->first->id]);
-    printf("pusheval(col, thr_col);\n");
+    printf("pusheval(%d, col, thr_%s);\n", lookup_rule[n->first->id],
+	    binding ? "bound" : "rule");
+    //if (binding)
+//	printf("pusheval(%d, thr_bound);\n", lookup_rule[n->first->id]);
+ //   else
+//	printf("pusheval(%d, thr_rule);\n", lookup_rule[n->first->id]);
+ //   printf("pusheval(col, thr_col);\n");
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont); pushm(cur);\n");
     printf("cont = %d;\n", n->id);

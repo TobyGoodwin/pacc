@@ -72,10 +72,9 @@ check 5+x ''
 check 6+x ''
 check 5.+ ''
 
-# missing from git repo
-#build mk-lit0
-#check foo foo
-#check bar ''
+build mk-lit0
+check foo foo
+check bar ''
 
 build mk-and0
 check ab a

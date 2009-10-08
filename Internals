@@ -355,3 +355,10 @@ others. Hmm... let's have another look.
 No, it's hairier than that. What col we are at is dynamic (in the
 parser), whereas what names are bound is static (in the
 parser-generator).
+
+2009-10-08
+----------
+
+I seem to have all the above worked out, and almost working. I'm about
+to wave a wand of simplification over the thrs array. Here goes...
+
