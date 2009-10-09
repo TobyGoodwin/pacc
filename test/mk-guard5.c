@@ -18,7 +18,8 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
-    p = new_node(expr); p->text = "*b - '0'"; q = p;
+    p = new_node(ident); p->text = "b"; s = p;
+    p = new_node(expr); p->text = "*b - '0'"; p->first = s; q = p;
     p = new_node(ident); p->text = "b"; s = p;
     p = new_node(guard); p->text = "*b>='0' && *b<='9'"; p->first = s; p->next = q; q = p;
     p = new_node(call); p->text = "A"; s = p;

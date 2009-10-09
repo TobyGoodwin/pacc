@@ -206,6 +206,7 @@ static void bind_post(struct s_node *n) {
     printf("/* end bind: %s */\n", n->text);
 }
 
+#if 0
 static void promises(struct s_node *n) {
     int i, j;
     struct s_node *p;
@@ -225,10 +226,11 @@ printf("/* var is %s */\n", p->text);
 	printf("    if (cur->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
 	printf("}\n");
-	printf("printf(\"promise of %s: pos %%d holds col %%d\\n\", pos, cur->thrs[pos].col);\n", p->text);
+	printf("printf(\"binding of %s: pos %%d holds col %%d\\n\", pos, cur->thrs[pos].col);\n", p->text);
     }
 printf("/* promises() done */\n");
 }
+#endif
 
 static void declarations(struct s_node *n) {
     int i;
@@ -264,15 +266,26 @@ static void bindings(struct s_node *n) {
 	if (i == n_ptr) continue;
 	printf("pushcont(_pacc_i);\n");
 	printf("_pacc_i = %d + 1;\n", i);
-	printf("for (pos = 0; pos < expr->thrs_ptr; ++pos) {\n");
-	printf("    if (expr->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
+	//printf("for (pos = 0; pos < _pacc_p->thrs_ptr; ++pos) {\n");
+	//printf("    if (_pacc_p->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
+	//printf("    if (_pacc_i == 0) break;\n");
+	//printf("}\n");
+	/* XXX Currently we have to run this loop backwards. I believe
+	 * this is a workaround for a deficiency in the "rep" code: in
+	 * mk-guard7, "( c:Char &{ *c /= '}' } )*" causes a new binding
+	 * for c to be pushed on the thrs list each time round the rep.
+	 * I'm not fixing this now, as rep will be treated as syntactic
+	 * sugar soon.
+	 */
+	printf("for (pos = _pacc_p->thrs_ptr - 1; pos >= 0; --pos) {\n");
+	printf("    if (_pacc_p->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
 	printf("}\n");
-	printf("printf(\"promise of %s: pos %%d holds col %%d\\n\", pos, expr->thrs[pos].col);\n", p->text);
+	printf("printf(\"binding of %s: pos %%d holds col %%d\\n\", pos, _pacc_p->thrs[pos].col);\n", p->text);
 	printf("_pacc_i = popcont();\n");
 
-	printf("    printf(\"bind %s to r%d @ c%%d\\n\", expr->thrs[pos].col);\n", p->text, i_stack[i]);
-	printf("    cur = matrix + expr->thrs[pos].col * n_rules + %d;\n",
+	printf("    printf(\"bind %s to r%d @ c%%d\\n\", _pacc_p->thrs[pos].col);\n", p->text, i_stack[i]);
+	printf("    cur = matrix + _pacc_p->thrs[pos].col * n_rules + %d;\n",
 		i_stack[i]);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
@@ -280,7 +293,7 @@ static void bindings(struct s_node *n) {
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
-	printf("    printf(\"bound %s to r%d @ c%%d ==> %%d\\n\", expr->thrs[pos].col, cur->value.u0);\n", p->text, i_stack[i]);
+	printf("    printf(\"bound %s to r%d @ c%%d ==> %%d\\n\", _pacc_p->thrs[pos].col, cur->value.u0);\n", p->text, i_stack[i]);
 #if 0
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
@@ -309,16 +322,15 @@ static void emit_expr(struct s_node *n) {
     //promises(n);
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
-    printf("    struct intermed *expr;\n");
+    printf("    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
-    printf("    cur = matrix + col * n_rules + %d;\n", cur_rule);
-    printf("    expr = cur; pushm(cur); evaluating = 1;\n");
+    printf("    _pacc_p = cur = matrix + col * n_rules + %d;\n", cur_rule);
+    printf("    evaluating = 1;\n");
     bindings(n);
-    printf("    cur = expr;\n", cur_rule);
+    printf("    cur = _pacc_p;\n", cur_rule);
     printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
     printf("    cur->status = evaluated;\n");
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
-    printf("    cur = popm();\n");
     printf("    goto eval_loop;\n");
     printf("}\n");
 }
@@ -379,11 +391,11 @@ static void guard_pre(struct s_node *n) {
 
     printf("printf(\"r%d @ c%%d: guard %d?\\n\", col);\n", cur_rule, n->id);
     printf("/* %d: guard_pre() */\n", n->id);
-    printf("{\n    struct intermed *guard;\n");
+    printf("{\n    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
-    printf("    guard = cur; pushm(cur); evaluating = 1;\n");
+    printf("    _pacc_p = cur; evaluating = 1;\n");
     bindings(n);
-    printf("    cur = popm(); evaluating = 0;\n");
+    printf("    cur = _pacc_p; evaluating = 0;\n");
 }
 
 /* obviously, the tricky part of a guard is the bindings! */

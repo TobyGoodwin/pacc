@@ -33,7 +33,7 @@ struct s_node *create(void) {
 
     /*
 	RawCode
-	    ← "{" c:Char &{ *c != 0x7d } "}" { match() } _
+	    ← "{" ( c:Char &{ *c != 0x7d } )* "}" { match() } _
     */
 
     p = s_new(call); p->text = "_"; q = p;
