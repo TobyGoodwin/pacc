@@ -1,9 +1,9 @@
 #include "syntax.h"
 
-char *prefix = "#include \"syntax.h\"\n";
+char *prefix = "#include <ctype.h>\n#include \"syntax.h\"\n";
 
 struct s_node *create(void) {
-    struct s_node *p, *q, *r, *s, *t;
+    struct s_node *p, *q, *r, *s;
 
     /*
 	End ← !.
@@ -70,7 +70,8 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "Name"; p->first = q; p->next = r; r = p;
 
     /* start anywhere... */
-    p = s_new(expr); p->text = "r"; q = p;
+    p = s_new(ident); p->text = "r"; s = p;
+    p = s_new(expr); p->text = "r"; p->first = s; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "Name"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;

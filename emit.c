@@ -111,7 +111,6 @@ static void rule_pre(struct s_node *n) {
     printf("rule_col = col;\n");
     printf("cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("if (cur->status == uncomputed) {\n");
-    i_ptr = n_ptr = 0;
 }
 
 static void rule_post(struct s_node *n) {
@@ -124,17 +123,17 @@ static void rule_post(struct s_node *n) {
 
 static void savecol(void) {
     printf("printf(\"save column registers\\n\");\n");
-    printf("pushcont(col); pushcont(col_ptr); pushcont(bcol_ptr); pushcont(cur->thrs_ptr);\n");
+    printf("pushcont(col); pushcont(col_ptr); pushcont(cur->thrs_ptr);\n");
 }
 
 static void restcol(void) {
     printf("printf(\"restore column registers\\n\");\n");
-    printf("cur->thrs_ptr = popcont(); bcol_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
+    printf("cur->thrs_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
 }
 
 static void accept_col(void) {
     printf("printf(\"accept column registers\\n\");\n");
-    printf("popcont(); popcont(); popcont(); popcont();\n");
+    printf("popcont(); popcont(); popcont();\n");
 }
 
 static void seq_pre(struct s_node *n) {
@@ -142,6 +141,7 @@ static void seq_pre(struct s_node *n) {
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
     printf("status = parsed;\n"); /* empty sequence */
+    i_ptr = n_ptr = 0;
 }
 
 static void seq_mid(struct s_node *n) {
@@ -198,7 +198,6 @@ static void bind_pre(struct s_node *n) {
     pushi(bind_rule);
     binding = 1;
     printf("printf(\"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, bind_rule);
-    //printf("pushbcol(col);\n");
 }
 
 static void bind_post(struct s_node *n) {
@@ -265,19 +264,8 @@ static void bindings(struct s_node *n) {
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
 	printf("pushcont(_pacc_i);\n");
-	printf("_pacc_i = %d + 1;\n", i);
-	//printf("for (pos = 0; pos < _pacc_p->thrs_ptr; ++pos) {\n");
-	//printf("    if (_pacc_p->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
-	//printf("    if (_pacc_i == 0) break;\n");
-	//printf("}\n");
-	/* XXX Currently we have to run this loop backwards. I believe
-	 * this is a workaround for a deficiency in the "rep" code: in
-	 * mk-guard7, "( c:Char &{ *c /= '}' } )*" causes a new binding
-	 * for c to be pushed on the thrs list each time round the rep.
-	 * I'm not fixing this now, as rep will be treated as syntactic
-	 * sugar soon.
-	 */
-	printf("for (pos = _pacc_p->thrs_ptr - 1; pos >= 0; --pos) {\n");
+	printf("_pacc_i = _pacc_rep + %d + 1;\n", i);
+	printf("for (pos = 0; pos < _pacc_p->thrs_ptr; ++pos) {\n");
 	printf("    if (_pacc_p->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
 	printf("}\n");

@@ -42,18 +42,6 @@ static int popcol(void) {
     return col_stack[--col_ptr];
 }
 
-/* surely not another stack! this one holds bind columns */
-static int bcol_stack[25];
-static int bcol_ptr = 0;
-static void pushbcol(int c) {
-    printf("push(%d) -> bcol_stack[%d]\n", c, bcol_ptr);
-    bcol_stack[bcol_ptr++] = c;
-}
-static int popbcol(void) {
-    printf("pop() bcol_stack[%d] -> %d\n", bcol_ptr - 1, bcol_stack[bcol_ptr - 1]);
-    return bcol_stack[--bcol_ptr];
-}
-
 /* a "thr" is a thunk or a rule/column pair */
 enum thr { thr_thunk = 71, thr_bound, thr_rule, thr_col };
 struct thunkrule {
@@ -120,13 +108,15 @@ static int parse(void) {
     evaluating = 0;
     int pos;
 
+    _pacc_rep = 0; /* may be needed in guards */
+
 #include "gen.c"
 
     if (parsed && !evaluating && matrix->status == parsed) {
 	printf("PARSED! Time to start eval...\n");
 	//pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
-	_pacc_i = 0;
+	_pacc_i = _pacc_rep = 0;
 	cur = matrix;
     eval_loop:
 	printf("eval loop with _pacc_i == %d\n", _pacc_i);
@@ -160,7 +150,7 @@ printf("eval loop: r%d @ c%d\n", rule, col);
 
     if (matrix->status == evaluated) {
 	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	//s_dump(matrix->value.u0);
+	s_dump(matrix->value.u0);
     } else if (matrix->status == parsed) {
 	printf("parsed with void value\n");
     } else printf("not parsed\n");
