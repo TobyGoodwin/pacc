@@ -249,7 +249,7 @@ struct s_node *create(void) {
 
     p = s_new(expr); p->text = "s_stash_type(match())"; q = p;
     p = s_new(call); p->text = "TypeElement"; s = p;
-    p = s_new(rep); p->number = 0x10000; p->first = s; p->next = q; q = p;
+    p = s_text(rep, "1,"); p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "_"; p->next = q; s = p;
     p = s_new(lit); p->text = "::"; p->next = q; s = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
@@ -413,7 +413,7 @@ struct s_node *create(void) {
     p = s_new(call); p->text = "Result"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "rArrow"; s = p;
-    p = s_new(rep); p->number = 1; p->first = s; q = p;
+    p = s_text(rep, ",1"); p->first = s; q = p;
     p = s_new(call); p->text = "Matchers"; s = p;
     p = s_new(bind); p->text = "m"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
@@ -589,15 +589,13 @@ struct s_node *create(void) {
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(expr); p->text = "r"; p->first = i; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
-    p = s_new(call); p->text = "Name"; s = p;
+    p = s_new(call); p->text = "Matcher"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
 
     p = s_new(grammar); p->text = "yy"; p->first = r;
-
-    resolve(p, p);
 
     return p;
 }
