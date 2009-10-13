@@ -4,7 +4,7 @@
 
 #include "syntax.h"
 
-static void nomem(void) {
+void nomem(void) {
     fprintf(stderr, "fatal: out of memory\n");
     exit(1);
 }
@@ -27,12 +27,19 @@ struct s_node *s_grammar(char *preamble, struct s_node *defns) {
     return r;
 }
 
+struct s_node *s_text(enum s_type t, char *n) {
+    struct s_node *r = s_new(t);
+    r->text = n;
+    return r;
+}
+
 struct s_node *s_rule(void) {
     return 0;
 }
 
-struct s_node *s_rule_cons(void) {
-    return 0;
+struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
+    car->next = cdr;
+    return car;
 }
 
 struct s_node *s_query(void) {
@@ -135,22 +142,6 @@ struct s_node *cons(struct s_node *a, struct s_node *d) {
     a->next = d;
     return a;
 }
-
-void resolve(struct s_node *g, struct s_node *n) {
-    struct s_node *p;
-    if (n->type == call && !n->first) {
-	struct s_node *i;
-	for (i = g->first; i; i = i->next)
-	    if (strcmp(i->text, n->text) == 0)
-		n->first = i;
-	if (!n->first)
-	    fprintf(stderr, "rule not found: %s\n", n->text);
-    }
-    if (s_has_children(n->type))
-	for (p = n->first; p; p = p->next)
-	    resolve(g, p);
-}
-
 
 char *decode_type(enum s_type t) {
     switch(t) {

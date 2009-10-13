@@ -435,7 +435,7 @@ struct s_node *create(void) {
     p = s_new(seq); p->first = q; t = p;
 
     p = s_new(ident); p->text = "l"; i = p;
-    p = s_new(expr); p->text="s_lit(l)"; p->first = i; q = p;
+    p = s_new(expr); p->text="s_text(lit, l)"; p->first = i; q = p;
     p = s_new(call); p->text = "StringLit"; s = p;
     p = s_new(bind); p->text = "l"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
@@ -589,7 +589,7 @@ struct s_node *create(void) {
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(expr); p->text = "r"; p->first = i; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
-    p = s_new(call); p->text = "PrimRule"; s = p;
+    p = s_new(call); p->text = "Name"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;

@@ -5,15 +5,15 @@ char *prefix = 0;
 struct s_node *create(void) {
     struct s_node *p, *q, *r, *s;
 
-    /* The ? operator:
+    /* The + operator:
      *
      * char *S <- 'x' Y 'x' → { match() }
-     * Y ← 'y' ?
+     * Y ← 'y' +
      *
      */
 
     p = new_node(lit); p->text = "y"; s = p;
-    p = new_node(rep); p->number = 1; p->first = s; q = p;
+    p = s_text(rep, "1,"); p->first = s; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Y"; p->first = q; r = p;
@@ -27,8 +27,6 @@ struct s_node *create(void) {
     p = new_node(rule); p->text = "S"; p->first = q; p->next = r; r = p;
 
     p = new_node(grammar); p->text = "yy"; p->first = r;
-
-    resolve(p, p);
 
     return p;
 }

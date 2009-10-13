@@ -315,9 +315,8 @@ static void emit_expr(struct s_node *n) {
     printf("    _pacc_p = cur = matrix + col * n_rules + %d;\n", cur_rule);
     printf("    evaluating = 1;\n");
     bindings(n);
-    printf("    cur = _pacc_p;\n", cur_rule);
+    printf("    cur = _pacc_p;\n");
     printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
-    printf("    cur->status = evaluated;\n");
     printf("printf(\"stash %%d to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
     printf("    goto eval_loop;\n");
     printf("}\n");
@@ -374,9 +373,6 @@ static void emit_expr(struct s_node *n) {
 #endif
 
 static void guard_pre(struct s_node *n) {
-    int i;
-    struct s_node *p;
-
     printf("printf(\"r%d @ c%%d: guard %d?\\n\", col);\n", cur_rule, n->id);
     printf("/* %d: guard_pre() */\n", n->id);
     printf("{\n    struct intermed *_pacc_p;\n"); /* parent */

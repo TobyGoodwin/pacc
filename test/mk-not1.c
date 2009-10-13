@@ -23,7 +23,5 @@ struct s_node *create(void) {
 
     p = new_node(grammar); p->text = "yy"; p->first = r;
 
-    resolve(p, p);
-
     return p;
 }

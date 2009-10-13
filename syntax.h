@@ -19,10 +19,11 @@ struct s_node {
 };
 
 /* building trees */
+extern struct s_node *create(void);
+
 extern struct s_node *s_new(enum s_type);
+extern struct s_node *s_text(enum s_type, char *);
 #define new_node(t) s_new(t)
-extern void s_resolve(struct s_node *, struct s_node *);
-#define resolve(g, n) s_resolve(g, n)
 
 extern struct s_node *s_grammar(char *, struct s_node *);
 
@@ -33,6 +34,11 @@ extern struct s_node *mkrule(char *, struct s_node *);
 extern struct s_node *mkseq(struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);
 
+/* manipulating trees */
+extern void desugar(struct s_node *);
+extern void resolve(struct s_node *);
+
+/* examining trees */
 extern void s_dump(struct s_node *);
 extern int s_has_children(enum s_type);
 extern int s_has_text(enum s_type);

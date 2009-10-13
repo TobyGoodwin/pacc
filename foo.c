@@ -140,6 +140,7 @@ printf("eval loop: r%d @ c%d\n", rule, col);
 	    }
 	    goto eval_loop;
 	}
+	cur->status = evaluated;
 	if (m2_ptr) {
 	    _pacc_i = popcont(); cur = popm2();
 	    goto eval_loop;
@@ -150,7 +151,7 @@ printf("eval loop: r%d @ c%d\n", rule, col);
 
     if (matrix->status == evaluated) {
 	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	s_dump(matrix->value.u0);
+	//s_dump(matrix->value.u0);
     } else if (matrix->status == parsed) {
 	printf("parsed with void value\n");
     } else printf("not parsed\n");

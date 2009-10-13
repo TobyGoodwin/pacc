@@ -3,7 +3,7 @@ CFLAGS = -g -W -Wall
 
 all: pacc ab pr rd hash-test foo
 
-OBJS = emit.o main.o mktree.o syntax.o
+OBJS = emit.o main.o mktree.o resolve.o sugar.o syntax.o
 
 pacc: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)

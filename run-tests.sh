@@ -100,12 +100,17 @@ check xyyyyyyyyyyx xyyyyyyyyyyx
 
 build mk-rep1
 check xx ''
+check xyx y
+check xyyx yy
+
+build mk-rep2
+check xx ''
 check xyx xyx
 check xyyx xyyx
 check xyyyx xyyyx
 check xyyyyyyyyyyx xyyyyyyyyyyx
 
-build mk-rep2
+build mk-rep3
 check xx xx
 check xyx xyx
 check xyyx ''
@@ -114,7 +119,7 @@ check xyyyyyyyyyyx ''
 
 # This test needs to do something more clever with the results,
 # otherwise we're not really proving that we're doing nested reps.
-build mk-rep3
+build mk-rep4
 check a a
 check 'a b' 'a b'
 check 'a  b' 'a  b'
@@ -216,3 +221,5 @@ baf_tests3
 
 build mk-regress0
 check 'fred' 'fred'
+check 'fred ' 'fred'
+check 'fred barney' ''

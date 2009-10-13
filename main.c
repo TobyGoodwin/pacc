@@ -5,6 +5,9 @@ int main(int argc, char **argv) {
 
     p = create();
     s_dump(p);
+    desugar(p);
+    resolve(p);
+    s_dump(p);
     emit(p);
 
     return 0;

@@ -16,6 +16,7 @@ struct s_node *create(void) {
 
     /* _ ← " " * */
     p = s_new(lit); p->text = " "; q = p;
+    //p = s_new(seq); p->first = q; q = p;
     p = s_new(rep); p->number = 0; p->first = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
@@ -63,6 +64,7 @@ struct s_node *create(void) {
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(expr); p->text = "match()"; p->next = q; q = p;
     p = s_new(call); p->text = "NameCont"; s = p;
+    p = s_new(seq); p->first = s; s = p;
     p = s_new(rep); p->number = 0; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "NameStart"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
@@ -80,8 +82,6 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
 
     p = s_new(grammar); p->text = "yy"; p->first = r;
-
-    resolve(p, p);
 
     return p;
 }

@@ -121,7 +121,5 @@ struct s_node *create(void) {
 
     p = s_new(grammar); p->text = "yy"; p->first = r;
 
-    resolve(p, p);
-
     return p;
 }
