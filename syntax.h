@@ -15,7 +15,6 @@ struct s_node {
     struct s_node *first, *last; /* children */
     struct s_node *next; /* sibling */
     char *text;
-    int number;
 };
 
 /* building trees */
@@ -23,6 +22,8 @@ extern struct s_node *create(void);
 
 extern struct s_node *s_new(enum s_type);
 extern struct s_node *s_text(enum s_type, char *);
+extern struct s_node *s_kid(enum s_type, struct s_node *);
+extern struct s_node *s_both(enum s_type, char *, struct s_node *);
 #define new_node(t) s_new(t)
 
 extern struct s_node *s_grammar(char *, struct s_node *);

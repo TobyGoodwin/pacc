@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "error.h"
 #include "syntax.h"
 
 static void resolve0(struct s_node *g, struct s_node *n) {
@@ -11,7 +12,7 @@ static void resolve0(struct s_node *g, struct s_node *n) {
 	    if (strcmp(i->text, n->text) == 0)
 		n->first = i;
 	if (!n->first)
-	    fprintf(stderr, "rule not found: %s\n", n->text);
+	    fatal3("rule not found: `", n->text, "'");
     }
     if (s_has_children(n->type))
 	for (p = n->first; p; p = p->next)

@@ -20,16 +20,29 @@ struct s_node *s_new(enum s_type t) {
     return n;
 }
 
+struct s_node *s_text(enum s_type t, char *n) {
+    struct s_node *r = s_new(t);
+    r->text = n;
+    return r;
+}
+
+struct s_node *s_kid(enum s_type t, struct s_node *n) {
+    struct s_node *r = s_new(t);
+    r->first = n;
+    return r;
+}
+
+struct s_node *s_both(enum s_type t, char *n, struct s_node *s) {
+    struct s_node *r = s_new(t);
+    r->text = n;
+    r->first = s;
+    return r;
+}
+
 struct s_node *s_grammar(char *preamble, struct s_node *defns) {
     struct s_node *r = s_new(grammar);
     r->text = preamble;
     r->first = defns;
-    return r;
-}
-
-struct s_node *s_text(enum s_type t, char *n) {
-    struct s_node *r = s_new(t);
-    r->text = n;
     return r;
 }
 
@@ -40,6 +53,12 @@ struct s_node *s_rule(void) {
 struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
     car->next = cdr;
     return car;
+}
+
+struct s_node *s_seq(struct s_node *s) {
+    struct s_node *r = s_new(seq);
+    r->first = s;
+    return r;
 }
 
 struct s_node *s_query(void) {
@@ -65,8 +84,10 @@ struct s_node *s_lit(void) {
     return 0;
 }
 
-struct s_node *s_bind(void) {
-    return 0;
+struct s_node *s_bind(char *n, struct s_node *c) {
+    struct s_node *r = s_text(bind, n);
+    r->first = c;
+    return r;
 }
 
 struct s_node *s_and(void) {
@@ -81,11 +102,12 @@ struct s_node *s_guard(void) {
     return 0;
 }
 
-struct s_node *s_expr(void) {
-    return 0;
+struct s_node *s_expr(char *t) {
+    struct s_node *r = s_text(expr, t);
+    return r;
 }
 
-static char *t;
+static char *t = "int";
 
 char *s_stash_type(char *type) {
     t = type;
@@ -138,9 +160,17 @@ struct s_node *mkseq(struct s_node *l) {
 }
 
 struct s_node *cons(struct s_node *a, struct s_node *d) {
-    printf("!!! cons(%p, %p)\n", a, d);
     a->next = d;
     return a;
+}
+
+struct s_node *snoc(struct s_node *l, struct s_node *a) {
+    struct s_node *p, *q;
+    if (!l) return a;
+    for (p = l; p; p = p->next)
+	q = p;
+    q->next = a;
+    return l;
 }
 
 char *decode_type(enum s_type t) {
@@ -169,13 +199,10 @@ int s_has_children(enum s_type t) {
 	t == expr || t == guard || t == not || t == rep || t == seq;
 }
 
-int s_has_number(enum s_type t) {
-    return t == rep;
-}
-
 int s_has_text(enum s_type t) {
     return t == bind || t == call || t == expr || t == grammar ||
-	t == guard || t == ident || t == lit || t == rule || t == type;
+	t == guard || t == ident || t == lit || t == rep ||
+	t == rule || t == type;
 }
 
 static void dump(struct s_node *p, int indent) {
@@ -184,8 +211,6 @@ static void dump(struct s_node *p, int indent) {
     if (!p) return;
     for (i = 0; i < indent; ++i) fprintf(stderr, "  ");
     fprintf(stderr, "%s %d: ", decode_type(p->type), p->id);
-    if (s_has_number(p->type))
-	fprintf(stderr, "%d ", p->number);
     if (s_has_text(p->type))
 	fprintf(stderr, "%s ", p->text);
     fprintf(stderr, "\n");

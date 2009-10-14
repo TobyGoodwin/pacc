@@ -12,10 +12,11 @@ Defns
     / ε { 0 }
 
 Defn
-    ← n:Name t:TypeOptional lArrow r:Rule _ { s_rule(n, t, r) }
+    ← n:Name t:TypeOptional lArrow r:Rule _ →
+	{ s_both(rule, name, cons(s_text(type, t), r)) }
 
 Rule
-    ← s:SeqRule Slash r:Rule { s_rule_cons(s, r) }
+    ← s:SeqRule Slash r:Rule { s_kid(alt, cons(s, r)) }
     / s:SeqRule → s
 
 SeqRule
@@ -29,16 +30,17 @@ UnaryRule
     / p:PrimRule → p
 
 PrimRule
-    ← n:Name { s_call(n) }
+    ← n:Name { s_call(n) } !lArrow !ColCol
     / l:StringLit { s_lit(l) }
     / lParen r:Rule rParen → r
 
 Sequence
-    ← m:Matchers rArrow? r:Result { s_seq(snoc(m, r)) }
+    ← m:Matchers r:Result { s_seq(snoc(m, r)) }
+    / m:Matchers { s_seq(m) }
 
 Matchers
     ← m:Matcher ms:Matchers { cons(m, ms) }
-    / ε { 0 }
+    / m:Matcher → m
 
 Matcher
     ← n:Name Colon u:UnaryRule { s_bind(n, u) }
@@ -48,8 +50,8 @@ Matcher
     / u:UnaryRule → u
 
 Result
-    ← n:Name → s_expr(n)
-    / r:RawCode → s_expr(r)
+    ← rArrow n:Name → s_expr(n)
+    / rArrow? r:RawCode → s_expr(r)
 
 Name :: char *
     ← NameStart NameCont* { match() } _
@@ -62,7 +64,7 @@ RawCode
     ← "{" (c:Char &{ *c != 0x7d)* } "}" { match() } _
 
 TypeOptional
-    ← "::" _ TypeElement+ { s_stash_type(match()) }
+    ← ColCol TypeElement+ { s_stash_type(match()) }
     / ε { s_stashed_type() }
 
 Char ← . { match() }
@@ -92,6 +94,8 @@ _
 And ← "&" _
 lArrow  ← ("←" / "<-") _
 rArrow  ← ("→" / "->") _
+Colon ← ":" _
+ColCol ← "::" _
 Not ← "!" _
 lParen ← "(" _
 rParen ← ")" _

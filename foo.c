@@ -100,7 +100,7 @@ static int parse(void) {
     enum status status;
     int cont, st;
     int col, rule_col, col_expr;
-    int _pacc_i, _pacc_rep;
+    int _pacc_i;
     int evaluating;
     struct intermed *last;
     col = 0;
@@ -108,15 +108,13 @@ static int parse(void) {
     evaluating = 0;
     int pos;
 
-    _pacc_rep = 0; /* may be needed in guards */
-
 #include "gen.c"
 
     if (parsed && !evaluating && matrix->status == parsed) {
 	printf("PARSED! Time to start eval...\n");
 	//pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
-	_pacc_i = _pacc_rep = 0;
+	_pacc_i = 0;
 	cur = matrix;
     eval_loop:
 	printf("eval loop with _pacc_i == %d\n", _pacc_i);

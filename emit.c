@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -264,7 +265,7 @@ static void bindings(struct s_node *n) {
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
 	printf("pushcont(_pacc_i);\n");
-	printf("_pacc_i = _pacc_rep + %d + 1;\n", i);
+	printf("_pacc_i = %d + 1;\n", i);
 	printf("for (pos = 0; pos < _pacc_p->thrs_ptr; ++pos) {\n");
 	printf("    if (_pacc_p->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
@@ -444,45 +445,10 @@ static void alt_post(struct s_node *n) {
     i_ptr = n_ptr = 0;
 }
 
-/* I rather like this implementation of rep, but according to both Bryan
- * Ford and Robert Grimm treating rep as anything other than sugar can
- * introduce non-linearity into the parser. I've yet to produce a
- * convincing example of this.
- */
 static void rep_pre(struct s_node *n) {
-    int min, max;
+    int sugar = 1;
 
-    min = (n->number & 0xffff0000) >> 16;
-    max = n->number & 0xffff;
-    printf("printf(\"rep %d @ col %%d?\\n\", col);\n", n->id);
-    printf("pushcont(_pacc_rep);\n");
-    printf("_pacc_rep = 0;\n");
-    printf("case %d:\n", n->id);
-    savecol();
-}
-
-static void rep_post(struct s_node *n) {
-    int min, max;
-
-    min = (n->number & 0xffff0000) >> 16;
-    max = n->number & 0xffff;
-    printf("if (status == no_parse) {\n");
-    restcol();
-    printf("    if (_pacc_rep >= %d", min);
-    if (max)
-	printf(" && _pacc_rep <= %d", max);
-    printf(") {\n");
-    printf("        status = parsed;\n");
-    printf("    }\n");
-    printf("} else {\n");
-    accept_col();
-    printf("    ++_pacc_rep;\n");
-    if (max) printf("    if (_pacc_rep < %d) {\n", max);
-    printf("        st = %d; goto top;\n", n->id);
-    if (max) printf("    }\n");
-    printf("}\n");
-    printf("_pacc_rep = popcont();\n");
-    printf("printf(\"rep %d @ col %%d => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
+    assert(!sugar);
 }
 
 static void (*pre[s_type_max])(struct s_node *);
@@ -521,7 +487,6 @@ void emit(struct s_node *g) {
     post[and] = and_post; post[not] = not_post;
     post[bind] = bind_post;
     post[guard] = guard_post;
-    post[rep] = rep_post;
 
     node(g);
 }

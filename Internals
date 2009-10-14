@@ -362,3 +362,21 @@ parser-generator).
 I seem to have all the above worked out, and almost working. I'm about
 to wave a wand of simplification over the thrs array. Here goes...
 
+2009-10-14
+----------
+
+Interesting, becoming an expert in a system which doesn't yet exist!
+I've been trying (once again) to get my head around how we can tell
+where a rule ends. For quite a while, I was under the mistaken
+impression that Ford can parse "a <- b c <- d" because the parser backs
+up when it sees the second arrow, and decides that the "c" must belong
+to a new rule. This isn't how PEGs work!
+
+In fact, Ford can tell where a rule ends, because every rule *ends* with
+an expression "a <- b -> foo c <- d -> bar". Since only one thing
+appears to the right of a right arrow, the "c" must start a new rule.
+OK.
+
+D'oh! And Piumarta solves it so easily, by saying that an identifier
+that is a call is "identifier !EQUAL". Guess who'd forgotten about
+syntactic predicates?
