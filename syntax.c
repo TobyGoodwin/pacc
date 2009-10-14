@@ -110,6 +110,8 @@ struct s_node *s_expr(char *t) {
 static char *t = "int";
 
 char *s_stash_type(char *type) {
+    while (*type && (*type == ':' || *type == ' '))
+	++type;
     t = type;
     return type;
 }

@@ -86,7 +86,7 @@ TypeElement
     ← Name _ / "*" _
 
 Comment
-    ← "#" (c:Char &{ *c /= '\n' })* "\n"
+    ← "#" (c:Char &{ *c != '\n' })* "\n"
 
 _
     ← (" " / "\n" / Comment) *

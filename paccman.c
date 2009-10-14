@@ -154,13 +154,14 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
     p = s_new(rule); p->text = "_"; p->first = q; p->next = r; r = p;
 
-    /* Comment ← "#" (c:Char &{ *c /= '\n' })* "\n" */
-    p = s_new(lit); p->text = "\n"; q = p;
-    p = s_new(ident); p->text = "c"; s = p;
-    p = s_new(guard); p->text = "*c /= '\\n'" /* XXX: '\n' */; p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "Char"; s = p;
-    p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
-    p = s_new(rep); p->first = q; q = p;
+    /* Comment ← "#" (c:Char &{ *c != '\n' })* "\n" */
+    p = s_new(lit); p->text = "\n"; s = p;
+    p = s_new(ident); p->text = "c"; i = p;
+    p = s_new(guard); p->text = "*c != '\\n'" /* XXX: '\n' */; p->first = i; q = p;
+    p = s_new(call); p->text = "Char"; i = p;
+    p = s_new(bind); p->text = "c"; p->first = i; p->next = q; q = p;
+    p = s_kid(seq, p);
+    p = s_both(rep, "", p); p->next = s; q = p;
     p = s_new(lit); p->text = "#"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
@@ -177,7 +178,7 @@ struct s_node *create(void) {
 
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(call); p->text = "Name"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; t = p;
+    p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(alt); p->first = t; q = p;
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
@@ -280,7 +281,7 @@ struct s_node *create(void) {
     p = s_new(expr); p->text = "s_stash_type(match())"; q = p;
     p = s_new(call); p->text = "TypeElement"; s = p;
     p = s_text(rep, "1,"); p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "ColCol"; p->next = q; s = p;
+    p = s_new(call); p->text = "ColCol"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(alt); p->first = t; q = p;
@@ -637,17 +638,16 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
 
-#if 0
     /* start anywhere... */
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(expr); p->text = "r"; p->first = i; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
-    p = s_new(call); p->text = "Defns"; s = p;
+    p = s_new(call); p->text = "Comment"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
-#endif
+    p = s_new(rule); p->text = "Start"; p->first = q; p->next = r;
+    //r = p;
 
     p = s_new(grammar); p->text = "yy"; p->first = r;
 

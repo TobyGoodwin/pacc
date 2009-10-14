@@ -77,7 +77,7 @@ static void pusheval(int t, int col, enum thr type) {
 
 static struct intermed *matrix;
 
-#define M_STACK_BODGE 25
+#define M_STACK_BODGE 500
 static struct intermed *m_stack[M_STACK_BODGE];
 static int m_ptr = 0;
 static void pushm(struct intermed *i) {
