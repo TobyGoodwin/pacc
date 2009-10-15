@@ -89,7 +89,7 @@ Comment
     ← "#" (c:Char &{ *c != '\n' })* "\n"
 
 _
-    ← (" " / "\n" / Comment) *
+    ← (" " / "\t" / "\n" / Comment) *
 
 And ← "&" _
 lArrow  ← ("←" / "<-") _

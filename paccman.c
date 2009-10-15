@@ -144,9 +144,13 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
     p = s_new(rule); p->text = "And"; p->first = q; p->next = r; r = p;
 
-    /* _ ← (" " / "\n" / Comment) * */
+    /*
+	_
+	    ← (" " / "\t" / "\n" / Comment) *
+    */
     p = s_new(call); p->text = "Comment"; q = p;
     p = s_new(lit); p->text = "\n"; p->next = q; q = p;
+    p = s_new(lit); p->text = "\t"; p->next = q; q = p;
     p = s_new(lit); p->text = " "; p->next = q; q = p;
     p = s_new(alt); p->first = q; q = p;
     p = s_new(rep); p->first = q; q = p;
