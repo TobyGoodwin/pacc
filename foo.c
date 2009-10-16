@@ -149,7 +149,18 @@ printf("eval loop: r%d @ c%d\n", rule, col);
 
     if (matrix->status == evaluated) {
 	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	s_dump(matrix->value.u0);
+
+	if (1) {
+	    struct s_node *p;
+	    p = matrix->value.u0;
+	    s_dump(p);
+	    desugar(p);
+	    resolve(p);
+	    printf("---cut here\n");
+	    emit(p);
+	    printf("---cut here\n");
+	}
+
     } else if (matrix->status == parsed) {
 	printf("parsed with void value\n");
     } else printf("not parsed\n");
@@ -161,6 +172,9 @@ contin:
     goto top;
 
 }
+
+/* XXX Let's put prefixes in the tree, please? */
+char *prefix = 0;
 
 static void matrix_dump(void) {
     int r, s;

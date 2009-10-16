@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,7 +104,17 @@ struct s_node *s_guard(void) {
 }
 
 struct s_node *s_expr(char *t) {
-    struct s_node *r = s_text(expr, t);
+    struct s_node *r;
+
+    if (*t == '{') {
+	size_t l;
+
+	++t;
+	l = strlen(t);
+	assert(t[l -1] == '}');
+	t[l - 1] = '\0';
+    }
+    r = s_text(expr, t);
     return r;
 }
 

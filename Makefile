@@ -13,7 +13,7 @@ pacc: $(OBJS)
 
 emit.o: syntax.h
 
-foo: foo.o syntax.o
+foo: foo.o emit.o syntax.o error.o resolve.o sugar.o
 	$(CC) $(LDFLAGS) $^ -o $@
 
 foo.o: foo.c gen.c
