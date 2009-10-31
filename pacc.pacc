@@ -53,15 +53,21 @@ Result
     ← rArrow n:Name → s_expr(n)
     / rArrow? r:RawCode → s_expr(r)
 
+NameCode
+    ← n:Name ns:NameCode { cons(s_new(ident, n), ns) }
+    / StringLit ns:NameCode → ns
+    / c:Char &{ *c != "}" } ns:NameCode → ns
+    / ε { 0 }
+
+RawCode
+    ← "{" n:NameCode "}" _ → n
+
 Name :: char *
     ← NameStart NameCont* { match() } _
 
 Preamble
-    ← r:RawCode _ → r
+    ← r:RawCode { match() } _
     / ε { 0 }
-
-RawCode
-    ← "{" (c:Char &{ *c != 0x7d)* } "}" { match() } _
 
 TypeOptional
     ← ColCol TypeElement+ { s_stash_type(match()) }
