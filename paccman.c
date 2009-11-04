@@ -238,6 +238,20 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "QuotedChar"; p->first = q; p->next = r; r = p;
 
     /*
+	CharLit :: void
+	    ← "'" QuotedChar "'" _
+     */
+    
+    p = s_text(call, "_");
+    p = cons(s_text(lit, "'"), p);
+    p = cons(s_text(call, "QuotedChar"), p);
+    p = cons(s_text(lit, "'"), p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "char *"), p);
+    p = s_both(rule, "CharLit", p);
+    r = cons(p, r);
+
+    /*
 	QuotedChars ← (!"\"" QuotedChar)* { match() }
     */
 
@@ -292,6 +306,7 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "TypeOptional"; p->first = q; p->next = r; r = p;
 
+#if 0
     /*
 	RawCode
 	    ← "{" c:Char &{ *c != 0x7d } "}" { s_text(bind, match()) } _
@@ -310,6 +325,7 @@ struct s_node *create(void) {
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "RawCode"; p->first = q; p->next = r; r = p;
+#endif
 
     /*
 	Preamble
@@ -322,7 +338,7 @@ struct s_node *create(void) {
 
     p = s_new(call); p->text = "_"; q = p;
     p = s_text(expr, "match()"); p->next = q; q = p;
-    p = s_new(call); p->text = "RawCode"; p->next = q; q = p;
+    p = s_new(call); p->text = "Code"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(alt); p->first = t; q = p;
@@ -344,57 +360,84 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "Name"; p->first = q; p->next = r; r = p;
 
     /*
-	RawCode
-	    ← "{" n:NameCode "}" _ → n
+	Code
+	    ← "{" n:CodeNames "}" _ → n
      */
 
     p = s_both(expr, "n", s_text(ident, "n"));
     p = cons(s_text(call, "_"), p);
     p = cons(s_text(lit, "}"), p);
-    p = cons(s_both(bind, "n", s_text(call, "NameCode")), p);
+    p = cons(s_both(bind, "n", s_text(call, "CodeNames")), p);
     p = cons(s_text(lit, "{"), p);
     p = cons(s_text(type, "struct s_node *"), p);
-    p = s_both(rule, "RawCode", p);
+    p = s_both(rule, "Code", p);
     r = cons(p, r);
 
     /*
-	NameCode
-	    ← n:Name ns:NameCode { cons(s_new(ident, n), ns) }
-	    / StringLit ns:NameCode → ns
-	    / c:Char &{ *c != "}" } ns:NameCode → ns
+	CodeNames
+	    ← n:Name ns:CodeNames { cons(s_new(ident, n), ns) }
+	    / StringLit ns:CodeNames → ns
+	    / CharLit ns:CodeNames → ns
+	    / c:Char &{ *c != '}' } ns:CodeNames → ns
 	    / ε { 0 }
      */
 
-    /* XXX only first & last alts implemented! */
     p = s_text(expr, "0");
     p = s_kid(seq, p);
     t = p;
 
+    p = s_both(expr, "ns", s_text(ident, "ns"));
+    p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
+    p = cons(s_both(guard, "*c != '}'", s_text(ident, "c")), p);
+    p = cons(s_both(bind, "c", s_text(call, "Char")), p);
+    p = s_kid(seq, p);
+    t = cons(p, t);
+
+    p = s_both(expr, "ns", s_text(ident, "ns"));
+    p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
+    p = cons(s_text(call, "CharLit"), p);
+    p = s_kid(seq, p);
+    t = cons(p, t);
+
+    p = s_both(expr, "ns", s_text(ident, "ns"));
+    p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
+    p = cons(s_text(call, "StringLit"), p);
+    p = s_kid(seq, p);
+    t = cons(p, t);
+
     p = cons(s_text(ident, "n"), s_text(ident, "ns"));
-    p = s_both(expr, "cons(s_new(ident, n), ns)", p);
-    p = cons(s_both(bind, "ns", s_text(call, "NameCode")), p);
+    p = s_both(expr, "cons(s_text(ident, n), ns)", p);
+    p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
     p = cons(s_both(bind, "n", s_text(call, "Name")), p);
     p = s_kid(seq, p);
     t = cons(p, t);
 
     p = s_kid(alt, t);
     p = cons(s_text(type, "struct s_node *"), p);
-    p = s_both(rule, "NameCode", p);
+    p = s_both(rule, "CodeNames", p);
     r = cons(p, r);
 
     /*
+	CodeAndNames
+	    ← n:CodeNames { s_both(expr, match(), n) }
+     */
+
+    p = s_both(expr, "s_both(expr, match(), n)", s_text(ident, "n"));
+    p = cons(s_both(bind, "n", s_text(call, "CodeNames")), p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "struct s_node *"), p);
+    r = cons(s_both(rule, "CodeAndNames", p), r);
+
+    /*
 	Result
-	    ← rArrow n:Name → s_expr(n)
-	    / rArrow? r:RawCode → s_expr(r)
+	    ← rArrow n:Name { s_expr(n) }
+	    / rArrow? c:Code → c
     */
 
-    p = s_new(ident); p->text = "r"; i = p;
-    p = s_new(expr); p->text = "s_expr(r)"; p->first = i; q = p;
-    p = s_new(call); p->text = "RawCode"; s = p;
-    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
-    p = s_text(call, "rArrow"); s = p;
-    p = s_text(rep, ",1"); p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; t = p;
+    p = s_both(expr, "c", s_text(ident, "c"));
+    p = cons(s_both(bind, "c", s_text(call, "Code")), p);
+    p = cons(s_both(rep, ",1", s_text(call, "rArrow")), p);
+    t = s_kid(seq, p);
 
     p = s_new(ident); p->text = "n"; i = p;
     p = s_new(expr); p->text = "s_expr(n)"; p->first = i; q = p;
@@ -412,7 +455,7 @@ struct s_node *create(void) {
 	    ← n:Name Colon u:UnaryRule { s_bind(n, u) }
 	    / And u:UnaryRule { s_and(u) }
 	    / Not u:UnaryRule { s_not(u) }
-	    / And r:RawCode { s_guard(r) }
+	    / And c:Code { s_both(expr, match(), r) }
 	    / u:UnaryRule → u
     */
     p = s_new(ident); p->text = "u"; i = p;
@@ -422,8 +465,8 @@ struct s_node *create(void) {
     p = s_new(seq); p->first = q; t = p;
 
     p = s_new(ident); p->text = "r"; i = p;
-    p = s_new(expr); p->text="s_guard(r)"; p->first = i; q = p;
-    p = s_new(call); p->text = "RawCode"; s = p;
+    p = s_new(expr); p->text="s_both(expr, match(), r)"; p->first = i; q = p;
+    p = s_new(call); p->text = "Code"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "And"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
@@ -683,7 +726,7 @@ struct s_node *create(void) {
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(expr); p->text = "r"; p->first = i; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
-    p = s_new(call); p->text = "RawCode"; s = p;
+    p = s_new(call); p->text = "CodeAndNames"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;

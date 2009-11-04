@@ -46,27 +46,32 @@ Matcher
     ← n:Name Colon u:UnaryRule { s_bind(n, u) }
     / And u:UnaryRule { s_and(u) }
     / Not u:UnaryRule { s_not(u) }
-    / And r:RawCode { s_guard(r) }
+    / And c:Code { /* XXX c but as guard rather than expr */ }
     / u:UnaryRule → u
 
 Result
-    ← rArrow n:Name → s_expr(n)
-    / rArrow? r:RawCode → s_expr(r)
+    ← rArrow n:Name { s_expr(n) }
+    / rArrow? c:Code → c
 
-NameCode
-    ← n:Name ns:NameCode { cons(s_new(ident, n), ns) }
-    / StringLit ns:NameCode → ns
-    / c:Char &{ *c != "}" } ns:NameCode → ns
+CodeNames
+    ← n:Name ns:CodeNames { cons(s_new(ident, n), ns) }
+    / StringLit ns:CodeNames → ns
+    / CharLit ns:CodeNames → ns
+    / c:Char &{ *c != "}" } ns:CodeNames → ns
     / ε { 0 }
 
-RawCode
-    ← "{" n:NameCode "}" _ → n
+CodeAndNames
+    ← n:CodeNames { s_both(expr, match(), n) }
+
+Code
+    ← "{" n:CodeAndNames "}" _ → n
 
 Name :: char *
     ← NameStart NameCont* { match() } _
 
+# XXX we should free c?
 Preamble
-    ← r:RawCode { match() } _
+    ← c:Code { match() }
     / ε { 0 }
 
 TypeOptional
@@ -79,7 +84,10 @@ StringLit ← "\"" q:QuotedChars "\"" _ → q
 
 QuotedChars ← (!"\"" QuotedChar)* { match() }
 
-QuotedChar :: void
+CharLit :: void
+    ← "'" QuotedChar "'" _
+
+QuotedChar
     ← "\\n" / "\\\\" / "\\\"" / !"\\" Char
 
 NameStart
