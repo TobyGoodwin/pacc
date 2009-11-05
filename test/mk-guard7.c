@@ -26,7 +26,7 @@ struct s_node *create(void) {
     p = s_new(lit); p->text = "\n"; q = p;
     p = s_new(lit); p->text = " "; p->next = q; q = p;
     p = s_new(alt); p->first = q; q = p;
-    p = s_new(rep); p->number = 0; p->first = q; q = p;
+    p = s_new(rep); p->first = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
     p = s_new(rule); p->text = "_"; p->first = q; p->next = r; r = p;
@@ -44,7 +44,7 @@ struct s_node *create(void) {
     p = s_new(call); p->text = "Char"; s = p;
     p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(rep); p->number = 0; p->first = q; p->next = t; q = p;
+    p = s_new(rep); p->first = q; p->next = t; q = p;
     p = s_new(lit); p->text = "{"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;

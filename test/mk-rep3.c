@@ -13,7 +13,7 @@ struct s_node *create(void) {
      */
 
     p = new_node(lit); p->text = "y"; s = p;
-    p = s_text(rep, ",1"); p->number = 1; p->first = s; q = p;
+    p = s_text(rep, ",1"); p->first = s; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Y"; p->first = q; r = p;

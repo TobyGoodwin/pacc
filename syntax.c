@@ -40,6 +40,12 @@ struct s_node *s_both(enum s_type t, char *n, struct s_node *s) {
     return r;
 }
 
+/* s_retype(): destructively change the type of a node */
+struct s_node *s_retype(enum s_type t, struct s_node *s) {
+    s->type = t;
+    return s;
+}
+
 struct s_node *s_grammar(char *preamble, struct s_node *defns) {
     struct s_node *r = s_new(grammar);
     r->text = preamble;
@@ -54,12 +60,6 @@ struct s_node *s_rule(void) {
 struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
     car->next = cdr;
     return car;
-}
-
-struct s_node *s_seq(struct s_node *s) {
-    struct s_node *r = s_new(seq);
-    r->first = s;
-    return r;
 }
 
 struct s_node *s_query(void) {
@@ -101,21 +101,6 @@ struct s_node *s_not(void) {
 
 struct s_node *s_guard(void) {
     return 0;
-}
-
-struct s_node *s_expr(char *t) {
-    struct s_node *r;
-
-    if (*t == '{') {
-	size_t l;
-
-	++t;
-	l = strlen(t);
-	assert(t[l -1] == '}');
-	t[l - 1] = '\0';
-    }
-    r = s_text(expr, t);
-    return r;
 }
 
 static char *t = "int";

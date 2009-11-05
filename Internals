@@ -380,3 +380,16 @@ OK.
 D'oh! And Piumarta solves it so easily, by saying that an identifier
 that is a call is "identifier !EQUAL". Guess who'd forgotten about
 syntactic predicates?
+
+2009-11-05
+----------
+
+It's funny how even the trivialest aspects require design decisions
+(which I hope to get "right": partly to save time later, but mostly just
+out of a sense of elegance). For example, it's just become crystal clear
+exactly how identical "expr" and "guard" nodes are in the tree: they
+both hold a hunk of code in the node itself, and a list of identifiers
+used in that code as child. But we can't distinguish them by context
+(both are typically children of a seq).
+
+So I think I can see s_retype() about to be created...

@@ -329,7 +329,7 @@ struct s_node *create(void) {
 
     /*
 	Preamble
-	    ← RawCode { match() } _
+	    ← Code { match() } _
 	    / ε { 0 }
     */
 
@@ -361,14 +361,17 @@ struct s_node *create(void) {
 
     /*
 	Code
-	    ← "{" n:CodeNames "}" _ → n
+	    ← "{" n:CodeAndNames "}" _ → n
      */
+
+    /* XXX probably want lBrace and rBrace */
 
     p = s_both(expr, "n", s_text(ident, "n"));
     p = cons(s_text(call, "_"), p);
     p = cons(s_text(lit, "}"), p);
-    p = cons(s_both(bind, "n", s_text(call, "CodeNames")), p);
+    p = cons(s_both(bind, "n", s_text(call, "CodeAndNames")), p);
     p = cons(s_text(lit, "{"), p);
+    p = s_kid(seq, p);
     p = cons(s_text(type, "struct s_node *"), p);
     p = s_both(rule, "Code", p);
     r = cons(p, r);
@@ -430,7 +433,7 @@ struct s_node *create(void) {
 
     /*
 	Result
-	    ← rArrow n:Name { s_expr(n) }
+	    ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }
 	    / rArrow? c:Code → c
     */
 
@@ -440,7 +443,7 @@ struct s_node *create(void) {
     t = s_kid(seq, p);
 
     p = s_new(ident); p->text = "n"; i = p;
-    p = s_new(expr); p->text = "s_expr(n)"; p->first = i; q = p;
+    p = s_new(expr); p->text = "s_both(expr, n, s_text(ident, n))"; p->first = i; q = p;
     p = s_new(call); p->text = "Name"; s = p;
     p = s_new(bind); p->text = "n"; p->first = s; p->next = q; q = p;
     p = s_text(call, "rArrow"); p->next = q; q = p;
@@ -455,7 +458,7 @@ struct s_node *create(void) {
 	    ← n:Name Colon u:UnaryRule { s_bind(n, u) }
 	    / And u:UnaryRule { s_and(u) }
 	    / Not u:UnaryRule { s_not(u) }
-	    / And c:Code { s_both(expr, match(), r) }
+	    / And c:Code { s_retype(guard, c) }
 	    / u:UnaryRule → u
     */
     p = s_new(ident); p->text = "u"; i = p;
@@ -464,10 +467,10 @@ struct s_node *create(void) {
     p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(ident); p->text = "r"; i = p;
-    p = s_new(expr); p->text="s_both(expr, match(), r)"; p->first = i; q = p;
+    p = s_new(ident); p->text = "c"; i = p;
+    p = s_new(expr); p->text="s_retype(guard, c)"; p->first = i; q = p;
     p = s_new(call); p->text = "Code"; s = p;
-    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
+    p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "And"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
@@ -525,21 +528,19 @@ struct s_node *create(void) {
 
     /*
 	Sequence
-	    ← m:Matchers r:Result { s_seq(snoc(m, r)) }
-	    / m:Matchers { s_seq(m) }
-	Sequence
-	    ← m:Matchers rArrow? r:Result { s_seq(snoc(m, r)) }
+	    ← m:Matchers r:Result { s_kid(seq, snoc(m, r)) }
+	    / m:Matchers { s_kid(seq, m) }
     */
 
     p = s_text(ident, "m"); i = p;
-    p = s_text(expr, "s_seq(m)"); p->first = i; q = p;
+    p = s_text(expr, "s_kid(seq, m)"); p->first = i; q = p;
     p = s_new(call); p->text = "Matchers"; s = p;
     p = s_new(bind); p->text = "m"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; t = p;
 
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(ident); p->text = "m"; p->next = i; i = p;
-    p = s_new(expr); p->text="s_seq(snoc(m, r))"; p->first = i; q = p;
+    p = s_new(expr); p->text="s_kid(seq, snoc(m, r))"; p->first = i; q = p;
     p = s_new(call); p->text = "Result"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Matchers"; s = p;
@@ -722,16 +723,18 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
 
+#if 0
     /* start anywhere... */
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(expr); p->text = "r"; p->first = i; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
-    p = s_new(call); p->text = "CodeAndNames"; s = p;
+    p = s_new(call); p->text = "Sequence"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Start"; p->first = q; p->next = r;
     r = p;
+#endif
 
     p = s_new(grammar); p->text = "yy"; p->first = r;
 

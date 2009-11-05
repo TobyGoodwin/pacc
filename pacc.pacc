@@ -35,8 +35,8 @@ PrimRule
     / lParen r:Rule rParen → r
 
 Sequence
-    ← m:Matchers r:Result { s_seq(snoc(m, r)) }
-    / m:Matchers { s_seq(m) }
+    ← m:Matchers r:Result { s_kid(seq, snoc(m, r)) }
+    / m:Matchers { s_kid(seq, m) }
 
 Matchers
     ← m:Matcher ms:Matchers { cons(m, ms) }
@@ -46,11 +46,11 @@ Matcher
     ← n:Name Colon u:UnaryRule { s_bind(n, u) }
     / And u:UnaryRule { s_and(u) }
     / Not u:UnaryRule { s_not(u) }
-    / And c:Code { /* XXX c but as guard rather than expr */ }
+    / And c:Code { s_retype(guard, c) }
     / u:UnaryRule → u
 
 Result
-    ← rArrow n:Name { s_expr(n) }
+    ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }
     / rArrow? c:Code → c
 
 CodeNames
