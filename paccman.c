@@ -91,6 +91,16 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "Not"; p->first = q; p->next = r; r = p;
 
     /*
+	Epsilon ← "ε" _
+     */
+
+    p = s_text(call, "_");
+    p = cons(s_text(lit, "ε"), p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "int" /* XXX: void */), p);
+    r = cons(s_both(rule, "Epsilon", p), r);
+
+    /*
 	ColCol ← "::" _
     */
 
@@ -455,17 +465,23 @@ struct s_node *create(void) {
 
     /*
 	Matcher
-	    ← n:Name Colon u:UnaryRule { s_bind(n, u) }
+	    ← Epsilon { 0 }
+	    / n:Name Colon u:UnaryRule { s_bind(n, u) }
 	    / And u:UnaryRule { s_and(u) }
 	    / Not u:UnaryRule { s_not(u) }
 	    / And c:Code { s_retype(guard, c) }
 	    / u:UnaryRule → u
     */
+
+    p = s_text(expr, "0");
+    p = cons(s_text(call, "Epsilon"), p);
+    t = s_kid(seq, p);
+
     p = s_new(ident); p->text = "u"; i = p;
     p = s_new(expr); p->text="u"; p->first =i; q = p;
     p = s_new(call); p->text = "UnaryRule"; s = p;
     p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; t = p;
+    p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(ident); p->text = "c"; i = p;
     p = s_new(expr); p->text="s_retype(guard, c)"; p->first = i; q = p;

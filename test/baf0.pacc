@@ -1,4 +1,4 @@
-# Bryan Ford"s trivial grammar with actions:
+# Bryan Ford's trivial grammar with actions:
 
 Additive <- m:Multitive "+" a:Additive { m + a } / m:Multitive -> m
 Multitive <- p:Primary "*" m:Multitive { p * m } / p:Primary -> p

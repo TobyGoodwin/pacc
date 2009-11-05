@@ -43,7 +43,8 @@ Matchers
     / m:Matcher → m
 
 Matcher
-    ← n:Name Colon u:UnaryRule { s_bind(n, u) }
+    ← Epsilon { 0 }
+    / n:Name Colon u:UnaryRule { s_bind(n, u) }
     / And u:UnaryRule { s_and(u) }
     / Not u:UnaryRule { s_not(u) }
     / And c:Code { s_retype(guard, c) }
@@ -110,6 +111,7 @@ lArrow  ← ("←" / "<-") _
 rArrow  ← ("→" / "->") _
 Colon ← ":" _
 ColCol ← "::" _
+Epsilon ← "ε" _
 Not ← "!" _
 lParen ← "(" _
 rParen ← ")" _

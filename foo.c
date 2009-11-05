@@ -150,11 +150,11 @@ printf("eval loop: r%d @ c%d\n", rule, col);
     if (matrix->status == evaluated) {
 	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
 
-	if (0) {
+	if (1) {
 	    struct s_node *p;
 	    p = matrix->value.u0;
 	    s_dump(p);
-	    if (1) {
+	    if (0) {
 		desugar(p);
 		resolve(p);
 		printf("---cut here\n");
