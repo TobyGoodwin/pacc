@@ -74,8 +74,20 @@ struct s_node *s_bind(char *n, struct s_node *c) {
 static char *t = "int";
 
 char *s_stash_type(char *type) {
+    char *s;
+
+    /* XXX can we really not strip the string in the grammar? */
     while (*type && (*type == ':' || *type == ' '))
 	++type;
+    s = type + strlen(type) - 1;
+    while (*s == ' ' || *s == '\t' || *s == '\n') {
+	*s = '\0';
+	--s;
+    }
+
+    /* XXX we need to handle void correctly */
+    if (strcmp(type, "void") == 0) type = "int";
+
     t = type;
     return type;
 }

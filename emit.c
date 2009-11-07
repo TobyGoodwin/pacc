@@ -44,7 +44,12 @@ static void grammar_pre(struct s_node *n) {
     }
     printf("#ifndef DECLS\n"); /* phew! what a loony hack: one day we will write the whole of foo.c from here */
     printf("#define DECLS 1\n");
+
+    /* XXX old style: separate "prefix" */
     if (prefix) printf("%s\n", prefix);
+    /* XXX new style: preamble is a node in the tree */
+    if (n->first->type == expr) printf("%s\n", n->first->text);
+
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
     g_name = n->text;
     printf("union %s_union {\n", g_name);

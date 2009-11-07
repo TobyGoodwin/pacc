@@ -156,7 +156,7 @@ printf("eval loop: r%d @ c%d\n", rule, col);
 	    struct s_node *p;
 	    p = matrix->value.u0;
 	    s_dump(p);
-	    if (0) {
+	    if (1) {
 		desugar(p);
 		resolve(p);
 		printf("---cut here\n");

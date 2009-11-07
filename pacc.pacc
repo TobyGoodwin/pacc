@@ -1,11 +1,13 @@
 {
 
+#include <ctype.h>
+
 #include "syntax.h"
 
 }
 
 Grammar :: struct s_node *
-    ← _ p:Preamble ds:Defns End { s_grammar(p, ds) }
+    ← _ p:Preamble ds:Defns End { s_both(grammar, "yy", cons(s_text(expr, p), ds)) }
 
 Defns
     ← d:Defn ds:Defns { cons(d, ds) }
