@@ -53,25 +53,9 @@ struct s_node *s_grammar(char *preamble, struct s_node *defns) {
     return r;
 }
 
-struct s_node *s_rule(void) {
-    return 0;
-}
-
 struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
     car->next = cdr;
     return car;
-}
-
-struct s_node *s_query(void) {
-    return 0;
-}
-
-struct s_node *s_star(void) {
-    return 0;
-}
-
-struct s_node *s_plus(void) {
-    return 0;
 }
 
 struct s_node *s_call(char *n) {
@@ -81,26 +65,10 @@ struct s_node *s_call(char *n) {
     return r;
 }
 
-struct s_node *s_lit(void) {
-    return 0;
-}
-
 struct s_node *s_bind(char *n, struct s_node *c) {
     struct s_node *r = s_text(bind, n);
     r->first = c;
     return r;
-}
-
-struct s_node *s_and(void) {
-    return 0;
-}
-
-struct s_node *s_not(void) {
-    return 0;
-}
-
-struct s_node *s_guard(void) {
-    return 0;
 }
 
 static char *t = "int";

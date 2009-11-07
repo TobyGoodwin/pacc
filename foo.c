@@ -56,11 +56,13 @@ enum status {
 
 #include "gen.c"
 
+#define THR_STACK_BODGE 40
+
 struct intermed {
     enum status status;
     union yy_union value; /* semantic value XXX needs to use g_name */
     int remainder; /* unparsed string */
-    struct thunkrule thrs[40]; /* XXX */
+    struct thunkrule thrs[THR_STACK_BODGE]; /* XXX */
     int thrs_ptr;
     int rule, col; /* XXX: redundant, but handy for debugging */
 };
@@ -214,6 +216,7 @@ int pparse(char *str) {
 	    matrix[j * n_rules + i].status = uncomputed;
 	    matrix[j * n_rules + i].rule = i;
 	    matrix[j * n_rules + i].col = j;
+	    matrix[j * n_rules + i].thrs_ptr = 0;
 	}
 
     printf("%d\n", parse());

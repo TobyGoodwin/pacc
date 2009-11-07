@@ -101,6 +101,16 @@ struct s_node *create(void) {
     r = cons(s_both(rule, "Epsilon", p), r);
 
     /*
+	Dot ← "." _
+     */
+
+    p = s_text(call, "_");
+    p = cons(s_text(lit, "."), p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "int" /* XXX: void */), p);
+    r = cons(s_both(rule, "Dot", p), r);
+
+    /*
 	ColCol ← "::" _
     */
 
@@ -226,7 +236,7 @@ struct s_node *create(void) {
 
     /*
 	QuotedChar :: void
-	    ← "\\n" / "\\\\" / "\\\"" / !"\\" Char
+	    ← "\\n" / "\\t" / "\\\\" / "\\\"" / !"\\" Char
     */
 
     p = s_new(call); p->text = "Char"; q = p;
@@ -239,6 +249,9 @@ struct s_node *create(void) {
 
     p = s_new(lit); p->text = "\\\\"; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
+
+    p = s_text(lit, "\\t");
+    t = cons(s_kid(seq, p), t);
 
     p = s_new(lit); p->text = "\\n"; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
@@ -465,44 +478,20 @@ struct s_node *create(void) {
 
     /*
 	Matcher
-	    ← Epsilon { 0 }
-	    / n:Name Colon u:UnaryRule { s_bind(n, u) }
-	    / And u:UnaryRule { s_and(u) }
-	    / Not u:UnaryRule { s_not(u) }
+	    ← Epsilon { s_new(seq) }
+	    / r:Result → r
+	    / And u:UnaryRule { s_kid(and, u) }
+	    / Not u:UnaryRule { s_kid(not, u) }
 	    / And c:Code { s_retype(guard, c) }
+	    / n:Name Colon u:UnaryRule { s_bind(n, u) }
 	    / u:UnaryRule → u
     */
-
-    p = s_text(expr, "0");
-    p = cons(s_text(call, "Epsilon"), p);
-    t = s_kid(seq, p);
 
     p = s_new(ident); p->text = "u"; i = p;
     p = s_new(expr); p->text="u"; p->first =i; q = p;
     p = s_new(call); p->text = "UnaryRule"; s = p;
     p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_new(ident); p->text = "c"; i = p;
-    p = s_new(expr); p->text="s_retype(guard, c)"; p->first = i; q = p;
-    p = s_new(call); p->text = "Code"; s = p;
-    p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "And"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_new(ident); p->text = "u"; i = p;
-    p = s_new(expr); p->text="s_not(u)"; p->first = i; q = p;
-    p = s_new(call); p->text = "UnaryRule"; s = p;
-    p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "Not"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_new(ident); p->text = "u"; i = p;
-    p = s_new(expr); p->text="s_and(u)"; p->first = i; q = p;
-    p = s_new(call); p->text = "UnaryRule"; s = p;
-    p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "And"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
+    p = s_new(seq); p->first = q; t = p;
 
     p = s_new(ident); p->text = "u"; i = p;
     p = s_new(ident); p->text = "n"; p->next = i; i = p;
@@ -513,6 +502,35 @@ struct s_node *create(void) {
     p = s_new(call); p->text = "Name"; s = p;
     p = s_new(bind); p->text = "n"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
+
+    p = s_new(ident); p->text = "c"; i = p;
+    p = s_new(expr); p->text="s_retype(guard, c)"; p->first = i; q = p;
+    p = s_new(call); p->text = "Code"; s = p;
+    p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
+    p = s_new(call); p->text = "And"; p->next = q; q = p;
+    p = s_new(seq); p->first = q; p->next = t; t = p;
+
+    p = s_new(ident); p->text = "u"; i = p;
+    p = s_new(expr); p->text="s_kid(not, u)"; p->first = i; q = p;
+    p = s_new(call); p->text = "UnaryRule"; s = p;
+    p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
+    p = s_new(call); p->text = "Not"; p->next = q; q = p;
+    p = s_new(seq); p->first = q; p->next = t; t = p;
+
+    p = s_new(ident); p->text = "u"; i = p;
+    p = s_new(expr); p->text="s_kid(and, u)"; p->first = i; q = p;
+    p = s_new(call); p->text = "UnaryRule"; s = p;
+    p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
+    p = s_new(call); p->text = "And"; p->next = q; q = p;
+    p = s_new(seq); p->first = q; p->next = t; t = p;
+
+    p = s_both(expr, "r", s_text(ident, "r"));
+    p = cons(s_both(bind, "r", s_text(call, "Result")), p);
+    t = cons(s_kid(seq, p), t);
+
+    p = s_text(expr, "s_new(seq)");
+    p = cons(s_text(call, "Epsilon"), p);
+    t = cons(s_kid(seq, p), t);
 
     p = s_new(alt); p->first = t; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
@@ -544,8 +562,7 @@ struct s_node *create(void) {
 
     /*
 	Sequence
-	    ← m:Matchers r:Result { s_kid(seq, snoc(m, r)) }
-	    / m:Matchers { s_kid(seq, m) }
+	    ← m:Matchers { s_kid(seq, m) }
     */
 
     p = s_text(ident, "m"); i = p;
@@ -554,22 +571,13 @@ struct s_node *create(void) {
     p = s_new(bind); p->text = "m"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(ident); p->text = "r"; i = p;
-    p = s_new(ident); p->text = "m"; p->next = i; i = p;
-    p = s_new(expr); p->text="s_kid(seq, snoc(m, r))"; p->first = i; q = p;
-    p = s_new(call); p->text = "Result"; s = p;
-    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "Matchers"; s = p;
-    p = s_new(bind); p->text = "m"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_new(alt); p->first = t; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Sequence"; p->first = q; p->next = r; r = p;
 
     /*
 	PrimRule
 	    ← n:Name { s_call(n) } !lArrow !ColCol
+	    / Dot { s_new(any) }
 	    / l:StringLit { s_lit(l) }
 	    / lParen r:Rule rParen → r
     */
@@ -587,6 +595,10 @@ struct s_node *create(void) {
     p = s_new(bind); p->text = "l"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
+    p = s_text(expr, "s_new(any)");
+    p = cons(s_text(call, "Dot"), p);
+    t = cons(s_kid(seq, p), t);
+
     p = s_kid(not, s_text(call, "ColCol"));
     p = cons(s_kid(not, s_text(call, "lArrow")), p); q = p;
     p = s_new(ident); p->text = "n"; i = p;
@@ -601,9 +613,9 @@ struct s_node *create(void) {
 
     /*
 	UnaryRule
-	    ← p:PrimRule Query { s_query(p) }
-	    / p:PrimRule Star { s_star(p) }
-	    / p:PrimRule Plus { s_plus(p) }
+	    ← p:PrimRule Query { s_both(rep, ",1", p) }
+	    / p:PrimRule Star { s_both(rep, 0, p) }
+	    / p:PrimRule Plus { s_both(rep, "1,", p) }
 	    / p:PrimRule → p
     */
     p = s_new(ident); p->text = "p"; i = p;
@@ -613,21 +625,21 @@ struct s_node *create(void) {
     p = s_new(seq); p->first = q; t = p;
 
     p = s_new(ident); p->text = "p"; i = p;
-    p = s_new(expr); p->text="s_plus(p)"; p->first = i; q = p;
+    p = s_new(expr); p->text="s_both(rep, \"1,\", p)"; p->first = i; q = p;
     p = s_new(call); p->text = "Plus"; p->next = q; q = p;
     p = s_new(call); p->text = "PrimRule"; s = p;
     p = s_new(bind); p->text = "p"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(ident); p->text = "p"; i = p;
-    p = s_new(expr); p->text="s_star(p)"; p->first = i; q = p;
+    p = s_new(expr); p->text="s_both(rep, 0, p)"; p->first = i; q = p;
     p = s_new(call); p->text = "Star"; p->next = q; q = p;
     p = s_new(call); p->text = "PrimRule"; s = p;
     p = s_new(bind); p->text = "p"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(ident); p->text = "p"; i = p;
-    p = s_new(expr); p->text="s_query(p)"; p->first = i; q = p;
+    p = s_new(expr); p->text="s_both(rep, \",1\", p)"; p->first = i; q = p;
     p = s_new(call); p->text = "Query"; p->next = q; q = p;
     p = s_new(call); p->text = "PrimRule"; s = p;
     p = s_new(bind); p->text = "p"; p->first = s; p->next = q; q = p;

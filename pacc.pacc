@@ -24,30 +24,31 @@ SeqRule
     / u:UnaryRule → u
 
 UnaryRule
-    ← p:PrimRule Query { s_query(p) }
-    / p:PrimRule Star { s_star(p) }
-    / p:PrimRule Plus { s_plus(p) }
+    ← p:PrimRule Query { s_both(rep, ",1", p) }
+    / p:PrimRule Star { s_both(rep, 0, p) }
+    / p:PrimRule Plus { s_both(rep, "1,", p) }
     / p:PrimRule → p
 
 PrimRule
     ← n:Name { s_call(n) } !lArrow !ColCol
+    / Dot { s_new(any) }
     / l:StringLit { s_lit(l) }
     / lParen r:Rule rParen → r
 
 Sequence
-    ← m:Matchers r:Result { s_kid(seq, snoc(m, r)) }
-    / m:Matchers { s_kid(seq, m) }
+    ← m:Matchers { s_kid(seq, m) }
 
 Matchers
     ← m:Matcher ms:Matchers { cons(m, ms) }
     / m:Matcher → m
 
 Matcher
-    ← Epsilon { 0 }
-    / n:Name Colon u:UnaryRule { s_bind(n, u) }
-    / And u:UnaryRule { s_and(u) }
-    / Not u:UnaryRule { s_not(u) }
+    ← Epsilon { s_new(seq) }
+    / r:Result → r
+    / And u:UnaryRule { s_kid(and, u) }
+    / Not u:UnaryRule { s_kid(not, u) }
     / And c:Code { s_retype(guard, c) }
+    / n:Name Colon u:UnaryRule { s_bind(n, u) }
     / u:UnaryRule → u
 
 Result
@@ -89,7 +90,7 @@ CharLit :: void
     ← "'" QuotedChar "'" _
 
 QuotedChar
-    ← "\\n" / "\\\\" / "\\\"" / !"\\" Char
+    ← "\\n" / "\\t" / "\\\\" / "\\\"" / !"\\" Char
 
 NameStart
     ← c:Char &{ isalpha(*c) || *c == '_' }
@@ -111,6 +112,7 @@ lArrow  ← ("←" / "<-") _
 rArrow  ← ("→" / "->") _
 Colon ← ":" _
 ColCol ← "::" _
+Dot ← "." _
 Epsilon ← "ε" _
 Not ← "!" _
 lParen ← "(" _
