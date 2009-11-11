@@ -164,6 +164,7 @@ char *decode_type(enum s_type t) {
     case ident:		return "ident";
     case lit:		return "lit";
     case not:		return "not";
+    case preamble:	return "preamble";
     case rep:		return "rep";
     case rule:		return "rule";
     case seq:		return "seq";
@@ -179,7 +180,7 @@ int s_has_children(enum s_type t) {
 
 int s_has_text(enum s_type t) {
     return t == bind || t == call || t == expr || t == grammar ||
-	t == guard || t == ident || t == lit || t == rep ||
+	t == guard || t == ident || t == lit || t == preamble || t == rep ||
 	t == rule || t == type;
 }
 

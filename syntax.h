@@ -6,6 +6,7 @@ enum s_type {
     guard, ident,	/* semantic predicate */
     call, lit, any,	/* matchers */
     rep, 		/* sugar */
+    preamble,
     s_type_max
 };
 

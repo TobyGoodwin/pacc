@@ -48,21 +48,26 @@ static void grammar_pre(struct s_node *n) {
     /* XXX old style: separate "prefix" */
     if (prefix) printf("%s\n", prefix);
     /* XXX new style: preamble is a node in the tree */
-    if (n->first->type == expr) printf("%s\n", n->first->text);
+    if (n->first->type == preamble) printf("%s\n", n->first->text);
 
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
     g_name = n->text;
     printf("union %s_union {\n", g_name);
-    for (p = n->first, i = 0; p; p = p->next, ++i) {
+    for (p = n->first, i = 0; p; p = p->next) {
+	if (p->type != rule) continue;
 	/* XXX obviously, we need to weed out duplicates, "void", etc. */
 	printf("    %s u%d;\n", p->first->text, i);
+	++i;
     }
     printf("};\n");
-    printf("#define TYPE_PRINTF "); /* XXX just for debugging */
-    if (strcmp(n->first->first->text, "int") == 0) printf("\"%%d\"");
-    else if (strcmp(n->first->first->text, "char *") == 0) printf("\"%%s\"");
-    else printf("\"%%d\"");
+
+    /* XXX just for debugging */
+    printf("#define TYPE_PRINTF ");
+    if (strcmp(n->first->next->first->text, "int") == 0) printf("\"%%d\"");
+    else if (strcmp(n->first->next->first->text, "char *") == 0) printf("\"%%s\"");
+    else printf("\"%%p\"");
     printf("\n");
+
     printf("/* not yet... %stype %svalue; */\n", g_name, g_name);
     printf("#else\n");
     printf("st = %d;\ntop:\n", n->first->id);
