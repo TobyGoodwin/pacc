@@ -8,9 +8,11 @@ static void resolve0(struct s_node *g, struct s_node *n) {
     struct s_node *p;
     if (n->type == call && !n->first) {
 	struct s_node *i;
-	for (i = g->first; i; i = i->next)
+	for (i = g->first; i; i = i->next) {
+	    if (i->type != rule) continue;
 	    if (strcmp(i->text, n->text) == 0)
 		n->first = i;
+	}
 	if (!n->first)
 	    fatal3("rule not found: `", n->text, "'");
     }

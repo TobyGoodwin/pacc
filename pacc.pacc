@@ -8,7 +8,7 @@
 
 Grammar :: struct s_node *
     ← _ p:Preamble ds:Defns End → 
-    { s_both(grammar, "yy", cons(s_text(preamble, p), ds)) }
+    { s_both(grammar, "yy", cons(p, ds)) }
 
 Defns
     ← d:Defn ds:Defns { cons(d, ds) }
@@ -16,7 +16,7 @@ Defns
 
 Defn
     ← n:Name t:TypeOptional lArrow r:Rule _ →
-	{ s_both(rule, name, cons(s_text(type, t), r)) }
+	{ s_both(rule, n, cons(s_text(type, t), r)) }
 
 Rule
     ← s:SeqRule Slash r:Rule { s_kid(alt, cons(s, r)) }
@@ -35,7 +35,7 @@ UnaryRule
 PrimRule
     ← n:Name { s_call(n) } !lArrow !ColCol
     / Dot { s_new(any) }
-    / l:StringLit { s_lit(l) }
+    / l:StringLit { s_text(lit, l) }
     / lParen r:Rule rParen → r
 
 Sequence
@@ -59,10 +59,10 @@ Result
     / rArrow? c:Code → c
 
 CodeNames
-    ← n:Name ns:CodeNames { cons(s_new(ident, n), ns) }
+    ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
     / StringLit ns:CodeNames → ns
     / CharLit ns:CodeNames → ns
-    / c:Char &{ *c != "}" } ns:CodeNames → ns
+    / c:Char &{ *c != '}' } ns:CodeNames → ns
     / ε { 0 }
 
 CodeAndNames
@@ -71,13 +71,14 @@ CodeAndNames
 Code
     ← "{" n:CodeAndNames "}" _ → n
 
+# XXX this is just c:Code?, except that we don't yet generate "0" for
+# missing options.
+Preamble
+    ← c:Code { s_retype(preamble, c) }
+    / ε { s_text(preamble, 0) }
+
 Name :: char *
     ← NameStart NameCont* { match() } _
-
-# XXX we should free c?
-Preamble
-    ← c:Code { match() }
-    / ε { 0 }
 
 TypeOptional
     ← ColCol TypeElement+ { s_stash_type(match()) }

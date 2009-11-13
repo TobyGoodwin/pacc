@@ -4,10 +4,15 @@
 
 static char *string;
 
-static int st_stack[2000];
+#define ST_STACK_BODGE 2000
+static int st_stack[ST_STACK_BODGE];
 static int st_ptr = 0;
 
 static void pushcont(int c) {
+    if (st_ptr == ST_STACK_BODGE) {
+	fprintf(stderr, "st_stack overflow\n");
+	exit(1);
+    }
     printf("push(%d) -> stack[%d]\n", c, st_ptr);
     st_stack[st_ptr++] = c;
 }

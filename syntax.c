@@ -151,6 +151,15 @@ struct s_node *snoc(struct s_node *l, struct s_node *a) {
     return l;
 }
 
+/* cons uniquely */
+struct s_node *s_set_cons(struct s_node *i, struct s_node *l) {
+    struct s_node *p;
+    for (p = l; p; p = p->next)
+	if (strcmp(p->text, i->text) == 0)
+	    return l;
+    return cons(i, l);
+}
+
 char *decode_type(enum s_type t) {
     switch(t) {
     case alt:		return "alt";

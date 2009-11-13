@@ -26,16 +26,9 @@ extern struct s_node *s_text(enum s_type, char *);
 extern struct s_node *s_kid(enum s_type, struct s_node *);
 extern struct s_node *s_both(enum s_type, char *, struct s_node *);
 extern struct s_node *s_retype(enum s_type, struct s_node *);
-#define new_node(t) s_new(t)
-
-extern struct s_node *s_grammar(char *, struct s_node *);
-
-extern struct s_node *mkalt(struct s_node *);
-extern struct s_node *mkcall(char *);
-extern struct s_node *mklit(char *);
-extern struct s_node *mkrule(char *, struct s_node *);
-extern struct s_node *mkseq(struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);
+extern struct s_node *s_set_cons(struct s_node *, struct s_node *);
+#define new_node(t) s_new(t)
 
 /* manipulating trees */
 extern void desugar(struct s_node *);

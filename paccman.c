@@ -1,15 +1,9 @@
 #include "syntax.h"
 
-/* Hmm. What are we going to do about the raw code prefix? It could be a
- * node in the tree, but that hardly seems worthwhile.
- */
-char *prefix = "#include <ctype.h>\n#include \"syntax.h\"\n";
+char *prefix = 0; /* XXX */
 
 struct s_node *create(void) {
     struct s_node *i, *p, *q, *r, *s, *t;
-
-    /*
-    */
 
     /*
 	End ← !.
@@ -169,8 +163,8 @@ struct s_node *create(void) {
 	    ← (" " / "\t" / "\n" / Comment) *
     */
     p = s_new(call); p->text = "Comment"; q = p;
-    p = s_new(lit); p->text = "\n"; p->next = q; q = p;
-    p = s_new(lit); p->text = "\t"; p->next = q; q = p;
+    p = s_new(lit); p->text = "\\n"; p->next = q; q = p;
+    p = s_new(lit); p->text = "\\t"; p->next = q; q = p;
     p = s_new(lit); p->text = " "; p->next = q; q = p;
     p = s_new(alt); p->first = q; q = p;
     p = s_new(rep); p->first = q; q = p;
@@ -179,7 +173,7 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "_"; p->first = q; p->next = r; r = p;
 
     /* Comment ← "#" (c:Char &{ *c != '\n' })* "\n" */
-    p = s_new(lit); p->text = "\n"; s = p;
+    p = s_new(lit); p->text = "\\n"; s = p;
     p = s_new(ident); p->text = "c"; i = p;
     p = s_new(guard); p->text = "*c != '\\n'" /* XXX: '\n' */; p->first = i; q = p;
     p = s_new(call); p->text = "Char"; i = p;
@@ -240,20 +234,20 @@ struct s_node *create(void) {
     */
 
     p = s_new(call); p->text = "Char"; q = p;
-    p = s_new(lit); p->text = "\\"; s = p;
+    p = s_new(lit); p->text = "\\\\"; s = p;
     p = s_new(not); p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(lit); p->text = "\\\""; q = p;
+    p = s_new(lit); p->text = "\\\\\\\""; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
-    p = s_new(lit); p->text = "\\\\"; q = p;
+    p = s_new(lit); p->text = "\\\\\\\\"; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
-    p = s_text(lit, "\\t");
+    p = s_text(lit, "\\\\t");
     t = cons(s_kid(seq, p), t);
 
-    p = s_new(lit); p->text = "\\n"; q = p;
+    p = s_new(lit); p->text = "\\\\n"; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(alt); p->first = t; q = p;
@@ -280,7 +274,7 @@ struct s_node *create(void) {
 
     p = s_new(expr); p->text = "match()"; t = p;
     p = s_new(call); p->text = "QuotedChar"; q = p;
-    p = s_new(lit); p->text = "\""; s = p;
+    p = s_new(lit); p->text = "\\\""; s = p;
     p = s_new(not); p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(rep); p->first = q; p->next = t; q = p;
@@ -295,10 +289,10 @@ struct s_node *create(void) {
     p = s_new(ident); p->text = "q"; i = p;
     p = s_new(expr); p->text = "q"; p->first = i; q = p;
     p = s_new(call); p->text = "_"; p->next = q; q = p;
-    p = s_new(lit); p->text = "\""; p->next = q; q = p;
+    p = s_new(lit); p->text = "\\\""; p->next = q; q = p;
     p = s_new(call); p->text = "QuotedChars"; s = p;
     p = s_new(bind); p->text = "q"; p->first = s; p->next = q; q = p;
-    p = s_new(lit); p->text = "\""; p->next = q; q = p;
+    p = s_new(lit); p->text = "\\\""; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "StringLit"; p->first = q; p->next = r; r = p;
@@ -351,24 +345,6 @@ struct s_node *create(void) {
 #endif
 
     /*
-	Preamble
-	    ← Code { match() } _
-	    / ε { 0 }
-    */
-
-    p = s_new(expr); p->text = "0"; q = p;
-    p = s_new(seq); p->first = q; t = p;
-
-    p = s_new(call); p->text = "_"; q = p;
-    p = s_text(expr, "match()"); p->next = q; q = p;
-    p = s_new(call); p->text = "Code"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_new(alt); p->first = t; q = p;
-    p = s_new(type); p->text = "char *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "Preamble"; p->first = q; p->next = r; r = p;
-
-    /*
 	Name :: char *
 	    ← NameStart NameCont* { match() } _
     */
@@ -381,6 +357,23 @@ struct s_node *create(void) {
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Name"; p->first = q; p->next = r; r = p;
+
+    /*
+	Preamble
+	    ← c:Code { s_retype(preamble, c) } _
+	    / ε { s_text(preamble, 0) }
+    */
+
+    p = s_text(expr, "s_text(preamble, 0)");
+    t = s_kid(seq, p);
+
+    p = s_both(expr, "s_retype(preamble, c)", s_text(ident, "c"));
+    p = cons(s_both(bind, "c", s_text(call, "Code")), p);
+    t = cons(s_kid(seq, p), t);
+
+    p = s_new(alt); p->first = t; q = p;
+    p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
+    p = s_new(rule); p->text = "Preamble"; p->first = q; p->next = r; r = p;
 
     /*
 	Code
@@ -400,8 +393,19 @@ struct s_node *create(void) {
     r = cons(p, r);
 
     /*
+	CodeAndNames
+	    ← n:CodeNames { s_both(expr, match(), n) }
+     */
+
+    p = s_both(expr, "s_both(expr, match(), n)", s_text(ident, "n"));
+    p = cons(s_both(bind, "n", s_text(call, "CodeNames")), p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "struct s_node *"), p);
+    r = cons(s_both(rule, "CodeAndNames", p), r);
+
+    /*
 	CodeNames
-	    ← n:Name ns:CodeNames { cons(s_new(ident, n), ns) }
+	    ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
 	    / StringLit ns:CodeNames → ns
 	    / CharLit ns:CodeNames → ns
 	    / c:Char &{ *c != '}' } ns:CodeNames → ns
@@ -432,7 +436,7 @@ struct s_node *create(void) {
     t = cons(p, t);
 
     p = cons(s_text(ident, "n"), s_text(ident, "ns"));
-    p = s_both(expr, "cons(s_text(ident, n), ns)", p);
+    p = s_both(expr, "s_set_cons(s_text(ident, n), ns)", p);
     p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
     p = cons(s_both(bind, "n", s_text(call, "Name")), p);
     p = s_kid(seq, p);
@@ -442,17 +446,6 @@ struct s_node *create(void) {
     p = cons(s_text(type, "struct s_node *"), p);
     p = s_both(rule, "CodeNames", p);
     r = cons(p, r);
-
-    /*
-	CodeAndNames
-	    ← n:CodeNames { s_both(expr, match(), n) }
-     */
-
-    p = s_both(expr, "s_both(expr, match(), n)", s_text(ident, "n"));
-    p = cons(s_both(bind, "n", s_text(call, "CodeNames")), p);
-    p = s_kid(seq, p);
-    p = cons(s_text(type, "struct s_node *"), p);
-    r = cons(s_both(rule, "CodeAndNames", p), r);
 
     /*
 	Result
@@ -578,7 +571,7 @@ struct s_node *create(void) {
 	PrimRule
 	    ← n:Name { s_call(n) } !lArrow !ColCol
 	    / Dot { s_new(any) }
-	    / l:StringLit { s_lit(l) }
+	    / l:StringLit { s_text(lit, l) }
 	    / lParen r:Rule rParen → r
     */
     p = s_new(ident); p->text = "r"; i = p;
@@ -737,11 +730,11 @@ struct s_node *create(void) {
     /*
 	Grammar :: struct s_node *
 	    ← _ p:Preamble ds:Defns End →
-	    { s_both(grammar, "yy", cons(s_text(preamble, p), ds)) }
+	    { s_both(grammar, "yy", cons(p, ds)) }
     */
     p = s_new(ident); p->text = "ds"; i = p;
     p = s_new(ident); p->text = "p"; p->next = i; i = p;
-    p = s_both(expr, "s_both(grammar, \"yy\", cons(s_text(preamble, p), ds))", i); q = p;
+    p = s_both(expr, "s_both(grammar, \"yy\", cons(p, ds))", i); q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "Defns"; s = p;
     p = s_new(bind); p->text = "ds"; p->first = s; p->next = q; q = p;
@@ -765,7 +758,8 @@ struct s_node *create(void) {
     r = p;
 #endif
 
-    p = s_new(grammar); p->text = "yy"; p->first = r;
+    r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\n"), r);
+    p = s_both(grammar, "yy", r);
 
     return p;
 }

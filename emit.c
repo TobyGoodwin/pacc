@@ -18,7 +18,6 @@ static struct s_node *g_node; /* grammar root */
  */
 static int cur_rule = 0; static struct s_node *cur_rule_node;
 
-
 static char *n_stack[25];
 static int n_ptr = 0;
 static void pushn(char *n) { n_stack[n_ptr++] = n; }
@@ -32,23 +31,31 @@ int binding = 0;
 /* should be temporary - nuke when we have hashing */
 static int *lookup_rule;
 
+/* Something to think about: should *every* grammar start with a
+ * preamble? That would simplify a couple of things, and is how
+ * pacc.pacc works at the moment. On the other hand, it's a bit odd to
+ * represent no preamble with an empty preamble node. */
 static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
 
     g_node = n;
-    lookup_rule = malloc(n->id * sizeof(int));
-    for (p = n->first; p; p = p->next) {
-	lookup_rule[p->id] = r;
-	++r;
-    }
     printf("#ifndef DECLS\n"); /* phew! what a loony hack: one day we will write the whole of foo.c from here */
     printf("#define DECLS 1\n");
 
     /* XXX old style: separate "prefix" */
     if (prefix) printf("%s\n", prefix);
-    /* XXX new style: preamble is a node in the tree */
-    if (n->first->type == preamble) printf("%s\n", n->first->text);
+    /* XXX new style: preamble is first child of g */
+    p = n->first;
+    if (p->type == preamble) {
+	if (p->text) printf("%s\n", p->text);
+	p = p->next;
+    }
+    lookup_rule = malloc(n->id * sizeof(int));
+    for ( ; p; p = p->next) {
+	lookup_rule[p->id] = r;
+	++r;
+    }
 
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
     g_name = n->text;
@@ -70,7 +77,8 @@ static void grammar_pre(struct s_node *n) {
 
     printf("/* not yet... %stype %svalue; */\n", g_name, g_name);
     printf("#else\n");
-    printf("st = %d;\ntop:\n", n->first->id);
+    printf("st = %d;\ntop:\n",
+	    n->first->type == preamble ? n->first->next->id : n->first->id);
     printf("printf(\"switch to state %%d\\n\", st);\n");
     printf("switch(st) {\n");
 }
@@ -82,13 +90,30 @@ static void grammar_post(struct s_node *n) {
 }
 
 
+static void preamble_emit(struct s_node *n) {
+    printf("%s\n", n->text);
+}
+
+/* XXX this has vacillated, but in the end we want to recognise a
+ * properly-escaped C string in the grammar, and copy that verbatim into
+ * the generated parser. No? That means we have to be a bit careful in
+ * calculating the string's length.
+ */
 static void literal(struct s_node *n) {
     char *p;
     int l;
 
-    l = strlen(n->text);
+    l = 0;
+    for (p = n->text; *p; ++p) {
+	if (*p == '\\') {
+	    ++p;
+	    assert(*p);
+	}
+	++l;
+    }
     printf("printf(\"lit %d @ col %%d => \", col);\n", n->id);
     printf("if (col + %d <= input_length &&\n", l);
+#if 0
     printf("        strncmp(\"");
     for (p = n->text; *p; ++p)
 	switch (*p) {
@@ -98,6 +123,8 @@ static void literal(struct s_node *n) {
 	    default: printf("%c", *p); break;
 	}
     printf("\", string + col, %d) == 0) {\n", l);
+#endif
+    printf("        strncmp(\"%s\", string + col, %d) == 0) {\n", n->text, l);
     printf("    status = parsed;\n");
     printf("    col += %d;\n", l);
     printf("    printf(\"yes (col=%%d)\\n\", col);\n");
@@ -247,6 +274,11 @@ static void declarations(struct s_node *n) {
     struct s_node *p;
 
     for (p = n->first; p; p = p->next) {
+	fprintf(stderr, "%s, ", p->text);
+    }
+    fprintf(stderr, "\n");
+
+    for (p = n->first; p; p = p->next) {
 	struct s_node *q;
 	int j;
 	for (i = 0; i < n_ptr; ++i)
@@ -254,6 +286,7 @@ static void declarations(struct s_node *n) {
 	if (i == n_ptr) continue;
 printf("/* i is %d */\n", i);
 	q = g_node->first;
+	if (q->type == preamble) q = q->next;
 	for (j = 0; j < i_stack[i]; ++j)
 	    q = q->next;
     printf("/* rule id is %d */\n", p->id);
