@@ -393,3 +393,13 @@ used in that code as child. But we can't distinguish them by context
 (both are typically children of a seq).
 
 So I think I can see s_retype() about to be created...
+
+2009-11-13
+----------
+
+Friday the Thirteenth, and the loop is tied! Specifically, paccman.c
+builds a parser (stage1) which can parse pacc.pacc and build another
+parser (stage2), which can parse pacc.pacc and build another parser
+(stage3), which can... As you would expect, stage2 and stage3 are
+identical. A brief eyeball suggests that the stage1 parser differs only
+in id numbers (since the tree is built in a slightly different order).
