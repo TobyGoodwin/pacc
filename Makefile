@@ -3,13 +3,20 @@ CFLAGS = -g -W -Wall
 
 all: pacc ab pr rd hash-test foo
 
-OBJS = emit.o error.o main.o mktree.o resolve.o sugar.o syntax.o
+OBJS = emit.o error.o main.o resolve.o sugar.o syntax.o
 
-pacc: $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+MANOBJS = $(OBJS) paccman.o
 
-#pacc.c: paccman.c pacc.peg
-#	./pacc pacc.peg;  cp paccman.c pacc.c
+paccman: $(MANOBJS) 
+	$(CC) $(LDFLAGS) -o $@ $(MANOBJS)
+
+PACCOBJS = $(OBJS) pacc.o
+
+pacc: $(PACCOBJS)
+	$(CC) $(LDFLAGS) -o $@ $(PACCOBJS)
+
+pacc.c: paccman pacc.pacc
+	IFS= ./paccman `cat pacc.pacc` > pacc.c
 
 emit.o: syntax.h
 

@@ -44,7 +44,7 @@ static void grammar_pre(struct s_node *n) {
     printf("#define DECLS 1\n");
 
     /* XXX old style: separate "prefix" */
-    if (prefix) printf("%s\n", prefix);
+    //if (prefix) printf("%s\n", prefix);
     /* XXX new style: preamble is first child of g */
     p = n->first;
     if (p->type == preamble) {
