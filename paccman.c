@@ -2,7 +2,7 @@
 
 char *prefix = 0; /* XXX */
 
-struct s_node *create(void) {
+int parse(struct s_node **result, char *str) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
     /*
@@ -761,5 +761,6 @@ struct s_node *create(void) {
     r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\n"), r);
     p = s_both(grammar, "yy", r);
 
-    return p;
+    *result = p;
+    return 1;
 }

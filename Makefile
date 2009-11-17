@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -W -Wall
 
-all: pacc ab pr rd hash-test foo
+all: pacc
 
 OBJS = emit.o error.o main.o resolve.o sugar.o syntax.o
 
@@ -15,8 +15,10 @@ PACCOBJS = $(OBJS) pacc.o
 pacc: $(PACCOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(PACCOBJS)
 
-pacc.c: paccman pacc.pacc
-	IFS= ./paccman `cat pacc.pacc` > pacc.c
+pacc.o: pacc.c pacc-part.c
+
+pacc-part.c: paccman pacc.pacc
+	IFS= ./paccman `cat pacc.pacc` > $@
 
 emit.o: syntax.h
 
