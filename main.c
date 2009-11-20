@@ -8,7 +8,9 @@ int main(int argc, char **argv) {
 	desugar(p);
 	resolve(p);
 	s_dump(p);
+	printf("\n---cut here\n");
 	emit(p);
+	printf("\n---cut here\n");
     }
 
     return 0;

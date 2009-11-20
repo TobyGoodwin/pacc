@@ -20,7 +20,7 @@ pacc1.o: pacc.c pacc1.c
 	$(CC) $(CFLAGS) -c -o $@ pacc.c
 
 pacc1.c: pacc0
-	./pacc0 > $@
+	./pacc0 | sed '1,/cut here/d;/cut here/,$$d' > $@
 
 OBJS2 = $(OBJS) pacc2.o
 
@@ -32,7 +32,7 @@ pacc2.o: pacc.c pacc2.c
 	$(CC) $(CFLAGS) -c -o $@ pacc.c
 
 pacc2.c: pacc1 pacc.pacc
-	IFS= ./pacc1 `cat pacc.pacc` > $@
+	IFS= ./pacc1 "`cat pacc.pacc`" | sed '1,/cut here/d;/cut here/,$$d' > $@
 
 pacc: pacc2
 	mv pacc2 pacc
