@@ -5,33 +5,39 @@ all: pacc
 
 OBJS = emit.o error.o main.o resolve.o sugar.o syntax.o
 
-MANOBJS = $(OBJS) paccman.o
+OBJS0 = $(OBJS) pacc0.o
 
-paccman: $(MANOBJS) 
-	$(CC) $(LDFLAGS) -o $@ $(MANOBJS)
+pacc0: $(OBJS0) 
+	$(CC) $(LDFLAGS) -o $@ $^
 
-PACCOBJS = $(OBJS) pacc.o
+OBJS1 = $(OBJS) pacc1.o
 
-pacc: $(PACCOBJS)
-	$(CC) $(LDFLAGS) -o $@ $(PACCOBJS)
+pacc1: $(OBJS1)
+	$(CC) $(LDFLAGS) -o $@ $^
 
-pacc.o: pacc.c pacc-part.c
+pacc1.o: pacc.c pacc1.c
+	cp pacc1.c pacc-part.c
+	$(CC) $(CFLAGS) -c -o $@ pacc.c
 
-pacc-part.c: paccman pacc.pacc
-	IFS= ./paccman `cat pacc.pacc` > $@
+pacc1.c: pacc0
+	./pacc0 > $@
 
-emit.o: syntax.h
+OBJS2 = $(OBJS) pacc2.o
 
-foo: foo.o emit.o syntax.o error.o resolve.o sugar.o
-	$(CC) $(LDFLAGS) $^ -o $@
+pacc2: $(OBJS2)
+	$(CC) $(LDFLAGS) -o $@ $^
 
-foo.o: foo.c gen.c
-	$(CC) $(CFLAGS) -c foo.c
+pacc2.o: pacc.c pacc2.c
+	cp pacc2.c pacc-part.c
+	$(CC) $(CFLAGS) -c -o $@ pacc.c
 
-mktree.o: mktree.c syntax.h
-	$(CC) $(CFLAGS) -c mktree.c
+pacc2.c: pacc1 pacc.pacc
+	IFS= ./pacc1 `cat pacc.pacc` > $@
 
-syntax.o: syntax.c syntax.h
+pacc: pacc2
+	mv pacc2 pacc
 
-gen.c: pacc
-	./pacc > gen.c
+clean:
+	rm -f pacc1.c pacc2.c
+	rm -f $(OBJS) pacc0.o pacc1.o pacc2.o
+	rm -f pacc0 pacc1 pacc2 pacc
