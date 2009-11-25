@@ -403,3 +403,59 @@ parser (stage2), which can parse pacc.pacc and build another parser
 (stage3), which can... As you would expect, stage2 and stage3 are
 identical. A brief eyeball suggests that the stage1 parser differs only
 in id numbers (since the tree is built in a slightly different order).
+
+2009-11-24
+----------
+
+Where next? Here are some things that are outstanding, in no particular
+order.
+
+1. Work out what the command-line interface to pacc is
+2. Replace the intermediate results matrix with hashing
+3. Review of the parsing engine - do we really need so many stacks?
+4. New test cases and harness
+5. Autoconfiscation
+6. Only one instance of each type per union
+7. Handle void types
+8. Dynamically allocate everything
+9. Parser optimization / manipulation (including partialization hack)
+10. Tidy up tracing
+11. Instrument and measure current time / space performance
+12. UTF-8 support
+
+Just off the top of my head, the most urgent would be 10, 11, 1, and 4.
+
+OK, and I have tidied up tracing, at least to the point where it's
+possible to remove all the sed hacks from the Makefile.
+
+2009-11-25
+----------
+
+Here are a few interesting statistics:
+
+    ; make clean; time make
+    ...
+    mv pacc2 pacc
+    2.10user 0.52system 0:03.88elapsed 67%CPU (0avgtext+0avgdata 0maxresident)k
+    0inputs+4664outputs (0major+57028minor)pagefaults 0swaps
+
+    ; time ./pacc1 ``() { cat pacc.pacc } >/dev/null
+    ...
+    0.05user 0.17system 0:00.34elapsed 63%CPU (0avgtext+0avgdata 0maxresident)k
+    0inputs+0outputs (0major+17741minor)pagefaults 0swaps
+
+    ; wc pacc.pacc 
+     129  460 2643 pacc.pacc
+    ; wc pacc2.c
+      6334  28437 193367 pacc2.c
+
+I can't think of anything much else to measure at the moment.
+
+So that brings us to the command line interface. Obviously enough,
+
+    pacc pacc.pacc
+
+should read pacc.pacc and write a parser to pacc.c. The "-o" option can
+specify a different output file.  Just at present, I can't see any
+reason for a separate .h file, since the interface is generally
+predictable: int parse(<type of start rule> *, const char *).

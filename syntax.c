@@ -61,7 +61,6 @@ struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
 struct s_node *s_call(char *n) {
     struct s_node *r = s_new(call);
     r->text = n;
-    printf("s_call(\"%s\")\n", n);
     return r;
 }
 

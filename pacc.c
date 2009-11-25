@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define Trace if (0)
+
 static char *string;
 
 #define ST_STACK_BODGE 2000
@@ -13,18 +15,18 @@ static void pushcont(int c) {
 	fprintf(stderr, "st_stack overflow\n");
 	exit(1);
     }
-    printf("push(%d) -> stack[%d]\n", c, st_ptr);
+    Trace fprintf(stderr, "push(%d) -> stack[%d]\n", c, st_ptr);
     st_stack[st_ptr++] = c;
 }
 static int popcont(void) {
-    printf("pop() stack[%d] -> %d\n", st_ptr - 1, st_stack[st_ptr - 1]);
+    Trace fprintf(stderr, "pop() stack[%d] -> %d\n", st_ptr - 1, st_stack[st_ptr - 1]);
     return st_stack[--st_ptr];
 }
 
 static char *copy(int from, int to) {
     char *r;
     int l;
-printf("copy(%d, %d)\n", from, to);
+    Trace fprintf(stderr, "copy(%d, %d)\n", from, to);
     l = to - from;
     r = realloc(0, l + 1);
     if (r) {
@@ -39,11 +41,11 @@ printf("copy(%d, %d)\n", from, to);
 static int col_stack[25];
 static int col_ptr = 0;
 static void pushcol(int c) {
-    printf("push(%d) -> col_stack[%d]\n", c, col_ptr);
+    Trace fprintf(stderr, "push(%d) -> col_stack[%d]\n", c, col_ptr);
     col_stack[col_ptr++] = c;
 }
 static int popcol(void) {
-    printf("pop() col_stack[%d] -> %d\n", col_ptr - 1, col_stack[col_ptr - 1]);
+    Trace fprintf(stderr, "pop() col_stack[%d] -> %d\n", col_ptr - 1, col_stack[col_ptr - 1]);
     return col_stack[--col_ptr];
 }
 
@@ -75,7 +77,7 @@ struct intermed {
 static struct intermed *cur;
 
 static void pusheval(int t, int col, enum thr type) {
-    printf("pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
+    Trace fprintf(stderr, "pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
     cur->thrs[cur->thrs_ptr].discrim = type;
     cur->thrs[cur->thrs_ptr].x = t;
     cur->thrs[cur->thrs_ptr].col = col;
@@ -118,20 +120,20 @@ static int engine(struct s_node **result) {
 #include "pacc-part.c"
 
     if (parsed && !evaluating && matrix->status == parsed) {
-	printf("PARSED! Time to start eval...\n");
+	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	//pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
 	_pacc_i = 0;
 	cur = matrix;
     eval_loop:
-	printf("eval loop with _pacc_i == %d\n", _pacc_i);
+	Trace fprintf(stderr, "eval loop with _pacc_i == %d\n", _pacc_i);
 	if (_pacc_i < cur->thrs_ptr) {
 	    if (cur->thrs[_pacc_i].discrim == thr_rule ||
 		    cur->thrs[_pacc_i].discrim == thr_bound) {
 		int col, rule;
 		rule = cur->thrs[_pacc_i].x; col = cur->thrs[_pacc_i].col;
 		++_pacc_i;
-printf("eval loop: r%d @ c%d\n", rule, col);
+		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
 		pushm2(cur); pushcont(_pacc_i);
 		cur = matrix + col * n_rules + rule;
 		_pacc_i = 0;
@@ -150,12 +152,12 @@ printf("eval loop: r%d @ c%d\n", rule, col);
 	    _pacc_i = popcont(); cur = popm2();
 	    goto eval_loop;
 	}
-	printf("eval finished\n");
+	Trace fprintf(stderr, "eval finished\n");
 	goto contin;
     }
 
     if (matrix->status == evaluated) {
-	printf("parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
+	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
 	*result = matrix->value.u0;
 
 	if (0) {
@@ -165,9 +167,7 @@ printf("eval loop: r%d @ c%d\n", rule, col);
 	    if (1) {
 		desugar(p);
 		resolve(p);
-		printf("---cut here\n");
 		emit(p);
-		printf("---cut here\n");
 	    }
 	}
 
@@ -177,7 +177,7 @@ printf("eval loop: r%d @ c%d\n", rule, col);
     return matrix->status == evaluated;
 
 contin:
-    printf("continuing in state %d\n", cont);
+    Trace fprintf(stderr, "continuing in state %d\n", cont);
     st = cont;
     goto top;
 
