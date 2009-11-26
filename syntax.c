@@ -3,12 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.h"
 #include "syntax.h"
-
-void nomem(void) {
-    fprintf(stderr, "fatal: out of memory\n");
-    exit(1);
-}
 
 struct s_node *s_new(enum s_type t) {
     static int id = 100;

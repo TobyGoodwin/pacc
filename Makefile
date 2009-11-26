@@ -3,7 +3,7 @@ CFLAGS = -g -W -Wall
 
 all: pacc
 
-OBJS = arg.o emit.o error.o main.o resolve.o sugar.o syntax.o
+OBJS = arg.o emit.o error.o load.o main.o resolve.o sugar.o syntax.o
 
 OBJS0 = $(OBJS) pacc0.o
 
