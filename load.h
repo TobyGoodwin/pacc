@@ -1,3 +1,4 @@
 #include <sys/types.h>
 
-extern off_t load(const char *);
+extern char *load(const char *, off_t *);
+extern void save(const char *);

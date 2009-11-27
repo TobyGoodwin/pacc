@@ -1,3 +1,5 @@
+#ifndef PACC_SYNTAX_H
+#define PACC_SYNTAX_H 1
 enum s_type {
     grammar, rule,	/* scaffolding */
     type, alt, seq,	/* fundamentals */
@@ -40,3 +42,4 @@ extern int s_has_children(enum s_type);
 extern int s_has_text(enum s_type);
 
 extern char *prefix;
+#endif

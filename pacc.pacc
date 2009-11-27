@@ -100,7 +100,7 @@ NameStart
     ← c:Char &{ isalpha(*c) || *c == '_' }
 
 NameCont
-    ← c:Char &{ isalnum(*c) || c == '_' }
+    ← c:Char &{ isalnum(*c) || *c == '_' }
 
 TypeElement
     ← Name _ / "*" _

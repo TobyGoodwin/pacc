@@ -6,10 +6,9 @@
 
 #include "error.h"
 
-off_t load(const char *n) {
-    char *p;
+char *load(const char *n, off_t *size) {
+    char *addr;
     int fd;
-    off_t size;
     struct stat sb;
 
     fd = open(n, O_RDONLY);
@@ -17,12 +16,18 @@ off_t load(const char *n) {
 
     if (fstat(fd, &sb) == -1) fatal3x("cannot stat `", n, "'");
 
-    size = sb.st_size;
-    p = (char *)-1;
-    p = mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
+    *size = sb.st_size;
+    addr = (char *)-1;
+    addr = mmap(0, *size, PROT_READ, MAP_SHARED, fd, 0);
 
     /* XXX eventually, we must try to read the file if we cannot mmap it */
-    if (p == (char *)-1) fatal3x("cannot mmap `", n, "'");
+    if (addr == (char *)-1) fatal3x("cannot mmap `", n, "'");
 
-    return size;
+    return addr;
+}
+
+void save(const char *n) {
+    close(1);
+    if (open(n, O_WRONLY | O_CREAT, 0666) != 1)
+	fatal3x("cannot open `", n, "' for writing");
 }

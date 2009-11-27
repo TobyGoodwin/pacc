@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "pacc.h"
+
 #define Trace if (0)
 
 static char *string;
@@ -159,18 +161,6 @@ static int engine(struct s_node **result) {
     if (matrix->status == evaluated) {
 	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
 	*result = matrix->value.u0;
-
-	if (0) {
-	    struct s_node *p;
-	    p = matrix->value.u0;
-	    s_dump(p);
-	    if (1) {
-		desugar(p);
-		resolve(p);
-		emit(p);
-	    }
-	}
-
     } else if (matrix->status == parsed) {
 	printf("parsed with void value\n");
     } else printf("not parsed\n");
@@ -180,7 +170,6 @@ contin:
     Trace fprintf(stderr, "continuing in state %d\n", cont);
     st = cont;
     goto top;
-
 }
 
 /* XXX Let's put prefixes in the tree, please? */
@@ -211,10 +200,10 @@ static void matrix_dump(void) {
     }
 }
 
-int parse(struct s_node **result, char *str) {
+int parse(char *addr, off_t l, struct s_node **result) {
     int i, j, matrix_size;
-    string = str;
-    input_length = strlen(string);
+    string = addr;
+    input_length = l;
     matrix_size = n_rules * (input_length + 1);
     matrix = malloc(sizeof(struct intermed) * matrix_size);
     for (i = 0; i < n_rules; ++i)

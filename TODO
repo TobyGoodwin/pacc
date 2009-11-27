@@ -1,0 +1,23 @@
+Output to a file, not just stdout
+
+Complete the command-line interface
+
+Replace the intermediate results matrix with hashing
+
+Review of the parsing engine - do we really need so many stacks?
+
+New test cases and harness
+
+Autoconfiscation
+
+Only one instance of each type per union
+
+Handle void types
+
+Dynamically allocate everything
+
+Parser optimization / manipulation (including partialization hack)
+
+UTF-8 support
+
+Documentation

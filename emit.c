@@ -273,10 +273,12 @@ static void declarations(struct s_node *n) {
     int i;
     struct s_node *p;
 
+#if 0
     for (p = n->first; p; p = p->next) {
 	fprintf(stderr, "%s, ", p->text);
     }
     fprintf(stderr, "\n");
+#endif
 
     for (p = n->first; p; p = p->next) {
 	struct s_node *q;
@@ -302,8 +304,10 @@ static void bindings(struct s_node *n) {
     for (p = n->first; p; p = p->next) {
 
 	printf("/* binding %s */\n", p->text);
+#if 0
 	for (i = 0; i < n_ptr; ++i)
 	    fprintf(stderr, "var %s @ pos %d\n", n_stack[i], i);
+#endif
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;

@@ -1,8 +1,9 @@
+#include "pacc.h"
 #include "syntax.h"
 
 char *prefix = 0; /* XXX */
 
-int parse(struct s_node **result, char *str) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
     /*
@@ -204,7 +205,7 @@ int parse(struct s_node **result, char *str) {
 
     /*
 	NameCont
-	    ← c:Char &{ isalnum(*c) || c == '_' }
+	    ← c:Char &{ isalnum(*c) || *c == '_' }
     */
 
     p = s_new(ident); p->text = "c"; s = p;

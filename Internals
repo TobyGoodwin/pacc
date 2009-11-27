@@ -459,3 +459,20 @@ should read pacc.pacc and write a parser to pacc.c. The "-o" option can
 specify a different output file.  Just at present, I can't see any
 reason for a separate .h file, since the interface is generally
 predictable: int parse(<type of start rule> *, const char *).
+
+2009-11-27
+----------
+
+OK, so I worked out why pacc2 and pacc3 were different! (A bug in
+pacc.pacc.)
+
+The interface has already changed, and I'm starting to think
+that we probably *do* want a "-d" ("--defines"!?) option that also
+writes a .h file. The current interface to the parse function is:
+
+    int parse(char *, off_t, <type of start rule> *)
+
+(The appearance of off_t is a bit of a nuisance, since it means that we
+depend on <sys/types.h>, but it *is* correct.)
+
+Anycase, the TODO list has moved to (you guessed it) TODO.

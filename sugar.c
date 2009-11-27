@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.h"
 #include "syntax.h"
 
 /* Hmm... it would probably be worth having a generic "walk" function
