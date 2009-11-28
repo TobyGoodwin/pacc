@@ -8,17 +8,16 @@
 
 char *load(const char *n, off_t *size) {
     char *addr;
-    int fd;
     struct stat sb;
 
-    fd = open(n, O_RDONLY);
-    if (fd == -1) fatal3x("cannot open `", n, "'");
+    close(0);
+    if (open(n, O_RDONLY) != 0) fatal3x("cannot open `", n, "'");
 
-    if (fstat(fd, &sb) == -1) fatal3x("cannot stat `", n, "'");
+    if (fstat(0, &sb) == -1) fatal3x("cannot stat `", n, "'");
 
     *size = sb.st_size;
     addr = (char *)-1;
-    addr = mmap(0, *size, PROT_READ, MAP_SHARED, fd, 0);
+    addr = mmap(0, *size, PROT_READ, MAP_SHARED, 0, 0);
 
     /* XXX eventually, we must try to read the file if we cannot mmap it */
     if (addr == (char *)-1) fatal3x("cannot mmap `", n, "'");
