@@ -158,12 +158,7 @@ static int engine(int *result) {
 	goto contin;
     }
 
-    if (matrix->status == evaluated) {
-	fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	*result = matrix->value.u0;
-    } else if (matrix->status == parsed) {
-	fprintf(stderr, "parsed with void value\n");
-    } else fprintf(stderr, "not parsed\n");
+    *result = matrix->value.u0;
     return matrix->status == evaluated;
 
 contin:
@@ -171,9 +166,6 @@ contin:
     st = cont;
     goto top;
 }
-
-/* XXX Let's put prefixes in the tree, please? */
-char *prefix = 0;
 
 static void matrix_dump(void) {
     int r, s;
