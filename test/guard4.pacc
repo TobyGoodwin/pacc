@@ -1,0 +1,4 @@
+# Semantic predicate and any matcher:
+
+P :: char * ← b:A &{ *b >= 'a' && *b <= 'z' } { b }
+A <- . { match() }

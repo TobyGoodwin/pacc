@@ -107,7 +107,7 @@ static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
 
 static int input_length;
 
-static int engine(int *result) {
+static int engine(PACC_TYPE *result) {
     enum status status;
     int cont, st;
     int col, rule_col, col_expr;
@@ -192,7 +192,7 @@ static void matrix_dump(void) {
     }
 }
 
-int parse(char *addr, off_t l, int *result) {
+int parse(char *addr, off_t l, PACC_TYPE *result) {
     int i, j, matrix_size;
     string = addr;
     input_length = l;

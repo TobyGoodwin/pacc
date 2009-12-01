@@ -1,0 +1,4 @@
+# Type char * with call and match macro:
+
+P :: char * <- A P { match() } / ε
+A <- "a"

@@ -1,0 +1,3 @@
+# Type char *:
+
+A :: char * <- "5" { "five" }

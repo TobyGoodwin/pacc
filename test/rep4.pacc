@@ -1,0 +1,6 @@
+# Nested repetition:
+
+Atoms :: char * ← ( Atom Space ) * → { match() }
+Atom ← Letter +
+Letter ← "a" / "b" / "c"
+Space ← " " *

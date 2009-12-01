@@ -17,15 +17,15 @@ int main(int argc, char **argv) {
     in = load(arg_input(), &size);
     fprintf(stderr, "loaded %ld bytes at %p!\n", size, in);
 
-    save(arg_output());
-
     if (parse(in, size, &p)) {
 	s_dump(p);
 	desugar(p);
 	resolve(p);
 	s_dump(p);
+	save(arg_output());
 	emit(p);
+	return 0;
     }
 
-    return 0;
+    return 1;
 }

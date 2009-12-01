@@ -1,0 +1,4 @@
+# The ? operator:
+
+S :: char * <- "x" Y "x" → { match() }
+Y ← "y" ?

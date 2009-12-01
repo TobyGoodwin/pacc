@@ -4,10 +4,10 @@
 #include "parse.h"
 
 int main(int argc, char **argv) {
-    int r;
+    PACC_TYPE r;
 
     if (parse(argv[1], strlen(argv[1]), &r))
-	printf("parsed with value %d\n", r);
+	printf("parsed with value " PACC_TYPE_FORMAT "\n", r);
     else
 	printf("not parsed\n");
 

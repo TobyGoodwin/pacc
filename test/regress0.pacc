@@ -1,0 +1,15 @@
+# Not entirely sure what regression this is testing, but here goes...
+
+{
+#include <ctype.h>
+}
+
+Start :: char * <- n:Name End -> n
+Name ← NameStart NameCont* { match() } _
+Char ← . { match() }
+
+# rest should be void
+NameStart :: int ← c:Char &{ isalpha(*c) || *c == '_' }
+NameCont ← c:Char &{ isalnum(*c) || *c == '_' }
+_ ← " " *
+End ← !.

@@ -1,0 +1,7 @@
+# Bryan Ford's trivial grammar with match():
+
+Additive <- m:Multitive "+" a:Additive { m + a } / m:Multitive -> m
+Multitive <- p:Primary "*" m:Multitive { p * m } / p:Primary -> p
+Primary <- "(" a:Additive ")" -> a / d:Decimal -> d
+Decimal :: int <- Digit { match()[0] - '0' }
+Digit <- "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9"

@@ -1,12 +1,17 @@
-Output to a file, not just stdout
+Error handling
+
+    Need to check what baf says about this. Intuitively, a good place to
+    start is with the rule that failed to match at the highest column.
+    Also, need to somehow get line numbers. It's not so obvious how /
+    where you could keep a count as parsing proceeds, but there's no
+    real reason not to count newlines after an error has been
+    encountered, is there?.
 
 Complete the command-line interface
 
 Replace the intermediate results matrix with hashing
 
 Review of the parsing engine - do we really need so many stacks?
-
-New test cases and harness
 
 Autoconfiscation
 

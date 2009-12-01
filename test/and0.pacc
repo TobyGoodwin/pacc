@@ -1,0 +1,3 @@
+# A single character with value:
+
+A :: char * ← "a" &( "b" ) { match() }
