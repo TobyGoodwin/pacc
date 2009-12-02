@@ -21,7 +21,7 @@ static void derep1(struct s_node *g, struct s_node *n) {
     x0 = malloc(l + 1);
     if (!x0) nomem();
     snprintf(x0, l, "..%d", n->id);
-    fprintf(stderr, "!!! got a rep - nm is %s !!!\n", x0);
+    //fprintf(stderr, "!!! got a rep - nm is %s !!!\n", x0);
     *x0 = '1'; x1 = strdup(x0); if (!x1) nomem();
     *x0 = 'x'; xx = strdup(x0); if (!xx) nomem();
     free(x0);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "assert.h"
 #include "pacc.h"
 
 #define Trace if (0)
@@ -63,6 +64,12 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
+/* A linked list of error information */
+struct _pacc_err {
+    char *x;
+    struct _pacc_err *next;
+};
+
 #include "pacc-part.c"
 
 #define THR_STACK_BODGE 40
@@ -74,6 +81,7 @@ struct intermed {
     struct thunkrule thrs[THR_STACK_BODGE]; /* XXX */
     int thrs_ptr;
     int rule, col; /* XXX: redundant, but handy for debugging */
+    struct _pacc_err *err;
 };
 
 static struct intermed *cur;
@@ -172,9 +180,6 @@ contin:
     goto top;
 }
 
-/* XXX Let's put prefixes in the tree, please? */
-char *prefix = 0;
-
 static void matrix_dump(void) {
     int r, s;
 
@@ -212,6 +217,7 @@ int parse(char *addr, off_t l, struct s_node **result) {
 	    matrix[j * n_rules + i].rule = i;
 	    matrix[j * n_rules + i].col = j;
 	    matrix[j * n_rules + i].thrs_ptr = 0;
+	    matrix[j * n_rules + i].err = 0;
 	}
 
     return engine(result);

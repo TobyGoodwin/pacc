@@ -129,6 +129,11 @@ static void literal(struct s_node *n) {
     printf("    col += %d;\n", l);
     printf("    Trace fprintf(stderr, \"yes (col=%%d)\\n\", col);\n");
     printf("} else {\n");
+    printf("    struct _pacc_err *e;\n");
+    printf("    e = realloc(0, sizeof *cur->err);\n");
+    printf("    if (!e) nomem();\n");
+    printf("    e->x = \"\\\"%s\\\"\";\n", n->text);
+    printf("    e->next = cur->err; cur->err = e;\n");
     printf("    status = no_parse;\n");
     printf("    Trace fprintf(stderr, \"no (col=%%d)\\n\", col);\n");
     printf("}\n");

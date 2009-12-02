@@ -18,10 +18,10 @@ int main(int argc, char **argv) {
     fprintf(stderr, "loaded %ld bytes at %p!\n", size, in);
 
     if (parse(in, size, &p)) {
-	s_dump(p);
+	//s_dump(p);
 	desugar(p);
 	resolve(p);
-	s_dump(p);
+	//s_dump(p);
 	save(arg_output());
 	emit(p);
 	return 0;

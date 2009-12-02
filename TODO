@@ -9,6 +9,8 @@ Error handling
 
 Complete the command-line interface
 
+Detect (and handle?) left recursion
+
 Replace the intermediate results matrix with hashing
 
 Review of the parsing engine - do we really need so many stacks?

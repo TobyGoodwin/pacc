@@ -27,6 +27,6 @@ char *load(const char *n, off_t *size) {
 
 void save(const char *n) {
     close(1);
-    if (open(n, O_WRONLY | O_CREAT, 0666) != 1)
+    if (open(n, O_WRONLY | O_CREAT | O_TRUNC, 0666) != 1)
 	fatal3x("cannot open `", n, "' for writing");
 }

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +6,11 @@
 #include "parse.h"
 
 #define Trace if (0)
+
+static void nomem(void) {
+    fprintf(stderr, "out of memory\n");
+    exit(1);
+}
 
 static char *string;
 
@@ -63,6 +69,12 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
+/* A linked list of error information */
+struct _pacc_err {
+    char *x;
+    struct _pacc_err *next;
+};
+
 #include "parse-part.c"
 
 #define THR_STACK_BODGE 40
@@ -74,6 +86,7 @@ struct intermed {
     struct thunkrule thrs[THR_STACK_BODGE]; /* XXX */
     int thrs_ptr;
     int rule, col; /* XXX: redundant, but handy for debugging */
+    struct _pacc_err *err;
 };
 
 static struct intermed *cur;
@@ -159,6 +172,16 @@ static int engine(PACC_TYPE *result) {
     }
 
     *result = matrix->value.u0;
+
+    /* XXX error propagation is an area of current study! */
+    if (matrix->status != evaluated) {
+	struct _pacc_err *e;
+	printf("Expected ");
+	for (e = matrix->err; e; e = e->next)
+	    printf("%s ", e->x);
+	printf("\n");
+    }
+
     return matrix->status == evaluated;
 
 contin:
@@ -204,6 +227,7 @@ int parse(char *addr, off_t l, PACC_TYPE *result) {
 	    matrix[j * n_rules + i].rule = i;
 	    matrix[j * n_rules + i].col = j;
 	    matrix[j * n_rules + i].thrs_ptr = 0;
+	    matrix[j * n_rules + i].err = 0;
 	}
 
     return engine(result);
