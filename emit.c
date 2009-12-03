@@ -102,9 +102,40 @@ static void preamble_emit(struct s_node *n) {
  * would actually be much simpler with an array that grows as needed.
  * (It seems theoretically possible that we could predict in advance the
  * maximum size of the array, but let's worry about that later.) This
- * would also cure the memory leak.  Finally, col doesn't need to be
- * part of the _pacc_error structure; we only need one.
+ * would also cure the memory leak.
  */
+void error (char *t, int quote) {
+    printf("{\n");
+    printf("    int doit, append;\n");
+    printf("fprintf(stderr, \"error(%s, %d) at col %%d\\n\", col);\n", t, quote);
+    printf("    append = doit = 1;\n");
+    printf("    if (col > _pacc_err_col) append = 0;\n");
+    printf("    else if (col == _pacc_err_col) {\n");
+    printf("        size_t i;\n");
+    printf("        for (i = 0; i < _pacc_err_valid; ++i) {\n");
+    printf("            if (strcmp(_pacc_err[i], ");
+    if (quote) printf("\"\\\"%s\\\"\"", t);
+    else printf("\"%s\"", t);
+    printf(") == 0) doit = 0;\n");
+    printf("        }\n");
+    printf("    } else doit = 0;\n");
+    printf("    if (doit) {\n");
+    printf("        if (append) ++_pacc_err_valid;\n");
+    printf("        else _pacc_err_valid = 1;\n");
+    printf("        if (_pacc_err_valid > _pacc_err_alloc) {\n");
+    printf("            _pacc_err_alloc = 2 * _pacc_err_alloc + 1;\n");
+    printf("            _pacc_err = realloc(_pacc_err, _pacc_err_alloc * sizeof(char *));\n");
+    printf("            if (!_pacc_err) nomem();\n");
+    printf("        }\n");
+    printf("        _pacc_err[_pacc_err_valid - 1] = ");
+    if (quote) printf("\"\\\"%s\\\"\"", t);
+    else printf("\"%s\"", t);
+    printf(";\n");
+    printf("        _pacc_err_col = col;\n");
+    printf("    }\n");
+    printf("}\n");
+}
+#if 0
 void error (char *t, int quote) {
     printf("{\n");
     printf("    struct _pacc_error *e, *f;\n");
@@ -138,6 +169,7 @@ void error (char *t, int quote) {
     printf("    }\n");
     printf("}\n");
 }
+#endif
 
 /* XXX this has vacillated, but in the end we want to recognise a
  * properly-escaped C string in the grammar, and copy that verbatim into
@@ -201,7 +233,7 @@ static void rule_post(struct s_node *n) {
     printf("    cur->status = status;\n");
     printf("    cur->remainder = col;\n");
     printf("    if (_pacc_err_col == rule_col) {\n");
-    printf("        _pacc_err = 0;\n"); /* XXX memory leak. */
+    printf("        _pacc_err_valid = 0;\n"); /* Rule made no progress: over-write error */
     error(n->text, 0);
     printf("    }\n");
     printf("}\n");

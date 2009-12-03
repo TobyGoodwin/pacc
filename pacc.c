@@ -64,12 +64,10 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
-/* A linked list of error information */
-struct _pacc_error {
-    char *x;
-    struct _pacc_error *next;
-};
-struct _pacc_error *_pacc_err;
+/* A dynamic array of error strings */
+char **_pacc_err = 0;
+size_t _pacc_err_alloc = 0;
+size_t _pacc_err_valid = 0;
 off_t _pacc_err_col;
 
 #include "pacc-part.c"

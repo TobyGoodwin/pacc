@@ -476,3 +476,41 @@ writes a .h file. The current interface to the parse function is:
 depend on <sys/types.h>, but it *is* correct.)
 
 Anycase, the TODO list has moved to (you guessed it) TODO.
+
+2009-12-03
+----------
+
+OK, so I'm starting to get error handling working, and it's actually
+rather pretty! (The interface, not the implementation, yet.) When
+harness is a baf3 parser, we get:
+
+    ; ./harness '3+4*('
+    expected Additive at column 5
+
+However, I'm not entirely happy with this:
+
+    ; ./harness '3+4*(5'
+    expected Right at column 6
+
+I would prefer the error to read like this.
+
+    expected ")" at column 6
+
+And this error is actually generated initially (by the failing lit
+matcher), but then over-written when pacc discovers that the Right rule
+(which is just Right <- ")" Space) has made no progress at all. To do
+this, we'd either need a heuristic to identify when rules should
+over-write error information, or a way to annotate such rules in the
+grammar. (Or both!)
+
+Heuristics might include: capitalization of the rule name (but I really
+hate this); whether the rule contains any alternatives.
+
+Annotations look more flexible, but I don't know what syntax I'd like to
+use.
+
+Just at the moment, I can't see how Pappy handles errors at all, and I
+don't have the Rats! documentation to hand.
+
+Any case, at the moment, I'm not going to make any radical changes,
+except to clean up the code.

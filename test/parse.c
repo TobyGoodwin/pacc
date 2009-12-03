@@ -69,12 +69,10 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
-/* A linked list of error information */
-struct _pacc_error {
-    char *x;
-    struct _pacc_error *next;
-};
-struct _pacc_error *_pacc_err;
+/* A dynamic array of error strings */
+char **_pacc_err = 0;
+size_t _pacc_err_alloc = 0;
+size_t _pacc_err_valid = 0;
 off_t _pacc_err_col;
 
 #include "parse-part.c"
@@ -176,13 +174,13 @@ static int engine(PACC_TYPE *result) {
 
     /* XXX error propagation is an area of current study! */
     if (matrix->status != evaluated) {
-	struct _pacc_error *e;
+	size_t i;
 	printf("expected ");
-	for (e = _pacc_err; e; e = e->next) {
-	    printf("%s", e->x);
-	    if (e->next) {
+	for (i = 0; i < _pacc_err_valid; ++i) {
+	    printf("%s", _pacc_err[i]);
+	    if (i + 1 < _pacc_err_valid) {
 		printf(", ");
-		if (!e->next->next) printf("or ");
+		if (i + 2 == _pacc_err_valid) printf("or ");
 	    }
 	}
 	printf(" at column %ld\n", _pacc_err_col);
