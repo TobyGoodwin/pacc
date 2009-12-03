@@ -65,10 +65,12 @@ enum status {
 };
 
 /* A linked list of error information */
-struct _pacc_err {
+struct _pacc_error {
     char *x;
-    struct _pacc_err *next;
+    off_t col;
+    struct _pacc_error *next;
 };
+struct _pacc_error *_pacc_err;
 
 #include "pacc-part.c"
 
@@ -81,7 +83,6 @@ struct intermed {
     struct thunkrule thrs[THR_STACK_BODGE]; /* XXX */
     int thrs_ptr;
     int rule, col; /* XXX: redundant, but handy for debugging */
-    struct _pacc_err *err;
 };
 
 static struct intermed *cur;
@@ -217,7 +218,6 @@ int parse(char *addr, off_t l, struct s_node **result) {
 	    matrix[j * n_rules + i].rule = i;
 	    matrix[j * n_rules + i].col = j;
 	    matrix[j * n_rules + i].thrs_ptr = 0;
-	    matrix[j * n_rules + i].err = 0;
 	}
 
     return engine(result);

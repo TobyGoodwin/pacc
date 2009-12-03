@@ -1,0 +1,4 @@
+# An alternative in column > 0
+
+P :: char * ← "foo " A { match() }
+A ← "bar" / "qux"

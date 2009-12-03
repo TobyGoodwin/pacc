@@ -70,10 +70,12 @@ enum status {
 };
 
 /* A linked list of error information */
-struct _pacc_err {
+struct _pacc_error {
     char *x;
-    struct _pacc_err *next;
+    off_t col;
+    struct _pacc_error *next;
 };
+struct _pacc_error *_pacc_err;
 
 #include "parse-part.c"
 
@@ -86,7 +88,6 @@ struct intermed {
     struct thunkrule thrs[THR_STACK_BODGE]; /* XXX */
     int thrs_ptr;
     int rule, col; /* XXX: redundant, but handy for debugging */
-    struct _pacc_err *err;
 };
 
 static struct intermed *cur;
@@ -175,11 +176,16 @@ static int engine(PACC_TYPE *result) {
 
     /* XXX error propagation is an area of current study! */
     if (matrix->status != evaluated) {
-	struct _pacc_err *e;
-	printf("Expected ");
-	for (e = matrix->err; e; e = e->next)
-	    printf("%s ", e->x);
-	printf("\n");
+	struct _pacc_error *e;
+	printf("expected ");
+	for (e = _pacc_err; e; e = e->next) {
+	    printf("%s", e->x);
+	    if (e->next) {
+		printf(", ");
+		if (!e->next->next) printf("or ");
+	    }
+	}
+	printf(" at column %ld\n", _pacc_err->col);
     }
 
     return matrix->status == evaluated;
@@ -227,7 +233,6 @@ int parse(char *addr, off_t l, PACC_TYPE *result) {
 	    matrix[j * n_rules + i].rule = i;
 	    matrix[j * n_rules + i].col = j;
 	    matrix[j * n_rules + i].thrs_ptr = 0;
-	    matrix[j * n_rules + i].err = 0;
 	}
 
     return engine(result);

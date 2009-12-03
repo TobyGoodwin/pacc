@@ -94,6 +94,49 @@ static void preamble_emit(struct s_node *n) {
     printf("%s\n", n->text);
 }
 
+/* XXX there are some serious problems here. First, this is way too much
+ * code to include time after time; it will have to be made part of the
+ * explicit control circuitry (but *that* probably means that we will
+ * need more than one label per rule, so we'll have to use "2 * id + 1"
+ * type labels. Secondly, this is a classic linked list, but the code
+ * would actually be much simpler with an array that grows as needed.
+ * (It seems theoretically possible that we could predict in advance the
+ * maximum size of the array, but let's worry about that later.) This
+ * would also cure the memory leak.  Finally, col doesn't need to be
+ * part of the _pacc_error structure; we only need one.
+ */
+void error (char *t, int quote) {
+    printf("    struct _pacc_error *e, *f;\n");
+    printf("    int gotit;\n");
+    printf("fprintf(stderr, \"error(%s, %d) at col %%d\\n\", col);\n", t, quote);
+    printf("    e = f = 0; gotit = 1;\n");
+    printf("    if (!_pacc_err) f = 0;\n");
+    printf("    else if (col > _pacc_err->col) {\n");
+    printf("        e = _pacc_err;\n");
+    printf("    } else if (col == _pacc_err->col) {\n");
+    printf("        for (e = _pacc_err; e; e = e->next) {\n");
+    printf("            f = e;\n");
+    printf("            if (strcmp(e->x, ");
+    if (quote) printf("\"\\\"%s\\\"\"", t);
+    else printf("\"%s\"", t);
+    printf(") == 0) gotit = 0;\n");
+    printf("        }\n");
+    printf("    } else gotit = 0;\n");
+    printf("    if (gotit) {\n");
+    printf("        if (!e) {\n");
+    printf("            e = realloc(0, sizeof *_pacc_err);\n");
+    printf("            if (!e) nomem();\n");
+    printf("        }\n");
+    printf("        e->x = ");
+    if (quote) printf("\"\\\"%s\\\"\"", t);
+    else printf("\"%s\"", t);
+    printf(";\n");
+    printf("        e->col = col;\n");
+    printf("        if (f) f->next = e;\n");
+    printf("        else _pacc_err = e;\n"); /* XXX memory leak! */
+    printf("    }\n");
+}
+
 /* XXX this has vacillated, but in the end we want to recognise a
  * properly-escaped C string in the grammar, and copy that verbatim into
  * the generated parser. No? That means we have to be a bit careful in
@@ -129,11 +172,7 @@ static void literal(struct s_node *n) {
     printf("    col += %d;\n", l);
     printf("    Trace fprintf(stderr, \"yes (col=%%d)\\n\", col);\n");
     printf("} else {\n");
-    printf("    struct _pacc_err *e;\n");
-    printf("    e = realloc(0, sizeof *cur->err);\n");
-    printf("    if (!e) nomem();\n");
-    printf("    e->x = \"\\\"%s\\\"\";\n", n->text);
-    printf("    e->next = cur->err; cur->err = e;\n");
+    error(n->text, 1);
     printf("    status = no_parse;\n");
     printf("    Trace fprintf(stderr, \"no (col=%%d)\\n\", col);\n");
     printf("}\n");

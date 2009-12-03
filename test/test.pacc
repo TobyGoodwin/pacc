@@ -1,3 +1,17 @@
-# A multi-character literal:
+# Bryan Ford"s trivial grammar with integers and spacing:
 
-A :: char * ← "foo" { match() }
+Sum :: int ← Space a:Additive End → a
+Additive <- m:Multitive Plus a:Additive { m + a } / m:Multitive -> m
+Multitive <- p:Primary Times m:Multitive { p * m } / p:Primary -> p
+Primary <- Left a:Additive Right -> a / d:Decimal -> d
+Decimal ← Digits1 { atoi(match()) } Space
+Digits1 ← Digit Digits1 / Digit
+Digit <- "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9"
+
+# rest should be void
+Left :: int ← "(" Space
+Right ← ")" Space
+Plus ← "+" Space
+Times ← "*" Space
+Space ← " " Space / ε
+End ← ! .
