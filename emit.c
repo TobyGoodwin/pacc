@@ -106,14 +106,15 @@ static void preamble_emit(struct s_node *n) {
  * part of the _pacc_error structure; we only need one.
  */
 void error (char *t, int quote) {
+    printf("{\n");
     printf("    struct _pacc_error *e, *f;\n");
     printf("    int gotit;\n");
     printf("fprintf(stderr, \"error(%s, %d) at col %%d\\n\", col);\n", t, quote);
     printf("    e = f = 0; gotit = 1;\n");
     printf("    if (!_pacc_err) f = 0;\n");
-    printf("    else if (col > _pacc_err->col) {\n");
+    printf("    else if (col > _pacc_err_col) {\n");
     printf("        e = _pacc_err;\n");
-    printf("    } else if (col == _pacc_err->col) {\n");
+    printf("    } else if (col == _pacc_err_col) {\n");
     printf("        for (e = _pacc_err; e; e = e->next) {\n");
     printf("            f = e;\n");
     printf("            if (strcmp(e->x, ");
@@ -124,17 +125,18 @@ void error (char *t, int quote) {
     printf("    } else gotit = 0;\n");
     printf("    if (gotit) {\n");
     printf("        if (!e) {\n");
-    printf("            e = realloc(0, sizeof *_pacc_err);\n");
+    printf("            e = realloc(0, sizeof *e);\n");
     printf("            if (!e) nomem();\n");
     printf("        }\n");
     printf("        e->x = ");
     if (quote) printf("\"\\\"%s\\\"\"", t);
     else printf("\"%s\"", t);
     printf(";\n");
-    printf("        e->col = col;\n");
+    printf("        _pacc_err_col = col;\n");
     printf("        if (f) f->next = e;\n");
     printf("        else _pacc_err = e;\n"); /* XXX memory leak! */
     printf("    }\n");
+    printf("}\n");
 }
 
 /* XXX this has vacillated, but in the end we want to recognise a
@@ -198,6 +200,10 @@ static void rule_pre(struct s_node *n) {
 static void rule_post(struct s_node *n) {
     printf("    cur->status = status;\n");
     printf("    cur->remainder = col;\n");
+    printf("    if (_pacc_err_col == rule_col) {\n");
+    printf("        _pacc_err = 0;\n"); /* XXX memory leak. */
+    error(n->text, 0);
+    printf("    }\n");
     printf("}\n");
     printf("goto contin;\n");
     ++cur_rule;

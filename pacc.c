@@ -67,10 +67,10 @@ enum status {
 /* A linked list of error information */
 struct _pacc_error {
     char *x;
-    off_t col;
     struct _pacc_error *next;
 };
 struct _pacc_error *_pacc_err;
+off_t _pacc_err_col;
 
 #include "pacc-part.c"
 

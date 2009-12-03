@@ -72,10 +72,10 @@ enum status {
 /* A linked list of error information */
 struct _pacc_error {
     char *x;
-    off_t col;
     struct _pacc_error *next;
 };
 struct _pacc_error *_pacc_err;
+off_t _pacc_err_col;
 
 #include "parse-part.c"
 
@@ -185,7 +185,7 @@ static int engine(PACC_TYPE *result) {
 		if (!e->next->next) printf("or ");
 	    }
 	}
-	printf(" at column %ld\n", _pacc_err->col);
+	printf(" at column %ld\n", _pacc_err_col);
     }
 
     return matrix->status == evaluated;
