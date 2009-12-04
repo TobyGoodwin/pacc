@@ -74,9 +74,10 @@ size_t _pacc_err_alloc = 0;
 size_t _pacc_err_valid = 0;
 off_t _pacc_err_col;
 
-#define n_rules 1
+#define n_rules 2
 union yy_union {
     int u0;
+    int u1;
 };
 #define TYPE_PRINTF "%d"
 #define PACC_TYPE int
@@ -136,20 +137,95 @@ static int engine(PACC_TYPE *result) {
     evaluating = 0;
     int pos;
 
-st = 105;
+st = 106;
 top:
 Trace fprintf(stderr, "switch to state %d\n", st);
 switch(st) {
-case 105: /* A */
-Trace fprintf(stderr, "rule 0 (A) col %d\n", col);
+case 106: /* P */
+Trace fprintf(stderr, "rule 0 (P) col %d\n", col);
 rule_col = col;
 cur = matrix + col * n_rules + 0;
 if (cur->status == uncomputed) {
-Trace fprintf(stderr, "seq 103 @ col %d?\n", col);
+Trace fprintf(stderr, "seq 104 @ col %d?\n", col);
 pushcont(cont);
-cont = 103;
+cont = 104;
 status = parsed;
-Trace fprintf(stderr, "lit 101 @ col %d => ", col);
+/* bind: a */
+Trace fprintf(stderr, "%d: bind_pre()\n", 102);
+Trace fprintf(stderr, "will bind a @ rule 1, col %d\n", col);
+pusheval(1, col, thr_bound);
+pushcont(rule_col);
+pushcont(cont); pushm(cur);
+cont = 101;
+st = 110; /* call A */
+goto top;
+case 101: /* return from A */
+cont = popcont();
+last = cur; cur = popm();
+status = last->status;
+col = last->remainder;
+rule_col = popcont();
+/* end bind: a */
+if (status == no_parse) {
+    goto contin;
+}
+Trace fprintf(stderr, "%d: emit_expr()\n", 103);
+pusheval(103, rule_col, thr_thunk);
+pusheval(0, col, thr_col);
+case 103:
+if (evaluating) {
+    struct intermed *_pacc_p;
+    _pacc_p = cur = matrix + col * n_rules + 0;
+    evaluating = 1;
+    cur = _pacc_p;
+    cur->value.u0 = ( 5 );
+Trace fprintf(stderr, "stash %d to (%d, 0)\n", cur->value.u0, col);
+    goto eval_loop;
+}
+case 104:
+cont = popcont();
+Trace fprintf(stderr, "seq 104 @ col %d => %s\n", rule_col, status!=no_parse?"yes":"no");
+Trace fprintf(stderr, "col is %d\n", col);
+    cur->status = status;
+    cur->remainder = col;
+    if (_pacc_err_col == rule_col) {
+        _pacc_err_valid = 0;
+{
+    int doit, append;
+Trace fprintf(stderr, "error(P, 0) at col %d\n", col);
+    append = doit = 1;
+    if (col > _pacc_err_col) append = 0;
+    else if (col == _pacc_err_col) {
+        size_t i;
+        for (i = 0; i < _pacc_err_valid; ++i) {
+            if (strcmp(_pacc_err[i], "P") == 0) doit = 0;
+        }
+    } else doit = 0;
+    if (doit) {
+        if (append) ++_pacc_err_valid;
+        else _pacc_err_valid = 1;
+        if (_pacc_err_valid > _pacc_err_alloc) {
+            _pacc_err_alloc = 2 * _pacc_err_alloc + 1;
+            _pacc_err = realloc(_pacc_err, _pacc_err_alloc * sizeof(char *));
+            if (!_pacc_err) nomem();
+        }
+        _pacc_err[_pacc_err_valid - 1] = "P";
+        _pacc_err_col = col;
+    }
+}
+    }
+}
+goto contin;
+case 110: /* A */
+Trace fprintf(stderr, "rule 1 (A) col %d\n", col);
+rule_col = col;
+cur = matrix + col * n_rules + 1;
+if (cur->status == uncomputed) {
+Trace fprintf(stderr, "seq 108 @ col %d?\n", col);
+pushcont(cont);
+cont = 108;
+status = parsed;
+Trace fprintf(stderr, "lit 107 @ col %d => ", col);
 if (col + 1 <= input_length &&
         strncmp("5", string + col, 1) == 0) {
     status = parsed;
@@ -182,25 +258,9 @@ Trace fprintf(stderr, "error(5, 1) at col %d\n", col);
     status = no_parse;
     Trace fprintf(stderr, "no (col=%d)\n", col);
 }
-if (status == no_parse) {
-    goto contin;
-}
-Trace fprintf(stderr, "%d: emit_expr()\n", 102);
-pusheval(102, rule_col, thr_thunk);
-pusheval(0, col, thr_col);
-case 102:
-if (evaluating) {
-    struct intermed *_pacc_p;
-    _pacc_p = cur = matrix + col * n_rules + 0;
-    evaluating = 1;
-    cur = _pacc_p;
-    cur->value.u0 = ( 5 );
-Trace fprintf(stderr, "stash %d to (%d, 0)\n", cur->value.u0, col);
-    goto eval_loop;
-}
-case 103:
+case 108:
 cont = popcont();
-Trace fprintf(stderr, "seq 103 @ col %d => %s\n", rule_col, status!=no_parse?"yes":"no");
+Trace fprintf(stderr, "seq 108 @ col %d => %s\n", rule_col, status!=no_parse?"yes":"no");
 Trace fprintf(stderr, "col is %d\n", col);
     cur->status = status;
     cur->remainder = col;

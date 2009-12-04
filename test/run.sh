@@ -5,7 +5,7 @@ build() {
     set -e
     echo build $1
     cp $1.pacc test.pacc
-    rm -f parse-part.c harness harness.o parse.o
+    rm -f parse.c harness harness.o parse.o
     make harness
 }
 
