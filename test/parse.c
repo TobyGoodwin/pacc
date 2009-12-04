@@ -1,16 +1,10 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "parse.h"
+#include "assert.h"
 
 #define Trace if (0)
-
-static void nomem(void) {
-    fprintf(stderr, "out of memory\n");
-    exit(1);
-}
 
 static char *string;
 
@@ -29,6 +23,11 @@ static void pushcont(int c) {
 static int popcont(void) {
     Trace fprintf(stderr, "pop() stack[%d] -> %d\n", st_ptr - 1, st_stack[st_ptr - 1]);
     return st_stack[--st_ptr];
+}
+
+static void nomem(void) {
+    fprintf(stderr, "out of memory\n");
+    exit(1);
 }
 
 static char *copy(int from, int to) {
@@ -75,7 +74,13 @@ size_t _pacc_err_alloc = 0;
 size_t _pacc_err_valid = 0;
 off_t _pacc_err_col;
 
-#include "parse-part.c"
+#define n_rules 1
+union yy_union {
+    int u0;
+};
+#define TYPE_PRINTF "%d"
+#define PACC_TYPE int
+/* not yet... yytype yyvalue; */
 
 #define THR_STACK_BODGE 40
 
@@ -131,7 +136,104 @@ static int engine(PACC_TYPE *result) {
     evaluating = 0;
     int pos;
 
-#include "parse-part.c"
+st = 105;
+top:
+Trace fprintf(stderr, "switch to state %d\n", st);
+switch(st) {
+case 105: /* A */
+Trace fprintf(stderr, "rule 0 (A) col %d\n", col);
+rule_col = col;
+cur = matrix + col * n_rules + 0;
+if (cur->status == uncomputed) {
+Trace fprintf(stderr, "seq 103 @ col %d?\n", col);
+pushcont(cont);
+cont = 103;
+status = parsed;
+Trace fprintf(stderr, "lit 101 @ col %d => ", col);
+if (col + 1 <= input_length &&
+        strncmp("5", string + col, 1) == 0) {
+    status = parsed;
+    col += 1;
+    Trace fprintf(stderr, "yes (col=%d)\n", col);
+} else {
+{
+    int doit, append;
+Trace fprintf(stderr, "error(5, 1) at col %d\n", col);
+    append = doit = 1;
+    if (col > _pacc_err_col) append = 0;
+    else if (col == _pacc_err_col) {
+        size_t i;
+        for (i = 0; i < _pacc_err_valid; ++i) {
+            if (strcmp(_pacc_err[i], "\"5\"") == 0) doit = 0;
+        }
+    } else doit = 0;
+    if (doit) {
+        if (append) ++_pacc_err_valid;
+        else _pacc_err_valid = 1;
+        if (_pacc_err_valid > _pacc_err_alloc) {
+            _pacc_err_alloc = 2 * _pacc_err_alloc + 1;
+            _pacc_err = realloc(_pacc_err, _pacc_err_alloc * sizeof(char *));
+            if (!_pacc_err) nomem();
+        }
+        _pacc_err[_pacc_err_valid - 1] = "\"5\"";
+        _pacc_err_col = col;
+    }
+}
+    status = no_parse;
+    Trace fprintf(stderr, "no (col=%d)\n", col);
+}
+if (status == no_parse) {
+    goto contin;
+}
+Trace fprintf(stderr, "%d: emit_expr()\n", 102);
+pusheval(102, rule_col, thr_thunk);
+pusheval(0, col, thr_col);
+case 102:
+if (evaluating) {
+    struct intermed *_pacc_p;
+    _pacc_p = cur = matrix + col * n_rules + 0;
+    evaluating = 1;
+    cur = _pacc_p;
+    cur->value.u0 = ( 5 );
+Trace fprintf(stderr, "stash %d to (%d, 0)\n", cur->value.u0, col);
+    goto eval_loop;
+}
+case 103:
+cont = popcont();
+Trace fprintf(stderr, "seq 103 @ col %d => %s\n", rule_col, status!=no_parse?"yes":"no");
+Trace fprintf(stderr, "col is %d\n", col);
+    cur->status = status;
+    cur->remainder = col;
+    if (_pacc_err_col == rule_col) {
+        _pacc_err_valid = 0;
+{
+    int doit, append;
+Trace fprintf(stderr, "error(A, 0) at col %d\n", col);
+    append = doit = 1;
+    if (col > _pacc_err_col) append = 0;
+    else if (col == _pacc_err_col) {
+        size_t i;
+        for (i = 0; i < _pacc_err_valid; ++i) {
+            if (strcmp(_pacc_err[i], "A") == 0) doit = 0;
+        }
+    } else doit = 0;
+    if (doit) {
+        if (append) ++_pacc_err_valid;
+        else _pacc_err_valid = 1;
+        if (_pacc_err_valid > _pacc_err_alloc) {
+            _pacc_err_alloc = 2 * _pacc_err_alloc + 1;
+            _pacc_err = realloc(_pacc_err, _pacc_err_alloc * sizeof(char *));
+            if (!_pacc_err) nomem();
+        }
+        _pacc_err[_pacc_err_valid - 1] = "A";
+        _pacc_err_col = col;
+    }
+}
+    }
+}
+goto contin;
+case -1: break;
+}
 
     if (parsed && !evaluating && matrix->status == parsed) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
@@ -170,22 +272,25 @@ static int engine(PACC_TYPE *result) {
 	goto contin;
     }
 
-    *result = matrix->value.u0;
-
-    /* XXX error propagation is an area of current study! */
     if (matrix->status != evaluated) {
-	size_t i;
-	printf("expected ");
-	for (i = 0; i < _pacc_err_valid; ++i) {
-	    printf("%s", _pacc_err[i]);
-	    if (i + 1 < _pacc_err_valid) {
-		printf(", ");
-		if (i + 2 == _pacc_err_valid) printf("or ");
-	    }
-	}
-	printf(" at column %ld\n", _pacc_err_col);
+       size_t i;
+       printf("expected ");
+       for (i = 0; i < _pacc_err_valid; ++i) {
+           printf("%s", _pacc_err[i]);
+           if (i + 1 < _pacc_err_valid) {
+               printf(", ");
+               if (i + 2 == _pacc_err_valid) printf("or ");
+           }
+       }
+       printf(" at column %ld\n", _pacc_err_col);
     }
 
+    if (matrix->status == evaluated) {
+	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
+	*result = matrix->value.u0;
+    } else if (matrix->status == parsed) {
+	printf("parsed with void value\n");
+    } else printf("not parsed\n");
     return matrix->status == evaluated;
 
 contin:

@@ -1,15 +1,27 @@
 Error handling
 
-    Need to check what baf says about this. Intuitively, a good place to
-    start is with the rule that failed to match at the highest column.
-    Also, need to somehow get line numbers. It's not so obvious how /
-    where you could keep a count as parsing proceeds, but there's no
-    real reason not to count newlines after an error has been
-    encountered, is there?.
+    This needs more experience. Currently, the merging of errors
+    destroys more information than I'm happy with.  Also, need to
+    somehow get line numbers. It's not so obvious how / where you could
+    keep a count as parsing proceeds, but there's no real reason not to
+    count newlines after an error has been encountered, is there?.
 
 Complete the command-line interface
 
+    Need --help for one. And --defines, although I'm inclined to think
+    that that should be the default.
+
 Detect (and handle?) left recursion
+
+    How does Piumarta do this?
+
+Make pacc output a complete parser
+
+    In other words, get rid of the -part.c bodge. Thing is, it's really
+    tempting to have a template file, rather than a rash of printf()s,
+    but that's a bit more work. Hell, no, it's essential to have a
+    template file. It's only a little bit of work to set it up, and then
+    we win every time.
 
 Replace the intermediate results matrix with hashing
 

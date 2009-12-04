@@ -507,10 +507,20 @@ Heuristics might include: capitalization of the rule name (but I really
 hate this); whether the rule contains any alternatives.
 
 Annotations look more flexible, but I don't know what syntax I'd like to
-use.
+use. Straw man: something like this?
+
+   D <- "0" { 0 } / "1" { 1 } / ... / "9" { 9 } ~ "decimal digit"
 
 Just at the moment, I can't see how Pappy handles errors at all, and I
 don't have the Rats! documentation to hand.
 
 Any case, at the moment, I'm not going to make any radical changes,
 except to clean up the code.
+
+OK, so now I'm thinking about getting rid of the -part.c bodge, and have
+decided that we really must have a template file (rather than emit.c
+sprouting a new rash of printf()s). So how would that work? Suppose we
+have pacc.tmpl, with some kinda marker at the points where we currently
+include pacc-part.c. Then a sed script could create template.c, which
+holds the three functions pre_decl(), pre_engine(), and post_engine().
+Let's do it!

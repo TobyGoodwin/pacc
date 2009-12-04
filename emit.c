@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "syntax.h"
+#include "template.h"
 
 static char *g_name; /* grammar name */
 static struct s_node *g_node; /* grammar root */
@@ -39,9 +40,10 @@ static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
 
+    fprintf(stderr, "at this point, arg_output() returns %s\n", arg_output());
+    pre_decl();
+
     g_node = n;
-    printf("#ifndef DECLS\n"); /* phew! what a loony hack: one day we will write the whole of foo.c from here */
-    printf("#define DECLS 1\n");
 
     /* XXX old style: separate "prefix" */
     //if (prefix) printf("%s\n", prefix);
@@ -75,8 +77,12 @@ static void grammar_pre(struct s_node *n) {
     else printf("\"%%p\"");
     printf("\n");
 
+    printf("#define PACC_TYPE %s\n", n->first->next->first->text);
+
     printf("/* not yet... %stype %svalue; */\n", g_name, g_name);
-    printf("#else\n");
+ 
+    pre_engine();
+
     printf("st = %d;\ntop:\n",
 	    n->first->type == preamble ? n->first->next->id : n->first->id);
     printf("Trace fprintf(stderr, \"switch to state %%d\\n\", st);\n");
@@ -86,7 +92,7 @@ static void grammar_pre(struct s_node *n) {
 static void grammar_post(struct s_node *n) {
     printf("case -1: break;\n");
     printf("}\n");
-    printf("#endif\n");
+    post_engine();
 }
 
 
@@ -98,16 +104,12 @@ static void preamble_emit(struct s_node *n) {
  * code to include time after time; it will have to be made part of the
  * explicit control circuitry (but *that* probably means that we will
  * need more than one label per rule, so we'll have to use "2 * id + 1"
- * type labels. Secondly, this is a classic linked list, but the code
- * would actually be much simpler with an array that grows as needed.
- * (It seems theoretically possible that we could predict in advance the
- * maximum size of the array, but let's worry about that later.) This
- * would also cure the memory leak.
+ * type labels.
  */
 void error (char *t, int quote) {
     printf("{\n");
     printf("    int doit, append;\n");
-    printf("fprintf(stderr, \"error(%s, %d) at col %%d\\n\", col);\n", t, quote);
+    printf("Trace fprintf(stderr, \"error(%s, %d) at col %%d\\n\", col);\n", t, quote);
     printf("    append = doit = 1;\n");
     printf("    if (col > _pacc_err_col) append = 0;\n");
     printf("    else if (col == _pacc_err_col) {\n");

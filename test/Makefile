@@ -11,7 +11,7 @@ harness: harness.o parse.o
 
 harness.o: parse.h harness.c
 
-parse.o: parse.h parse.c parse-part.c
+parse.o: parse.h parse.c
 
-parse-part.c: test.pacc
-	../pacc -o parse-part.c $^
+parse.c: test.pacc
+	../pacc -o $@ $^
