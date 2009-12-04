@@ -1,10 +1,11 @@
 Error handling
 
     This needs more experience. Currently, the merging of errors
-    destroys more information than I'm happy with.  Also, need to
-    somehow get line numbers. It's not so obvious how / where you could
-    keep a count as parsing proceeds, but there's no real reason not to
-    count newlines after an error has been encountered, is there?.
+    destroys more information than I'm happy with.  Also, need to get
+    line numbers. One possibility is to count newlines after an error
+    has been encountered; another is to maintain a line counter as we
+    currently maintain col, incrementing it if "any" matches a newline
+    and by the newline count in every matched literal.
 
 Complete the command-line interface
 
@@ -13,15 +14,12 @@ Complete the command-line interface
 
 Detect (and handle?) left recursion
 
-    How does Piumarta do this?
+    Piumarta does this by analyzing the tree. We will need to copy this,
+    perhaps as part of desugaring or optimizing. Other things include:
+    checking that every rule is reached; checking that non-void rules
+    always return a value (and that void rules never do).
 
-Make pacc output a complete parser
-
-    In other words, get rid of the -part.c bodge. Thing is, it's really
-    tempting to have a template file, rather than a rash of printf()s,
-    but that's a bit more work. Hell, no, it's essential to have a
-    template file. It's only a little bit of work to set it up, and then
-    we win every time.
+Parser optimization / manipulation (including partialization hack)
 
 Replace the intermediate results matrix with hashing
 
@@ -34,8 +32,6 @@ Only one instance of each type per union
 Handle void types
 
 Dynamically allocate everything
-
-Parser optimization / manipulation (including partialization hack)
 
 UTF-8 support
 

@@ -34,7 +34,7 @@ static void usage(void) {
  * suffix (or appended if there was no suffix). For example,
  * munge("/foo/x.pacc") ==> "x.c".
  */
-static char suffix[] = "-part.c";
+static char suffix[] = ".c";
 static char *munge(const char *i) {
     const char *b, *d, *p;
     char *r;
@@ -49,7 +49,7 @@ static char *munge(const char *i) {
     }
     if (!d) d = p;
     l = d - b;
-    r = malloc(l + sizeof(suffix));
+    r = malloc(l + sizeof suffix);
     if (!r) nomem();
     strncpy(r, b, l);
     r[l] = '\0';

@@ -8,8 +8,6 @@ int main(int argc, char **argv) {
 
     if (parse(argv[1], strlen(argv[1]), &r))
 	printf("parsed with value " PACC_TYPE_FORMAT "\n", r);
-    else
-	printf("not parsed\n");
 
     return 0;
 }

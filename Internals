@@ -524,3 +524,16 @@ have pacc.tmpl, with some kinda marker at the points where we currently
 include pacc-part.c. Then a sed script could create template.c, which
 holds the three functions pre_decl(), pre_engine(), and post_engine().
 Let's do it!
+
+2009-12-04
+----------
+
+Template file done as described, and aren't I glad I did! The best part
+is that, because it's (almost) a real C file, vim's syntax highlighting
+works, unlike emit.c where all the emitted code is just pink. (Now that
+gives me an idea, what about a vim syntax definition that can understand
+embedded code... :-)
+
+Anycase, I'm just redoing the test harness so that it can make use of
+errors, and it occurs to me that we need to generate useful errors for
+failing predicates.

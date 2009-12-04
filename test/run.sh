@@ -4,244 +4,266 @@ build() {
     # Oh. Seems that commandline -e doesn't apply to functions.
     set -e
     echo build $1
-    cp $1.pacc test.pacc
+    cp $1.pacc parse.pacc
     rm -f parse.c harness harness.o parse.o
     make harness
 }
 
+passes=0
+fails=0
+
 check() {
-    r=`./harness "$1" | sed -n '/\(not \|\)parsed\(\| with value \)\(.*\)/s//\3/p'`
+    r=`./harness "$1" 2>&1`
     if [ "$r" = "$2" ]; then
 	echo "PASS: $1 ==> $2"
+	passes=`expr $passes + 1`
     else
-	echo "FAIL: $1 ==> $r (expected $2)" 1>&2
-	exit 1
+	echo "FAIL: $1 ==> $r (expected $2)"
+	fails=`expr $fails + 1`
     fi
+}
+
+parse() {
+    check "$1" "parsed with value $2"
+}
+
+noparse() {
+    check "$1" "expected $2 at column $3"
 }
 
 cp parse.h-int parse.h
 
 build val0
-check 5 5
-check x ''
+parse 5 5
+noparse x A 0
 
 build val1
-check 5 5
-check 6 6
-check x ''
+parse 5 5
+parse 6 6
+noparse x A 0
 
 build val2
-check 5 5
-check 6 6
-check x ''
+parse 5 5
+parse 6 6
+noparse x P 0
 
 build val3
-check 5.5 25
-check 5.6 30
-check 6.5 30
-check 6.6 36
-check 5.x ''
+parse 5.5 25
+parse 5.6 30
+parse 6.5 30
+parse 6.6 36
+noparse 5.x A 2
 
 build val4
-check 5.5 25
-check 5.6 30
-check 6.5 30
-check 6.6 36
-check 5.x ''
+parse 5.5 25
+parse 5.6 30
+parse 6.5 30
+parse 6.6 36
+noparse 5.x A 2
 
 build val5
-check .5 5
-check .6 6
-check .x ''
+parse .5 5
+parse .6 6
+noparse .x A 1
 
 build val6
-check 5.5 25
-check 5.6 30
-check 6.5 30
-check 6.6 36
-check x ''
-check 5.x ''
-check 6.x ''
-check 5+5 10
-check 5+6 11
-check 6+5 11
-check 6+6 12
-check 5+x ''
-check 6+x ''
-check 5.+ ''
+parse 5.5 25
+parse 5.6 30
+parse 6.5 30
+parse 6.6 36
+noparse x P 0
+noparse 5.x A 2
+noparse 6.x A 2
+parse 5+5 10
+parse 5+6 11
+parse 6+5 11
+parse 6+6 12
+noparse 5+x A 2
+noparse 6+x A 2
+noparse 5.+ A 2
 
 cp parse.h-chars parse.h
 
 build lit0
-check foo foo
-check bar ''
+parse foo foo
+noparse bar A 0
 
 build and0
-check ab a
-check ac ''
+parse ab a
+noparse ac '"b"' 1
 
 build not0
-check a a
-check ac a
-check ab ''
+parse a a
+parse ac a
+noparse ab A 1
 
 build not1
-check f ''
-check fo ''
-check foo yes
-check food ''
+noparse f S 0
+noparse fo S 0
+parse foo yes
+noparse food S 3
 
 build rep0
-check xx xx
-check xyx xyx
-check xyyx xyyx
-check xyyyx xyyyx
-check xyyyyyyyyyyx xyyyyyyyyyyx
+parse xx xx
+parse xyx xyx
+parse xyyx xyyx
+parse xyyyx xyyyx
+parse xyyyyyyyyyyx xyyyyyyyyyyx
 
 build rep1
-check xx ''
-check xyx y
-check xyyx yy
+parse xx ''
+parse xyx y
+parse xyyx yy
 
 build rep2
-check xx ''
-check xyx xyx
-check xyyx xyyx
-check xyyyx xyyyx
-check xyyyyyyyyyyx xyyyyyyyyyyx
+noparse xx Y 1
+parse xyx xyx
+parse xyyx xyyx
+parse xyyyx xyyyx
+parse xyyyyyyyyyyx xyyyyyyyyyyx
 
 build rep3
-check xx xx
-check xyx xyx
-check xyyx ''
-check xyyyx ''
-check xyyyyyyyyyyx ''
+parse xx xx
+parse xyx xyx
+noparse xyyx '"x"' 2
+noparse xyyyx '"x"' 2
+noparse xyyyyyyyyyyx '"x"' 2
 
 # This test needs to do something more clever with the results,
 # otherwise we're not really proving that we're doing nested reps.
 build rep4
-check a a
-check 'a b' 'a b'
-check 'a  b' 'a  b'
+parse a a
+parse 'a b' 'a b'
+parse 'a  b' 'a  b'
 
 cp parse.h-int parse.h
 
 build guard0
-check 5 5
-check x ''
+check 5 'hello, world!
+parsed with value 5'
+noparse x A 0
 
 build guard1
-check 5 5
-check 6 ''
+parse 5 5
+noparse 6 A 1
 
 build guard2
-check 5 5
-check 6 ''
+parse 5 5
+noparse 6 A 1
 
 build guard3
-check 55 5
-check 66 6
-check 56 ''
-check 65 ''
-check xy ''
+parse 55 5
+parse 66 6
+noparse 56 A 2
+noparse 65 A 2
+noparse xy P 0
 
 cp parse.h-chars parse.h
 
 build guard4
-check a a
-check q q
-check z z
-check A ''
-check '%' ''
+parse a a
+parse q q
+parse z z
+noparse A A 1
+noparse '%' A 1
 
 cp parse.h-int parse.h
 
 build guard5
-check a9 9
-check z3 3
-check zx ''
+parse a9 9
+parse z3 3
+noparse zx A 2
 
 cp parse.h-chars parse.h
 
 build guard6
-check q q
-check qux qux
-check q39a q39a
-check q. q
-check q3. q3
-check 37 ''
+parse q q
+parse qux qux
+parse q39a q39a
+parse q. q
+parse q3. q3
+noparse 37 Char 1
 
 build guard7
-check '{}' '{}'
-check '{ any chars here }' '{ any chars here }'
-check '{ no' ''
+parse '{}' '{}'
+parse '{ any chars here }' '{ any chars here }'
+noparse '{ no' '"}"' 4
 
 build type0
-check 5 five
+parse 5 five
 
 build type1
-check 5 5
+parse 5 5
 
 build type2
-check a a
-check aa aa
-check aaaaa aaaaa
-check aabaa aa
+parse a a
+parse aa aa
+parse aaaaa aaaaa
+parse aabaa aa
 
 cp parse.h-int parse.h
 
 build type3
-check 78 78
+parse 78 78
 
 cp parse.h-chars parse.h
 
 build match0
-check 567 56
+parse 567 56
 
 build match1
-check 567 7
+parse 567 7
 
 cp parse.h-int parse.h
 
 baf_tests1() {
-    check 5 5
-    check x ''
-    check 2+3 5
-    check '2*3' 6
-    check '2+3+4' 9
-    check '2*3+4' 10
-    check '2+3*4' 14
-    check '2*3*4' 24
+    parse 5 5
+    parse 2+3 5
+    parse '2*3' 6
+    parse '2+3+4' 9
+    parse '2*3+4' 10
+    parse '2+3*4' 14
+    parse '2*3*4' 24
 }
 
 build baf0
 baf_tests1
+noparse x Additive 0
 
 build baf1
 baf_tests1
+noparse x Additive 0
 
 baf_tests2() {
     baf_tests1
-    check '53*(13+75)' 4664
+    parse '53*(13+75)' 4664
 }
 
 build baf2
 baf_tests2
+noparse x Additive 0
 
 baf_tests3() {
     baf_tests2
-    check ' 456 + 123 * ( 543 + 7 * (987 + 2) + 6) ' 919512
+    parse ' 456 + 123 * ( 543 + 7 * (987 + 2) + 6) ' 919512
 }
 
 build baf3
 baf_tests3
+noparse x Sum 0
 
 cp parse.h-chars parse.h
 
 build regress0
-check 'fred' 'fred'
-check 'fred ' 'fred'
-check 'fred barney' ''
+parse 'fred' 'fred'
+parse 'fred ' 'fred'
+noparse 'fred barney' End 5
 
+cp parse.h-int parse.h
 build regress1
-check '5' ''
+parse 5 5
+
+echo
+echo $passes passes
+echo $fails fails
+if [ $fails -ne 0 ]; then exit 1; else exit 0; fi
