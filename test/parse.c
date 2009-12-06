@@ -94,7 +94,7 @@ struct intermed {
     int rule, col; /* XXX: redundant, but handy for debugging */
 };
 
-static struct intermed *cur;
+static struct intermed *cur, *matrix;
 
 static void pusheval(int t, int col, enum thr type) {
     Trace fprintf(stderr, "pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
@@ -104,7 +104,13 @@ static void pusheval(int t, int col, enum thr type) {
     ++cur->thrs_ptr;
 }
 
-static struct intermed *matrix;
+static int input_length;
+
+static struct intermed *_pacc_result(int col, int rule) {
+    assert(col < input_length + 1);
+    assert(rule < n_rules);
+    return matrix + col * n_rules + rule;
+}
 
 #define M_STACK_BODGE 500
 static struct intermed *m_stack[M_STACK_BODGE];
@@ -122,8 +128,6 @@ static void pushm2(struct intermed *i) {
     m2_stack[m2_ptr++] = i;
 }
 static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
-
-static int input_length;
 
 static int engine(PACC_TYPE *result) {
     enum status status;
@@ -144,7 +148,7 @@ switch(st) {
 case 106: /* P */
 Trace fprintf(stderr, "rule 0 (P) col %d\n", col);
 rule_col = col;
-cur = matrix + col * n_rules + 0;
+cur = _pacc_result(col, 0);
 if (cur->status == uncomputed) {
 Trace fprintf(stderr, "seq 104 @ col %d?\n", col);
 pushcont(cont);
@@ -175,11 +179,11 @@ pusheval(0, col, thr_col);
 case 103:
 if (evaluating) {
     struct intermed *_pacc_p;
-    _pacc_p = cur = matrix + col * n_rules + 0;
+    _pacc_p = cur = _pacc_result(col, 0);
     evaluating = 1;
     cur = _pacc_p;
     cur->value.u0 = ( 5 );
-Trace fprintf(stderr, "stash %d to (%d, 0)\n", cur->value.u0, col);
+    Trace fprintf(stderr, "stash " TYPE_PRINTF " to (%d, 0)\n", cur->value.u0, col);
     goto eval_loop;
 }
 case 104:
@@ -219,7 +223,7 @@ goto contin;
 case 110: /* A */
 Trace fprintf(stderr, "rule 1 (A) col %d\n", col);
 rule_col = col;
-cur = matrix + col * n_rules + 1;
+cur = _pacc_result(col, 1);
 if (cur->status == uncomputed) {
 Trace fprintf(stderr, "seq 108 @ col %d?\n", col);
 pushcont(cont);
@@ -295,12 +299,12 @@ goto contin;
 case -1: break;
 }
 
-    if (parsed && !evaluating && matrix->status == parsed) {
+    cur = _pacc_result(0, 0);
+    if (parsed && !evaluating && cur->status == parsed) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	//pushthunk(-1); pushthunk(-1);
 	evaluating = 1;
 	_pacc_i = 0;
-	cur = matrix;
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_i == %d\n", _pacc_i);
 	if (_pacc_i < cur->thrs_ptr) {
@@ -311,7 +315,7 @@ case -1: break;
 		++_pacc_i;
 		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
 		pushm2(cur); pushcont(_pacc_i);
-		cur = matrix + col * n_rules + rule;
+		cur = _pacc_result(col, rule);
 		_pacc_i = 0;
 		goto eval_loop;
 	    } else {
@@ -332,7 +336,8 @@ case -1: break;
 	goto contin;
     }
 
-    if (matrix->status == no_parse) {
+    assert(cur == matrix);
+    if (cur->status == no_parse) {
        size_t i;
        printf("expected ");
        for (i = 0; i < _pacc_err_valid; ++i) {
@@ -345,13 +350,13 @@ case -1: break;
        printf(" at column %ld\n", _pacc_err_col);
     }
 
-    if (matrix->status == evaluated) {
-	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", matrix->value.u0); /* XXX u0 */
-	*result = matrix->value.u0;
-    } else if (matrix->status == parsed) {
+    if (cur->status == evaluated) {
+	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
+	*result = cur->value.u0;
+    } else if (cur->status == parsed) {
 	Trace fprintf(stderr, "parsed with void value\n");
     } else Trace fprintf(stderr, "not parsed\n");
-    return matrix->status == evaluated;
+    return cur->status == evaluated;
 
 contin:
     Trace fprintf(stderr, "continuing in state %d\n", cont);
@@ -392,10 +397,11 @@ int parse(char *addr, off_t l, PACC_TYPE *result) {
     matrix = malloc(sizeof(struct intermed) * matrix_size);
     for (i = 0; i < n_rules; ++i)
 	for (j = 0; j < input_length + 1; ++j) {
-	    matrix[j * n_rules + i].status = uncomputed;
-	    matrix[j * n_rules + i].rule = i;
-	    matrix[j * n_rules + i].col = j;
-	    matrix[j * n_rules + i].thrs_ptr = 0;
+	    struct intermed *p = _pacc_result(j, i);
+	    p->status = uncomputed;
+	    p->rule = i;
+	    p->col = j;
+	    p->thrs_ptr = 0;
 	}
 
     return engine(result);

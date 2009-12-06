@@ -40,7 +40,6 @@ static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
 
-    fprintf(stderr, "at this point, arg_output() returns %s\n", arg_output());
     pre_decl();
 
     g_node = n;
@@ -227,7 +226,7 @@ static void rule_pre(struct s_node *n) {
     printf("case %d: /* %s */\n", n->id, n->text); 
     printf("Trace fprintf(stderr, \"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
     printf("rule_col = col;\n");
-    printf("cur = matrix + col * n_rules + %d;\n", cur_rule);
+    printf("cur = _pacc_result(col, %d);\n", cur_rule);
     printf("if (cur->status == uncomputed) {\n");
 }
 
@@ -405,15 +404,14 @@ static void bindings(struct s_node *n) {
 	printf("_pacc_i = popcont();\n");
 
 	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->thrs[pos].col);\n", p->text, i_stack[i]);
-	printf("    cur = matrix + _pacc_p->thrs[pos].col * n_rules + %d;\n",
-		i_stack[i]);
+	printf("    cur = _pacc_result(_pacc_p->thrs[pos].col, %d);\n", i_stack[i]);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
 	printf("	_pacc_i = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
-	printf("    %s = cur->value.u0;\n", p->text); /* XXX u0 */
-	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%d ==> %%d\\n\", _pacc_p->thrs[pos].col, cur->value.u0);\n", p->text, i_stack[i]);
+	printf("    %s = cur->value.u%d;\n", p->text, i_stack[i]);
+	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%d ==> \" TYPE_PRINTF \"\\n\", _pacc_p->thrs[pos].col, cur->value.u0);\n", p->text, i_stack[i]);
 #if 0
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
@@ -444,12 +442,12 @@ static void emit_expr(struct s_node *n) {
     printf("if (evaluating) {\n");
     printf("    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
-    printf("    _pacc_p = cur = matrix + col * n_rules + %d;\n", cur_rule);
+    printf("    _pacc_p = cur = _pacc_result(col, %d);\n", cur_rule);
     printf("    evaluating = 1;\n");
     bindings(n);
     printf("    cur = _pacc_p;\n");
     printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
-    printf("Trace fprintf(stderr, \"stash %%d to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
+    printf("    Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%%d, %d)\\n\", cur->value.u0, col);\n", cur_rule);
     printf("    goto eval_loop;\n");
     printf("}\n");
 }

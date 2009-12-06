@@ -21,6 +21,11 @@ Detect (and handle?) left recursion
 
 Parser optimization / manipulation (including partialization hack)
 
+Value inheritance
+
+    In your rule "SeqRule ← s:Sequence → s / u:UnaryRule → u" would not
+    "SeqRule ← Sequence / UnaryRule" do as well, if not better?
+
 Replace the intermediate results matrix with hashing
 
 Review of the parsing engine - do we really need so many stacks?

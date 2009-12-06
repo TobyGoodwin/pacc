@@ -33,7 +33,7 @@ UnaryRule
     / p:PrimRule → p
 
 PrimRule
-    ← n:Name { s_call(n) } !lArrow !ColCol
+    ← n:Name { s_text(call, n) } !lArrow !ColCol
     / Dot { s_new(any) }
     / l:StringLit { s_text(lit, l) }
     / lParen r:Rule rParen → r

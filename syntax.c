@@ -54,12 +54,6 @@ struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
     return car;
 }
 
-struct s_node *s_call(char *n) {
-    struct s_node *r = s_new(call);
-    r->text = n;
-    return r;
-}
-
 struct s_node *s_bind(char *n, struct s_node *c) {
     struct s_node *r = s_text(bind, n);
     r->first = c;

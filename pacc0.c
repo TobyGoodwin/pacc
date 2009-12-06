@@ -570,7 +570,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	PrimRule
-	    ← n:Name { s_call(n) } !lArrow !ColCol
+	    ← n:Name { s_text(call, n) } !lArrow !ColCol
 	    / Dot { s_new(any) }
 	    / l:StringLit { s_text(lit, l) }
 	    / lParen r:Rule rParen → r
@@ -596,7 +596,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_kid(not, s_text(call, "ColCol"));
     p = cons(s_kid(not, s_text(call, "lArrow")), p); q = p;
     p = s_new(ident); p->text = "n"; i = p;
-    p = s_new(expr); p->text="s_call(n)"; p->first = i; p->next = q; q = p;
+    p = s_new(expr); p->text="s_text(call, n)"; p->first = i; p->next = q; q = p;
     p = s_new(call); p->text = "Name"; s = p;
     p = s_new(bind); p->text = "n"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
