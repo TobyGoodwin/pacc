@@ -537,3 +537,14 @@ embedded code... :-)
 Anycase, I'm just redoing the test harness so that it can make use of
 errors, and it occurs to me that we need to generate useful errors for
 failing predicates.
+
+2009-12-07
+----------
+
+I'm starting to implement hashing, and have been reading up on hash
+chains, open probing, double hashing, radix searching, patricia and so
+on. It occurs to me that in the current interface we always know the
+input length before we start parsing, and the number of rules. So
+assuming we can guess the "matrix density" fairly sensibly, we've got a
+pretty good idea exactly how many slots we will need. So it should be
+possible to avoid rehashing.

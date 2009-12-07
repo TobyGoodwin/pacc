@@ -28,6 +28,8 @@ Value inheritance
 
 Replace the intermediate results matrix with hashing
 
+Generate #line directives
+
 Review of the parsing engine - do we really need so many stacks?
 
 Autoconfiscation

@@ -99,14 +99,21 @@ static void pusheval(int t, int col, enum thr type) {
 
 static int input_length;
 
+static int used = 0;
 static struct intermed *_pacc_result(int col, int rule) {
     unsigned long h;
+    struct intermed *p;
     assert(col < input_length + 1);
     assert(rule < n_rules);
     h = 5381; h += h << 5; h ^= rule;
     h += h << 5; h ^= col;
-    fprintf(stderr, "_pacc_result(%d, %d) ==> %lu\n", col, rule, h % 251);
-    return matrix + col * n_rules + rule;
+    //fprintf(stderr, "_pacc_result(%d, %d) ==> %lu\n", col, rule, h % 251);
+    p = matrix + col * n_rules + rule;
+    if (p->col == -1) {
+	p->col = col; p->rule = rule;
+	++used;
+    }
+    return p;
 }
 
 #define M_STACK_BODGE 500
@@ -191,6 +198,7 @@ static int engine(PACC_TYPE *result) {
        printf(" at column %ld\n", _pacc_err_col);
     }
 
+    fprintf(stderr, "used %d slots out of %d\n", used, n_rules * (input_length + 1));
     if (cur->status == evaluated) {
 	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
 	*result = cur->value.u0;
@@ -240,8 +248,7 @@ int parse(char *addr, off_t l, PACC_TYPE *result) {
 	for (j = 0; j < input_length + 1; ++j) {
 	    struct intermed *p = _pacc_result(j, i);
 	    p->status = uncomputed;
-	    p->rule = i;
-	    p->col = j;
+	    p->col = -1;
 	    p->thrs_ptr = 0;
 	}
 
