@@ -99,6 +99,8 @@ static void pusheval(int t, int col, enum thr type) {
 
 static int input_length;
 
+/* the old original (or something like it) */
+#if 0
 static int used = 0;
 static struct intermed *_pacc_result(int col, int rule) {
     unsigned long h;
@@ -110,6 +112,28 @@ static struct intermed *_pacc_result(int col, int rule) {
     //fprintf(stderr, "_pacc_result(%d, %d) ==> %lu\n", col, rule, h % 251);
     p = matrix + col * n_rules + rule;
     if (p->col == -1) {
+	p->col = col; p->rule = rule;
+	++used;
+    }
+    return p;
+}
+#endif
+
+/* hash chains */
+#define PRIME 677
+static int h0s[PRIME], h1s[PRIME];
+static int used = 0;
+static struct intermed *_pacc_result(int col, int rule) {
+    unsigned int h0, h1;
+    struct intermed *p;
+    assert(col < input_length + 1);
+    assert(rule < n_rules);
+    //fprintf(stderr, "_pacc_result(%d, %d) ==>\t%u\t%u\n", col, rule, h0 % 1499, h1 % 1499);
+    p = matrix + col * n_rules + rule;
+    if (p->col == -1) {
+	h0 = 31 * rule + col; ++h0s[h0 % PRIME];
+	//h1 = 5381; h1 += h1 << 5; h1 ^= rule; h1 += h1 << 5; h1 ^= col; ++h1s[h1 % PRIME];
+	h1 = 31 * rule ^ col; ++h1s[h1 % PRIME];
 	p->col = col; p->rule = rule;
 	++used;
     }
@@ -198,7 +222,19 @@ static int engine(PACC_TYPE *result) {
        printf(" at column %ld\n", _pacc_err_col);
     }
 
+    {
+	int i, m;
+
     fprintf(stderr, "used %d slots out of %d\n", used, n_rules * (input_length + 1));
+    m = 0;
+    for (i = 0; i < PRIME; ++i)
+	if (h0s[i] > m) m = h0s[i];
+    fprintf(stderr, "h0: longest chain %d\n", m);
+    m = 0;
+    for (i = 0; i < PRIME; ++i)
+	if (h1s[i] > m) m = h1s[i];
+    fprintf(stderr, "h1: longest chain %d\n", m);
+    }
     if (cur->status == evaluated) {
 	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
 	*result = cur->value.u0;

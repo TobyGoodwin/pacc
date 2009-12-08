@@ -548,3 +548,33 @@ input length before we start parsing, and the number of rules. So
 assuming we can guess the "matrix density" fairly sensibly, we've got a
 pretty good idea exactly how many slots we will need. So it should be
 possible to avoid rehashing.
+
+(There might be an option to generate a parser which doesn't know its
+input size up front, in which case rehashing would be necessary. But
+let's worry about that another time.)
+
+Not many data points so far; basically pacc itself is the only serious
+grammar we have. At present, that allocates 143154 results, and used
+16426 of them, or 11.5%. Looking at that and a couple of the larger test
+cases suggests that 10% - 15% is about right for the matrix density. So
+that gives us a few options.
+
+1. Using hash chains, we can say that we will never need to rehash; the
+worst that can possibly happen is that the chains get a bit longer than
+we'd like. Suppose we have (rules * input length / 100) chains, then the
+average length of chains equals the percentage density; about 12 items
+per chain. We'd want around 1500 hash buckets for pacc.pacc. The only
+disadvantage is that we need a next pointer in every result.
+
+2. If we double hash, although we can size the table so that it *should*
+be big enough, we can't guarantee that. We save on the next pointer, but
+we will need to be prepared to rehash if the table gets more than about
+70% full. Hmm...  and the initial estimate will be big. We'd maybe go
+for (rules * input length * 0.17), so for pacc.pacc we'd allocate about
+24000 slots. The wastage there kinda dwarfs a few next pointers, but on
+the other hand we never have to allocate any memory.
+
+In either case, we have the interesting problem of picking a size for
+the hash table. Ideally, of course, it should be prime, which makes me
+think of testing for primality on the fly, or (better) starting with a
+lookup table of a few dozen primes.
