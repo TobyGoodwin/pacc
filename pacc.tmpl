@@ -119,47 +119,28 @@ static struct intermed *_pacc_result(int col, int rule) {
 }
 #endif
 
-typedef unsigned int uint32;
-
-#define ROT(x,b) (((x) << (b)) | ((x) >> (32 - (b))))
-#define MUSH(i,b) x = t[i] += (((x ^ seed[i]) + sum) ^ ROT(x,b))
-void surf(uint32 out[8], uint32 in[12], uint32 seed[32]) {
-    uint32 t[12], x, sum = 0;
-    int r, i, loop;
-    for (i = 0; i < 12; ++i) t[i] = in[i] ^ seed[12 + i];
-    for (i = 0; i < 8; ++i) out[i] = seed[24 + i];
-    x = t[11];
-    for (loop = 0; loop < 2; ++loop) {
-	for (r = 0; r < 16; ++r) {
-	    sum += 0x9e3779b9;
-	    MUSH(0,5); MUSH(1,7); MUSH(2,9); MUSH(3,13);
-	    MUSH(4,5); MUSH(5,7); MUSH(6,9); MUSH(7,13);
-	    MUSH(8,5); MUSH(9,7); MUSH(10,9); MUSH(11,13);
-	}
-	for (i = 0; i < 8; ++i) out[i] ^= t[i + 4];
-    }
-}
+#include <fcntl.h>
 
 /* hash chains */
-#define PRIME 1433
+#define PRIME 727
 static int h0s[PRIME], h1s[PRIME];
-static int used = 0;
+static int access = 0, used = 0;
 static struct intermed *_pacc_result(int col, int rule) {
     unsigned int h0, h1;
     struct intermed *p;
     assert(col < input_length + 1);
     assert(rule < n_rules);
-    //fprintf(stderr, "_pacc_result(%d, %d) ==>\t%u\t%u\n", col, rule, h0 % 1499, h1 % 1499);
+    fprintf(stderr, "_pacc_result(%d, %d)\n", col, rule);
     p = matrix + col * n_rules + rule;
     if (p->col == -1) {
-	uint32 s[32], i[12], o[8];
 	h0 = 31 * rule + col; ++h0s[h0 % PRIME];
-	//h1 = 5381; h1 += h1 << 5; h1 ^= rule; h1 += h1 << 5; h1 ^= col; ++h1s[h1 % PRIME];
-	i[0] = rule; i[1] = col; surf(o, i, s);
-	h1 = o[0]; ++h1s[h1 % PRIME];
+	h1 = col + (rule << 6) + (rule << 16) - rule; ++h1s[h1 % PRIME];
+	p->status = uncomputed;
+	p->thrs_ptr = 0;
 	p->col = col; p->rule = rule;
 	++used;
     }
+    ++access;
     return p;
 }
 
@@ -248,6 +229,7 @@ static int engine(PACC_TYPE *result) {
     {
 	int i, m;
 
+    fprintf(stderr, "matrix accessed %d times\n", access);
     fprintf(stderr, "used %d slots out of %d\n", used, n_rules * (input_length + 1));
     m = 0;
     for (i = 0; i < PRIME; ++i)
@@ -305,10 +287,8 @@ int parse(char *addr, off_t l, PACC_TYPE *result) {
     matrix = malloc(sizeof(struct intermed) * matrix_size);
     for (i = 0; i < n_rules; ++i)
 	for (j = 0; j < input_length + 1; ++j) {
-	    struct intermed *p = _pacc_result(j, i);
-	    p->status = uncomputed;
+	    struct intermed *p = matrix + j * n_rules + i;
 	    p->col = -1;
-	    p->thrs_ptr = 0;
 	}
 
     return engine(result);
