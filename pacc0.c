@@ -477,7 +477,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 	    / And u:UnaryRule { s_kid(and, u) }
 	    / Not u:UnaryRule { s_kid(not, u) }
 	    / And c:Code { s_retype(guard, c) }
-	    / n:Name Colon u:UnaryRule { s_bind(n, u) }
+	    / n:Name Colon u:UnaryRule { s_both(bind, n, u) }
 	    / u:UnaryRule → u
     */
 
@@ -487,9 +487,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(ident); p->text = "u"; i = p;
+    p = s_new(ident); p->text = "x"; i = p;
+    p = s_new(ident); p->text = "u"; p->next = i; i = p;
     p = s_new(ident); p->text = "n"; p->next = i; i = p;
-    p = s_new(expr); p->text="s_bind(n, u)"; p->first = i; q = p;
+    p = s_new(ident); p->text = "s_bind"; p->next = i; i = p;
+    p = s_new(expr); p->text="s_bind(n, u) /* x */"; p->first = i; q = p;
     p = s_new(call); p->text = "UnaryRule"; s = p;
     p = s_new(bind); p->text = "u"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Colon"; p->next = q; q = p;
@@ -677,7 +679,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(ident); p->text = "s"; p->next = i; i = p;
-    p = s_new(expr); p->text="s_kid(alt, cons(s, r))"; p->first = i; q = p;
+    p = s_new(expr); p->text="s_alt(s, r)"; p->first = i; q = p;
     p = s_new(call); p->text = "Rule"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Slash"; p->next = q; q = p;

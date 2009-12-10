@@ -68,6 +68,15 @@ struct s_node *s_bind(char *n, struct s_node *c) {
 }
 #endif
 
+struct s_node *s_alt(struct s_node *s, struct s_node *r) {
+    if (0 && r->type == alt) {
+	assert(!r->next);
+	r->first = cons(s, r->first);
+	return r;
+    }
+    return s_kid(alt, cons(s, r));
+}
+
 static char *t = "int";
 
 char *s_stash_type(char *type) {

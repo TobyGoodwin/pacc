@@ -613,3 +613,37 @@ overflowing, and in any case I believe that all stacks are now overflow
 protected. The mighty valgrind doesn't report any problems.
 
 I'm still baffled.
+
+OK. I believe that the problem is as follows. Something about the syntax
+tree we build for the Matcher rule causes us to emit code that is
+faulty, and somehow fails to recognise valid inputs. If this is so, then
+making the s_bind -> s_both change in pacc0.c should result in a pacc1
+that fails the same way pacc2 now does. Try it... No, because the
+salient property is the length of bind list; change *that* to include
+extra names... 
+
+No, this is not the case. When pacc0.c builds this tree:
+
+        expr 371: s_bind(n, u) /* x */ 
+          ident 370: s_bind 
+          ident 369: n 
+          ident 368: u 
+          ident 367: x 
+
+and pacc1 parses pacc.pacc to produce this tree:
+
+                  expr 326:  s_bind(n, u) /* x */  
+                    ident 325: s_bind 
+                    ident 324: n 
+                    ident 323: u 
+                    ident 322: x 
+
+This implies that the problem is a bizarre interaction between the
+nested alt nodes, and the bind count. Now, at some point nested alts
+should go away... shall we do this? But I'd also like to understand why
+they fail in this case (if, indeed, making them go away fixes the
+problem). Hah...
+
+OK, denesting alts makes the s_both() code work. What about renesting
+them, by removing the conditional case in s_alt()? Err, no, *that* also
+works fine. Hang about...

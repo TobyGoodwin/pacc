@@ -19,7 +19,7 @@ Defn
 	{ s_both(rule, n, cons(s_text(type, t), r)) }
 
 Rule
-    ← s:SeqRule Slash r:Rule { s_kid(alt, cons(s, r)) }
+    ← s:SeqRule Slash r:Rule { s_alt(s, r) }
     / s:SeqRule → s
 
 SeqRule
@@ -51,7 +51,7 @@ Matcher
     / And u:UnaryRule { s_kid(and, u) }
     / Not u:UnaryRule { s_kid(not, u) }
     / And c:Code { s_retype(guard, c) }
-    / n:Name Colon u:UnaryRule { s_bind(n, u) /* x */ }
+    / n:Name Colon u:UnaryRule { s_both(bind, n, u) }
     / u:UnaryRule → u
 
 Result
