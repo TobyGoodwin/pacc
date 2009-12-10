@@ -19,13 +19,26 @@ static struct s_node *g_node; /* grammar root */
  */
 static int cur_rule = 0; static struct s_node *cur_rule_node;
 
-static char *n_stack[25];
+#define N_STACK_BODGE 30
+static char *n_stack[N_STACK_BODGE];
 static int n_ptr = 0;
-static void pushn(char *n) { n_stack[n_ptr++] = n; }
+static void pushn(char *n) {
+    if (n_ptr == N_STACK_BODGE) {
+	fprintf(stderr, "n_stack overflow\n");
+	exit(1);
+    }
+    n_stack[n_ptr++] = n;
+}
 
-int i_stack[25];
+int i_stack[N_STACK_BODGE];
 int i_ptr = 0;
-static void pushi(int i) { i_stack[i_ptr++] = i; }
+static void pushi(int i) {
+    if (i_ptr == N_STACK_BODGE) {
+	fprintf(stderr, "i_stack overflow\n");
+	exit(1);
+    }
+    i_stack[i_ptr++] = i;
+}
 
 int binding = 0;
 

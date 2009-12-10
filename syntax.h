@@ -32,6 +32,8 @@ extern struct s_node *cons(struct s_node *, struct s_node *);
 extern struct s_node *s_set_cons(struct s_node *, struct s_node *);
 #define new_node(t) s_new(t)
 
+extern struct s_node *s_bind(char *, struct s_node *);
+
 /* manipulating trees */
 extern void desugar(struct s_node *);
 extern void resolve(struct s_node *);

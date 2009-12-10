@@ -592,3 +592,24 @@ doesn't work: it fails to parse even the simplest grammar.
 It's hard to see what's wrong, or even different, about this pacc2. I
 wonder if there is some shared structure somewhere? Or am I wrong about
 the two calls being equivalent? Next step: rewrite s_bind to use s_both.
+
+OK, so now I have s_bind() defined as "return s_both(bind, n, c)", and
+declared in syntax.h. Every works. "Inline" the call to s_both into
+pacc.pacc, and it falls over, in just the same way that it did before.
+What on earth is going on?
+
+I still have absolutely no idea what is going on, but I have narrowed
+the problem down to the following. The call to "s_both(bind, n, u)"
+brings 4 names into scope (s_both, bind, n, and u), whereas "s_bind(n,
+u)" only 3. Any time we have 4 names, even with something like
+"s_bind(n, u) /* x */" the resultant parser is broken in exactly the
+same way. First guess was that it was something to do with stack
+overflow in emit.c, but apparently not. (We do have a lot of stacks, but
+most of them now indicate when they overflow.)
+
+Another data point: adding *more* identifiers ("s_bind(n, u) /* x y z
+*/") also makes the problem go away, so it's not merely something
+overflowing, and in any case I believe that all stacks are now overflow
+protected. The mighty valgrind doesn't report any problems.
+
+I'm still baffled.

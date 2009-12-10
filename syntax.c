@@ -31,6 +31,7 @@ struct s_node *s_kid(enum s_type t, struct s_node *n) {
 
 struct s_node *s_both(enum s_type t, char *n, struct s_node *s) {
     struct s_node *r = s_new(t);
+    if (t == bind) fprintf(stderr, "s_bind(%s, [%s])\n", n, s->text);
     r->text = n;
     r->first = s;
     return r;
@@ -54,11 +55,18 @@ struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
     return car;
 }
 
+#if 0
 struct s_node *s_bind(char *n, struct s_node *c) {
     struct s_node *r = s_text(bind, n);
     r->first = c;
     return r;
 }
+#else
+struct s_node *s_bind(char *n, struct s_node *c) {
+    //fprintf(stderr, "s_bind(%s, [%s])\n", n, c->text);
+    return s_both(bind, n, c);
+}
+#endif
 
 static char *t = "int";
 

@@ -45,9 +45,14 @@ static char *copy(int from, int to) {
 #define match() copy(col, col_expr)
 #define rmatch() copy(col_expr, cur->remainder)
 
-static int col_stack[25];
+#define COL_STACK_BODGE 25
+static int col_stack[COL_STACK_BODGE];
 static int col_ptr = 0;
 static void pushcol(int c) {
+    if (col_ptr == COL_STACK_BODGE) {
+	fprintf(stderr, "col_stack overflow\n");
+	exit(1);
+    }
     Trace fprintf(stderr, "push(%d) -> col_stack[%d]\n", c, col_ptr);
     col_stack[col_ptr++] = c;
 }
@@ -90,6 +95,10 @@ struct intermed {
 static struct intermed *cur, *matrix;
 
 static void pusheval(int t, int col, enum thr type) {
+    if (cur->thrs_ptr == THR_STACK_BODGE) {
+	fprintf(stderr, "thr_stack overflow\n");
+	exit(1);
+    }
     Trace fprintf(stderr, "pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
     cur->thrs[cur->thrs_ptr].discrim = type;
     cur->thrs[cur->thrs_ptr].x = t;
@@ -229,16 +238,16 @@ static int engine(PACC_TYPE *result) {
     {
 	int i, m;
 
-    fprintf(stderr, "matrix accessed %d times\n", access);
-    fprintf(stderr, "used %d slots out of %d\n", used, n_rules * (input_length + 1));
+    Trace fprintf(stderr, "matrix accessed %d times\n", access);
+    Trace fprintf(stderr, "used %d slots out of %d\n", used, n_rules * (input_length + 1));
     m = 0;
     for (i = 0; i < PRIME; ++i)
 	if (h0s[i] > m) m = h0s[i];
-    fprintf(stderr, "h0: longest chain %d\n", m);
+    Trace fprintf(stderr, "h0: longest chain %d\n", m);
     m = 0;
     for (i = 0; i < PRIME; ++i)
 	if (h1s[i] > m) m = h1s[i];
-    fprintf(stderr, "h1: longest chain %d\n", m);
+    Trace fprintf(stderr, "h1: longest chain %d\n", m);
     }
     if (cur->status == evaluated) {
 	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */

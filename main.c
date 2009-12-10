@@ -15,7 +15,6 @@ int main(int argc, char **argv) {
     arg(argc, argv);
 
     in = load(arg_input(), &size);
-    fprintf(stderr, "loaded %ld bytes at %p!\n", size, in);
 
     if (parse(in, size, &p)) {
 	//s_dump(p);

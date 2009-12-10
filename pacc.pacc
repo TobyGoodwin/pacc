@@ -51,7 +51,7 @@ Matcher
     / And u:UnaryRule { s_kid(and, u) }
     / Not u:UnaryRule { s_kid(not, u) }
     / And c:Code { s_retype(guard, c) }
-    / n:Name Colon u:UnaryRule { s_both(bind, n, u) }
+    / n:Name Colon u:UnaryRule { s_bind(n, u) /* x */ }
     / u:UnaryRule → u
 
 Result
