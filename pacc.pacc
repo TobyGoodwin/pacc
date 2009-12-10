@@ -19,7 +19,7 @@ Defn
 	{ s_both(rule, n, cons(s_text(type, t), r)) }
 
 Rule
-    ← s:SeqRule Slash r:Rule { s_alt(s, r) }
+    ← s:SeqRule Slash r:Rule { s_kid(alt, cons(s, r)) }
     / s:SeqRule → s
 
 SeqRule
