@@ -563,7 +563,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_text(expr, "s_kid(seq, m)"); p->first = i; q = p;
     p = s_new(call); p->text = "Matchers"; s = p;
     p = s_new(bind); p->text = "m"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; t = p;
+    p = s_new(seq); p->first = q; q = p;
 
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Sequence"; p->first = q; p->next = r; r = p;

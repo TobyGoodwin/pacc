@@ -130,7 +130,7 @@ static struct intermed *_pacc_result(int col, int rule) {
     struct intermed *p;
     assert(col < input_length + 1);
     assert(rule < n_rules);
-    fprintf(stderr, "_pacc_result(%d, %d)\n", col, rule);
+    //fprintf(stderr, "_pacc_result(%d, %d)\n", col, rule);
     p = matrix + col * n_rules + rule;
     if (p->col == -1) {
 	h0 = 31 * rule + col; ++h0s[h0 % PRIME];

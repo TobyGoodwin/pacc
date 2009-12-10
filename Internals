@@ -578,3 +578,17 @@ In either case, we have the interesting problem of picking a size for
 the hash table. Ideally, of course, it should be prime, which makes me
 think of testing for primality on the fly, or (better) starting with a
 lookup table of a few dozen primes.
+
+2009-12-10
+----------
+
+One of those utterly baffling bugs. In both pacc0.c and pacc.pacc, a
+bound call is constructed by "s_bind(n, u)". Turns out that s_bind() is
+declared, so this produces integer / pointer warnings, but works.
+Replace that call, in pacc.pacc, with "s_both(bind, n, u)", which
+appears to be completely equivalent, and the resultant pacc2 just
+doesn't work: it fails to parse even the simplest grammar.
+
+It's hard to see what's wrong, or even different, about this pacc2. I
+wonder if there is some shared structure somewhere? Or am I wrong about
+the two calls being equivalent? Next step: rewrite s_bind to use s_both.
