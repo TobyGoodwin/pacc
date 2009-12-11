@@ -69,7 +69,7 @@ struct s_node *s_bind(char *n, struct s_node *c) {
 #endif
 
 struct s_node *s_alt(struct s_node *s, struct s_node *r) {
-    if (0 && r->type == alt) {
+    if (r->type == alt) {
 	assert(!r->next);
 	r->first = cons(s, r->first);
 	return r;

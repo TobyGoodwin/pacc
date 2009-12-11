@@ -1,0 +1,7 @@
+# But since we're saying that names are lexically scoped over sequences,
+# the following should work, with the two "a" separately bound.
+
+P :: char * ← a:A (a:B &{ *a == 'b' } / "c") → a
+
+A ← "a" { match() }
+B ← "b" { match() }

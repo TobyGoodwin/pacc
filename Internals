@@ -648,5 +648,31 @@ OK, denesting alts makes the s_both() code work. What about renesting
 them, by removing the conditional case in s_alt()? Err, no, *that* also
 works fine. Hang about...
 
-Restoring the old nested cons code in pacc.pacc brings back the
+Restoring the old nested alts code in pacc.pacc brings back the
 "expected Char at column 55". Brain fade. Good night.
+
+2009-12-11
+----------
+
+Interesting. So, I have made the same problem pop up somewhere else. Let
+me review this...
+
+Make s_alt do nothing clever, so alts are always nested. When the Rule
+result reads "s_kid(alt, cons(s,r))", with 5 names in the code, we have
+the problem. Change the result to "s_alt(s, r)", with just 3 names, and
+it all works. Add in "/* x y */" and it fails. With 4 names or 6 names
+in scope, it all works; with 5 it fails.
+
+Now, the Rule rule is *much* simpler than the Matcher rule. In fact, it
+doesn't *have* nested alts. Hmm... "s_alt(s, r) /* x y */" fails when
+s_alt creates nested alts. When s_alt denests alts, it succeeds. (Here,
+"it" means "make check", that is, pacc2 can parse its own grammar and
+build the phase 3 compiler.)
+
+Proposal: I can make this problem go away by denesting alts, which is
+the Right Thing anyway (although it probably ought to live in the
+optimization pass, rather than initial tree building). *All* the code in
+emit.c needs a severe reviewing, and I may just happen to solve the
+problem anyway. And I've got a few new tests up my sleeve to try and
+elicit bogus binding behaviour. Let's try those...
+

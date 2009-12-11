@@ -103,6 +103,23 @@ noparse fo S 0
 parse foo yes
 noparse food S 3
 
+build nest0
+parse abcd yes
+
+build nest1
+parse abcd yes
+
+build nest2
+parse ab ab
+parse cd cd
+noparse acd '"b"' 1
+
+build nest3
+noparse ab '"d"' 2
+noparse cd P 0
+parse abd abd
+parse acd acd
+
 build rep0
 parse xx xx
 parse xyx xyx
@@ -213,6 +230,15 @@ parse 567 56
 
 build match1
 parse 567 7
+
+build scope0
+parse ab a
+noparse ac B 1
+
+# Currently, scope1 won't even compile
+#build scope1
+#parse ab a
+#parse ac a
 
 cp parse.h-int parse.h
 

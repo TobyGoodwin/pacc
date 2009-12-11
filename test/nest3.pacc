@@ -1,0 +1,3 @@
+# See nest2.
+
+P :: char * ← "a" ("b" / "c") "d" { match() }
