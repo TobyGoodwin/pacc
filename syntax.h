@@ -32,7 +32,9 @@ extern struct s_node *cons(struct s_node *, struct s_node *);
 extern struct s_node *s_set_cons(struct s_node *, struct s_node *);
 #define new_node(t) s_new(t)
 
-extern struct s_node *s_bind(char *, struct s_node *);
+extern struct s_node *s_alt(struct s_node *, struct s_node *);
+extern char *s_stash_type(char *);
+extern char *s_stashed_type(void);
 
 /* manipulating trees */
 extern void desugar(struct s_node *);
