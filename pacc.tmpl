@@ -128,19 +128,40 @@ static struct intermed *_pacc_result(int col, int rule) {
 }
 #endif
 
-#include <fcntl.h>
+/* a pacc matrix */
+struct _pacc_m {
+    struct intermed *m;
+};
+
+static struct _pacc_m *_pacc_m_alloc(void) {
+    int i, j;
+    size_t m_size;
+    struct _pacc_m *r;
+
+    r = realloc(0, sizeof *r);
+    if (!r) nomem();
+    m_size = n_rules * (input_length + 1);
+    r->m = realloc(0, sizeof(struct intermed) * m_size);
+    if (!r->m) nomem();
+    for (i = 0; i < n_rules; ++i)
+	for (j = 0; j < input_length + 1; ++j) {
+	    struct intermed *p = r->m + j * n_rules + i;
+	    p->col = -1;
+	}
+    return r;
+}
 
 /* hash chains */
 #define PRIME 727
 static int h0s[PRIME], h1s[PRIME];
 static int access = 0, used = 0;
-static struct intermed *_pacc_result(int col, int rule) {
+static struct intermed *_pacc_result(struct _pacc_m *m, int col, int rule) {
     unsigned int h0, h1;
     struct intermed *p;
     assert(col < input_length + 1);
     assert(rule < n_rules);
     //fprintf(stderr, "_pacc_result(%d, %d)\n", col, rule);
-    p = matrix + col * n_rules + rule;
+    p = m->r + col * n_rules + rule;
     if (p->col == -1) {
 	h0 = 31 * rule + col; ++h0s[h0 % PRIME];
 	h1 = col + (rule << 6) + (rule << 16) - rule; ++h1s[h1 % PRIME];
@@ -170,7 +191,7 @@ static void pushm2(struct intermed *i) {
 }
 static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
 
-static int engine(PACC_TYPE *result) {
+static int engine(struct _pacc_m *m, PACC_TYPE *result) {
     enum status status;
     int cont, st;
     int col, rule_col, col_expr;
@@ -184,7 +205,7 @@ static int engine(PACC_TYPE *result) {
 
 #EMIT_ENGINE
 
-    cur = _pacc_result(0, 0);
+    cur = _pacc_result(m, 0, 0);
     if (parsed && !evaluating && cur->status == parsed) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	//pushthunk(-1); pushthunk(-1);
@@ -200,7 +221,7 @@ static int engine(PACC_TYPE *result) {
 		++_pacc_i;
 		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
 		pushm2(cur); pushcont(_pacc_i);
-		cur = _pacc_result(col, rule);
+		cur = _pacc_result(m, col, rule);
 		_pacc_i = 0;
 		goto eval_loop;
 	    } else {
@@ -289,9 +310,11 @@ static void matrix_dump(void) {
 }
 
 int parse(char *addr, off_t l, PACC_TYPE *result) {
-    int i, j, matrix_size;
+    struct _pacc_m *m;
     string = addr;
     input_length = l;
+    m = _pacc_m_alloc();
+#if 0
     matrix_size = n_rules * (input_length + 1);
     matrix = malloc(sizeof(struct intermed) * matrix_size);
     for (i = 0; i < n_rules; ++i)
@@ -299,6 +322,7 @@ int parse(char *addr, off_t l, PACC_TYPE *result) {
 	    struct intermed *p = matrix + j * n_rules + i;
 	    p->col = -1;
 	}
+#endif
 
     return engine(result);
 }
