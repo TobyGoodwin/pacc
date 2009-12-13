@@ -702,3 +702,17 @@ and, y'know, there's going to be enormous memory savings just on
 pacc.pacc. Do I really need to glory in just how wondrous they will be
 on other examples? The current implementation can hardly be considered
 serious when...
+
+; wc pacc.pacc
+ 129  465 2655 pacc.pacc
+; valgrind ./pacc2 pacc.pacc -o pacc3.c
+...
+==6362== malloc/free: in use at exit: 72,312,011 bytes in 4,488 blocks.
+
+That's 27236 bytes of memory for every byte in the input file! I think
+we can do better than that...
+
+By the way, here's a valgrind command to take account of the way we're
+using stdin:
+
+valgrind '--db-command=gdb -nw %f %p < /dev/tty' '--db-attach=yes' '--input-fd=7' ./pacc1 pacc.pacc -o pacc2.c <[7] /dev/tty
