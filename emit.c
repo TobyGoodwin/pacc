@@ -239,7 +239,7 @@ static void rule_pre(struct s_node *n) {
     printf("case %d: /* %s */\n", n->id, n->text); 
     printf("Trace fprintf(stderr, \"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
     printf("rule_col = col;\n");
-    printf("cur = _pacc_result(m, col, %d);\n", cur_rule);
+    printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
     printf("if (cur->status == uncomputed) {\n");
 }
 
@@ -417,7 +417,7 @@ static void bindings(struct s_node *n) {
 	printf("_pacc_i = popcont();\n");
 
 	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->thrs[pos].col);\n", p->text, i_stack[i]);
-	printf("    cur = _pacc_result(m, _pacc_p->thrs[pos].col, %d);\n", i_stack[i]);
+	printf("    cur = _pacc_result(_pacc, _pacc_p->thrs[pos].col, %d);\n", i_stack[i]);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
 	printf("	_pacc_i = 0; goto eval_loop;\n");
@@ -456,7 +456,7 @@ static void emit_expr(struct s_node *n) {
     printf("    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
     printf("    Trace fprintf(stderr, \"%d: evaluating\\n\");\n", n->id);
-    printf("    _pacc_p = cur = _pacc_result(m, col, %d);\n", cur_rule);
+    printf("    _pacc_p = cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
     printf("    evaluating = 1;\n");
     bindings(n);
     printf("    cur = _pacc_p;\n");

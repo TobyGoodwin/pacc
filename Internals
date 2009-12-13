@@ -676,3 +676,21 @@ emit.c needs a severe reviewing, and I may just happen to solve the
 problem anyway. And I've got a few new tests up my sleeve to try and
 elicit bogus binding behaviour. Let's try those...
 
+2009-12-13
+----------
+
+Messing about with matrix names, and it occurs to me that I ought to
+make explicit my goal: a pacc parser should be re-entrant. More
+specifically, an application should be able to include several parsers
+(one parser understands one grammar), and several instances of a parser.
+Furthermore, although most applications will include only a single
+parser, which will come from a single C source file (well, a .[ch]
+pair), for applications that do include more than one parser, as much
+code as possible that's shared between parsers should occur only once
+(in a separate .[ch] pair). This means that template.sh will have to get
+a lot more complicated!
+
+Anyway, that's the goal. Now back to your regular schedule...
+
+Of course, _pacc_result() is all very well, but shouldn't this code be
+inlined some day?
