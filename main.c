@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 	//s_dump(p);
 	desugar(p);
 	resolve(p);
-	//s_dump(p);
+	s_dump(p);
 	save(arg_output());
 	emit(p);
 	return 0;

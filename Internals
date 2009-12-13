@@ -694,3 +694,11 @@ Anyway, that's the goal. Now back to your regular schedule...
 
 Of course, _pacc_result() is all very well, but shouldn't this code be
 inlined some day?
+
+Now, I'm pretty close to doing hashing; It Would Be Nice to have some
+non-trivial examples other than pacc.pacc. Should we get baf's Java
+parser, and make it work? On 'tother hand, there's plenty else to do,
+and, y'know, there's going to be enormous memory savings just on
+pacc.pacc. Do I really need to glory in just how wondrous they will be
+on other examples? The current implementation can hardly be considered
+serious when...

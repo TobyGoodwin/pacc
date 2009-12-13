@@ -61,15 +61,16 @@ static void grammar_pre(struct s_node *n) {
     //if (prefix) printf("%s\n", prefix);
     /* XXX new style: preamble is first child of g */
     p = n->first;
-    if (p->type == preamble) {
-	if (p->text) printf("%s\n", p->text);
-	p = p->next;
-    }
-    lookup_rule = malloc(n->id * sizeof(int));
-    for ( ; p; p = p->next) {
-	lookup_rule[p->id] = r;
-	++r;
-    }
+    assert(p->type == preamble);
+    if (p->text) printf("%s\n", p->text);
+    p = p->next;
+
+    /* Count the rules, and set up lookup_rule[]. */
+    for ( ; p; p = p->next) ++r;
+    lookup_rule = malloc(r * sizeof(int));
+    r = 0;
+    for (p = n->first->next; p; p = p->next)
+	lookup_rule[p->id] = r++;
 
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
     g_name = n->text;
