@@ -65,10 +65,11 @@ static void grammar_pre(struct s_node *n) {
     if (p->text) printf("%s\n", p->text);
     p = p->next;
 
-    /* Count the rules, and set up lookup_rule[]. */
-    for ( ; p; p = p->next) ++r;
-    lookup_rule = malloc(r * sizeof(int));
-    r = 0;
+    /* Find the maximal rule id, and set up lookup_rule[]. */
+    i = 0;
+    for ( ; p; p = p->next)
+	if (p->id > i) i = p->id;
+    lookup_rule = malloc((i + 1) * sizeof(int));
     for (p = n->first->next; p; p = p->next)
 	lookup_rule[p->id] = r++;
 
