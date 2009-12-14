@@ -25,9 +25,13 @@ static int popcont(void) {
     return st_stack[--st_ptr];
 }
 
-static void nomem(void) {
-    fprintf(stderr, "out of memory\n");
+static void panic(const char *e) {
+    fprintf(stderr, "pacc: panic: %s\n", e);
     exit(1);
+}
+
+static void nomem(void) {
+    panic("out of memory");
 }
 
 static char *copy(int from, int to) {
@@ -124,7 +128,7 @@ static struct _pacc_parser *_pacc_parser_new(void) {
     r = realloc(0, sizeof *r);
     if (!r) nomem();
     m_size = n_rules * (input_length + 1);
-    r->m_bkt_cnt = 1409; /* XXX: some prime */
+    r->m_bkt_cnt = 1; // 1409; /* XXX: some prime */
     r->m_bkt = realloc(0, sizeof(struct intermed *) * r->m_bkt_cnt);
     if (!r->m_bkt) nomem();
     r->m_valid = realloc(0, 2 * r->m_bkt_cnt);
@@ -156,6 +160,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) 
 	    return r;
     }
     if (i == p->m_valid[h * 2 + 1]) {
+	if (i == 255) panic("bucket too large");
 	if (i + 1 > p->m_chain_max) p->m_chain_max = i + 1;
 	p->m_bkt[h] = bkt = realloc(bkt, p->m_chain_max * sizeof(struct intermed));
 	if (!bkt) nomem();
@@ -169,6 +174,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) 
     return r;
 }
 
+#if 0
 #define M_STACK_BODGE 500
 static struct intermed *m_stack[M_STACK_BODGE];
 static int m_ptr = 0;
@@ -185,6 +191,7 @@ static void pushm2(struct intermed *i) {
     m2_stack[m2_ptr++] = i;
 }
 static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
+#endif
 
 static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
@@ -214,7 +221,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 		rule = cur->thrs[_pacc_i].x; col = cur->thrs[_pacc_i].col;
 		++_pacc_i;
 		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-		pushm2(cur); pushcont(_pacc_i);
+		pushcol(rule); pushcol(col); pushcont(_pacc_i);
 		cur = _pacc_result(_pacc, col, rule);
 		_pacc_i = 0;
 		goto eval_loop;
@@ -228,8 +235,12 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    goto eval_loop;
 	}
 	cur->status = evaluated;
-	if (m2_ptr) {
-	    _pacc_i = popcont(); cur = popm2();
+	if (col_ptr) {
+	    int col, rule;
+	    _pacc_i = popcont();
+	    col = popcol();
+	    rule = popcol();
+	    cur = _pacc_result(_pacc, col, rule);
 	    goto eval_loop;
 	}
 	Trace fprintf(stderr, "eval finished\n");

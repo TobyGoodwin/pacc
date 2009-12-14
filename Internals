@@ -716,3 +716,19 @@ By the way, here's a valgrind command to take account of the way we're
 using stdin:
 
 valgrind '--db-command=gdb -nw %f %p < /dev/tty' '--db-attach=yes' '--input-fd=7' ./pacc1 pacc.pacc -o pacc2.c <[7] /dev/tty
+
+2009-12-14
+----------
+
+OK, so some hashing is in place, and it doesn't work! At least one
+problem is that we have been in the habit of pushing "cur" addresses:
+this is what pushm() and pushm2() do. But the way the hash buckets work,
+struct intermed pointers are likely to be realloc()ed under our feet! So
+we will instead have to push col/rule pairs, and call _pacc_result()
+again when we pop them. Hmm... is this what we really want? Well, yes.
+Unless we go for linked list hash buckets, this is inevitable. And I'm
+not going to start implementing anything that mangles pointers on a
+stack... had enough of that with es!
+
+OK, so in emit.c, cur_rule always holds the current rule: we *don't*
+need to push that, just col will do fine. I think.

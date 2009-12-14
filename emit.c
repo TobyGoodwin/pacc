@@ -544,13 +544,13 @@ static void emit_call(struct s_node *n) {
 //	printf("pusheval(%d, thr_rule);\n", lookup_rule[n->first->id]);
  //   printf("pusheval(col, thr_col);\n");
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
-    printf("pushcont(cont); pushm(cur);\n");
+    printf("pushcont(cont); pushcol(col);\n");
     printf("cont = %d;\n", n->id);
     printf("st = %d; /* call %s */\n", n->first->id, n->text);
     printf("goto top;\n");
     printf("case %d: /* return from %s */\n", n->id, n->text);
     printf("cont = popcont();\n");
-    printf("last = cur; cur = popm();\n");
+    printf("last = cur; cur = _pacc_result(_pacc, popcol(), %d);\n", cur_rule);
     printf("status = last->status;\n");
     printf("col = last->remainder;\n");
     printf("rule_col = popcont();\n");

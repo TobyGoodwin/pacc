@@ -1,8 +1,10 @@
+#include <sys/types.h>
+
 #include "syntax.h"
 
 char *prefix = 0;
 
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* A single character with value:
@@ -18,7 +20,9 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
+    r = cons(s_text(preamble, 0), r);
     p = new_node(grammar); p->text = "yy"; p->first = r;
 
-    return p;
+    *result = p;
+    return 1;
 }
