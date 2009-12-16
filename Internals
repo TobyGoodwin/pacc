@@ -732,3 +732,12 @@ stack... had enough of that with es!
 
 OK, so in emit.c, cur_rule always holds the current rule: we *don't*
 need to push that, just col will do fine. I think.
+
+2009-12-16
+----------
+
+All's broken, and I started trying to get the emit tests back to fix it.
+But although that might be a useful thing to do anyway, it's not
+strictly necessary. What I can do is roll back to a version that worked
+with the full matrix, make the emit.c changes I have to recalculate cur
+and debug those, then reinstate hashing. Here goes...
