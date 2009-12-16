@@ -741,3 +741,13 @@ But although that might be a useful thing to do anyway, it's not
 strictly necessary. What I can do is roll back to a version that worked
 with the full matrix, make the emit.c changes I have to recalculate cur
 and debug those, then reinstate hashing. Here goes...
+
+OK, well there's a serious snag in the theory: pacc0 can't build
+anything other than pacc1, and if the emit code is broken, that pacc1
+doesn't work! So we really do need to get the emit tests back. But I've
+managed to sort out at least part of the puzzle anyway. Even better, it
+actually saves an entire push()!
+
+And that now works in the mainline. Hmph: the pushm2() code does
+actually work as is, because we never allocate new matrix entries while
+evaluating. So we could leave it for now.

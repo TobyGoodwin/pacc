@@ -4,7 +4,7 @@
 
 #include "assert.h"
 
-#define Trace if (1)
+#define Trace if (0)
 
 static char *string;
 
@@ -128,7 +128,7 @@ static struct _pacc_parser *_pacc_parser_new(void) {
     r = realloc(0, sizeof *r);
     if (!r) nomem();
     m_size = n_rules * (input_length + 1);
-    r->m_bkt_cnt = 1; // 1409; /* XXX: some prime */
+    r->m_bkt_cnt = 1409; /* XXX: some prime */
     r->m_bkt = realloc(0, sizeof(struct intermed *) * r->m_bkt_cnt);
     if (!r->m_bkt) nomem();
     r->m_valid = realloc(0, 2 * r->m_bkt_cnt);
@@ -174,7 +174,6 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) 
     return r;
 }
 
-#if 0
 #define M_STACK_BODGE 500
 static struct intermed *m_stack[M_STACK_BODGE];
 static int m_ptr = 0;
@@ -191,7 +190,6 @@ static void pushm2(struct intermed *i) {
     m2_stack[m2_ptr++] = i;
 }
 static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
-#endif
 
 static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
@@ -221,7 +219,11 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 		rule = cur->thrs[_pacc_i].x; col = cur->thrs[_pacc_i].col;
 		++_pacc_i;
 		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
+#if 0
 		pushcol(rule); pushcol(col); pushcont(_pacc_i);
+#else
+		pushm2(cur); pushcont(_pacc_i);
+#endif
 		cur = _pacc_result(_pacc, col, rule);
 		_pacc_i = 0;
 		goto eval_loop;
@@ -235,12 +237,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    goto eval_loop;
 	}
 	cur->status = evaluated;
-	if (col_ptr) {
-	    int col, rule;
-	    _pacc_i = popcont();
-	    col = popcol();
-	    rule = popcol();
-	    cur = _pacc_result(_pacc, col, rule);
+	if (m2_ptr) {
+	    _pacc_i = popcont(); cur = popm2();
 	    goto eval_loop;
 	}
 	Trace fprintf(stderr, "eval finished\n");

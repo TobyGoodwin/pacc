@@ -28,6 +28,8 @@ Value inheritance
 
 Replace the intermediate results matrix with hashing
 
+Reinstate emit tests: they can still be useful (see Internals)
+
 Recognise comments in raw code
 
 Generate #line directives
