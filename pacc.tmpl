@@ -259,6 +259,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
        printf(" at column %ld\n", _pacc_err_col);
     }
 
+    fprintf(stderr, "chain length is %d\n", _pacc->m_chain_max);
     {
 	int i, m;
 
