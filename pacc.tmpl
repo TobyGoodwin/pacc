@@ -5,6 +5,7 @@
 #include "assert.h"
 
 #define Trace if (0)
+#define Instr if (1)
 
 static char *string;
 
@@ -142,9 +143,6 @@ static struct _pacc_parser *_pacc_parser_new(void) {
 }
 
 /* hash chains */
-#define PRIME 727
-static int h0s[PRIME], h1s[PRIME];
-static int access = 0, used = 0;
 static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) {
     unsigned char i;
     unsigned int h;
@@ -183,14 +181,6 @@ static void pushm(struct intermed *i) {
 }
 static struct intermed *popm(void) { return m_stack[--m_ptr]; }
 
-static struct intermed *m2_stack[M_STACK_BODGE];
-static int m2_ptr = 0;
-static void pushm2(struct intermed *i) {
-    if (m2_ptr == M_STACK_BODGE) { printf("out of m2 stack space\n"); exit(0); }
-    m2_stack[m2_ptr++] = i;
-}
-static struct intermed *popm2(void) { return m2_stack[--m2_ptr]; }
-
 static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
     int cont, st;
@@ -222,7 +212,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 #if 0
 		pushcol(rule); pushcol(col); pushcont(_pacc_i);
 #else
-		pushm2(cur); pushcont(_pacc_i);
+		pushm(cur); pushcont(_pacc_i);
 #endif
 		cur = _pacc_result(_pacc, col, rule);
 		_pacc_i = 0;
@@ -237,8 +227,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    goto eval_loop;
 	}
 	cur->status = evaluated;
-	if (m2_ptr) {
-	    _pacc_i = popcont(); cur = popm2();
+	if (m_ptr) {
+	    _pacc_i = popcont(); cur = popm();
 	    goto eval_loop;
 	}
 	Trace fprintf(stderr, "eval finished\n");
@@ -259,20 +249,18 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
        printf(" at column %ld\n", _pacc_err_col);
     }
 
-    fprintf(stderr, "chain length is %d\n", _pacc->m_chain_max);
-    {
-	int i, m;
+    Instr {
+	unsigned int i;
+	unsigned long a, v;
 
-    Trace fprintf(stderr, "matrix accessed %d times\n", access);
-    Trace fprintf(stderr, "used %d slots out of %d\n", used, n_rules * (input_length + 1));
-    m = 0;
-    for (i = 0; i < PRIME; ++i)
-	if (h0s[i] > m) m = h0s[i];
-    Trace fprintf(stderr, "h0: longest chain %d\n", m);
-    m = 0;
-    for (i = 0; i < PRIME; ++i)
-	if (h1s[i] > m) m = h1s[i];
-    Trace fprintf(stderr, "h1: longest chain %d\n", m);
+	fprintf(stderr, "chain length is %d\n", _pacc->m_chain_max);
+	a = v = 0;
+	for (i = 0; i < _pacc->m_bkt_cnt; ++i) {
+	    fprintf(stderr, "%d/%d ", _pacc->m_valid[i * 2], _pacc->m_valid[i * 2 + 1]);
+	    v += _pacc->m_valid[i * 2];
+	    a += _pacc->m_valid[i * 2 + 1];
+	}
+	fprintf(stderr, "\n%ld/%ld\n", v, a);
     }
     if (cur->status == evaluated) {
 	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
