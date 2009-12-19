@@ -765,4 +765,10 @@ So hashing fundamentally works. We now have:
 That's a distinct improvement, although still a rather enormous 7576
 bytes per input byte. Oh well, we still have a thunk stack in each
 struct intermed.
-thing.
+
+2009-12-19
+----------
+
+Oh bugger. I really need to review how the thunk stack is built. But to
+do that, we're going to have to make the emit tests work again. OK...
+

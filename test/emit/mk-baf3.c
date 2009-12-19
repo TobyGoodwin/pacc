@@ -1,8 +1,22 @@
+/*
+int
+parse 5 5
+parse 2+3 5
+parse 2*3 6
+parse 2+3+4 9
+parse 2*3+4 10
+parse 2+3*4 14
+parse 2*3*4 24
+parse 53*(13+75) 4664
+parse _456_+_123_*_(_543_+___7_*_(987_+_2)_+_6)_ 919512
+noparse x Sum 0
+*/
+
+#include <sys/types.h>
+
 #include "syntax.h"
 
-char *prefix = 0;
-
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
     /* Bryan Ford's trivial grammar with integers and spacing:
@@ -180,7 +194,9 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "int"; p->next = q; q = p;
     p = s_new(rule); p->text = "Sum"; p->first = q; p->next = r; r = p;
 
+    r = cons(s_text(preamble, 0), r);
     p = s_new(grammar); p->text = "yy"; p->first = r;
 
-    return p;
+    *result = p;
+    return 1;
 }

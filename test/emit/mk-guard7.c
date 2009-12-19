@@ -1,8 +1,15 @@
+/*
+chars
+parse {} {}
+parse {_any_chars_here_} {_any_chars_here_}
+noparse {_no "}" 4
+*/
+
+#include <sys/types.h>
+
 #include "syntax.h"
 
-char *prefix = 0;
-
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
     /*
@@ -23,7 +30,7 @@ struct s_node *create(void) {
     p = s_new(rule); p->text = "Char"; p->first = q; p->next = r; r = p;
 
     /* _ ← (" " / "\n" ) * */
-    p = s_new(lit); p->text = "\n"; q = p;
+    p = s_new(lit); p->text = "\\n"; q = p;
     p = s_new(lit); p->text = " "; p->next = q; q = p;
     p = s_new(alt); p->first = q; q = p;
     p = s_new(rep); p->first = q; q = p;
@@ -61,7 +68,9 @@ struct s_node *create(void) {
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
 
+    r = cons(s_text(preamble, 0), r);
     p = s_new(grammar); p->text = "yy"; p->first = r;
 
-    return p;
+    *result = p;
+    return 1;
 }

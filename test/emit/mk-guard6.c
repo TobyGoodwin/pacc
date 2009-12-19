@@ -1,6 +1,16 @@
-#include "syntax.h"
+/*
+chars
+parse q q
+parse qux qux
+parse q39a q39a
+parse q. q
+parse q3. q3
+noparse 37 Char 1
+*/
 
-char *prefix = 0;
+#include <sys/types.h>
+
+#include "syntax.h"
 
 /*
  * char *Identifier ← IdentStart IdentCont* { match() } 
@@ -8,7 +18,8 @@ char *prefix = 0;
  * void IdentCont ← IdentStart / d:Char &{ *d >= '0' && *d <= '9' }
  * char *Char ← . { match() }
  */
-struct s_node *create(void) {
+
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
     /* char *Char ← . { match() } */
@@ -55,7 +66,9 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Identifier"; p->first = q; p->next = r; r = p;
 
+    r = cons(s_text(preamble, 0), r);
     p = new_node(grammar); p->text = "yy"; p->first = r;
 
-    return p;
+    *result = p;
+    return 1;
 }

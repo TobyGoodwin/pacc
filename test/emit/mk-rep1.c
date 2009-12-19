@@ -1,8 +1,15 @@
+/*
+chars
+parse xx ''
+parse xyx y
+parse xyyx yy
+*/
+
+#include <sys/types.h>
+
 #include "syntax.h"
 
-char *prefix = 0;
-
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *r;
 
     /* The * operator with binding:
@@ -26,7 +33,9 @@ struct s_node *create(void) {
     p = cons(s_text(type, "char *"), p);
     r = cons(s_both(rule, "S", p), r);
 
+    r = cons(s_text(preamble, 0), r);
     p = s_both(grammar, "yy", r);
 
-    return p;
+    *result = p;
+    return 1;
 }

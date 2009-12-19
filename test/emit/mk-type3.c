@@ -1,8 +1,13 @@
+/*
+int
+parse 78 78
+*/
+
+#include <sys/types.h>
+
 #include "syntax.h"
 
-char *prefix = 0;
-
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* Mixed types:
@@ -52,14 +57,16 @@ struct s_node *create(void) {
     p = new_node(rule); p->text = "Digits1"; p->first = q; p->next = r; r = p;
 
     /* int Decimal ← Digits1 { atoi(match()) } */
-    p = new_node(expr); p->text = "atoi(d)"; q = p;
+    q = s_both(expr, "atoi(d)", s_text(ident, "d"));
     p = new_node(call); p->text = "Digits1"; s = p;
     p = new_node(bind); p->text = "d"; p->first = s; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "int"; p->next = q; q = p;
     p = new_node(rule); p->text = "Decimal"; p->first = q; p->next = r; r = p;
 
-    p = new_node(grammar); p->text = "yy"; p->first = r;
+    r = cons(s_text(preamble, 0), r);
+    p = s_both(grammar, "yy", r);
 
-    return p;
+    *result = p;
+    return 1;
 }

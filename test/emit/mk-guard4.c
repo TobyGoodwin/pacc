@@ -1,8 +1,17 @@
+/*
+chars
+parse a a
+parse q q
+parse z z
+noparse A A 1
+noparse % A 1
+*/
+
+#include <sys/types.h>
+
 #include "syntax.h"
 
-char *prefix = 0;
-
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* Semantic predicate and any matcher:
@@ -39,7 +48,9 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "P"; p->first = q; p->next = r; r = p;
 
+    r = cons(s_text(preamble, 0), r);
     p = new_node(grammar); p->text = "yy"; p->first = r;
 
-    return p;
+    *result = p;
+    return 1;
 }

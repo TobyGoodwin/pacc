@@ -1,8 +1,12 @@
+/*
+int
+parse 5 5
+noparse x A 0
+*/
+
 #include <sys/types.h>
 
 #include "syntax.h"
-
-char *prefix = 0;
 
 int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;

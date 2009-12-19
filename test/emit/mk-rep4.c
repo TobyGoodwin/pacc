@@ -1,8 +1,15 @@
+/*
+chars
+parse a a
+parse a_b a_b
+parse a__b a__b
+*/
+
+#include <sys/types.h>
+
 #include "syntax.h"
 
-char *prefix = 0;
-
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* Nested repetition:
@@ -46,7 +53,9 @@ struct s_node *create(void) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Atoms"; p->first = q; p->next = r; r = p;
 
-    p = new_node(grammar); p->text = "yy"; p->first = r;
+    r = cons(s_text(preamble, 0), r);
+    p = s_both(grammar, "yy", r);
 
-    return p;
+    *result = p;
+    return 1;
 }

@@ -1,0 +1,6 @@
+#include <sys/types.h>
+
+extern int parse(char *, off_t, int *);
+
+#define PACC_TYPE int
+#define PACC_TYPE_FORMAT "%d"

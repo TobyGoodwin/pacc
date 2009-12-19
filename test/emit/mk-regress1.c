@@ -1,8 +1,13 @@
+/*
+int
+parse 5 5
+*/
+
+#include <sys/types.h>
+
 #include "syntax.h"
 
-char *prefix = 0;
-
-struct s_node *create(void) {
+int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /*
@@ -30,7 +35,9 @@ struct s_node *create(void) {
     p = s_text(type, "int"); p->next = q; q = p;
     p = s_text(rule, "P"); p->first = q; p->next = r; r = p;
 
-    p = s_new(grammar); p->text = "yy"; p->first = r;
+    r = cons(s_text(preamble, 0), r);
+    p = new_node(grammar); p->text = "yy"; p->first = r;
 
-    return p;
+    *result = p;
+    return 1;
 }
