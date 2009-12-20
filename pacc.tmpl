@@ -149,7 +149,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) 
     unsigned int h;
     struct intermed *bkt, *r;
     assert(col < input_length + 1);
-    assert(rule < n_rules);
+    //assert(rule < n_rules); Not any more!
     //fprintf(stderr, "_pacc_result(%d, %d)\n", col, rule);
     h = (col + (rule << 6) + (rule << 16) - rule) % p->m_bkt_cnt;
     bkt = p->m_bkt[h];
@@ -196,7 +196,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 
 #EMIT_ENGINE
 
-    cur = _pacc_result(_pacc, 0, 0);
+    cur = _pacc_result(_pacc, 0, start_rule_id);
     if (parsed && !evaluating && cur->status == parsed) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	evaluating = 1;

@@ -74,12 +74,15 @@ static void grammar_pre(struct s_node *n) {
 	lookup_rule[p->id] = r++;
 
     printf("#define n_rules %d\n", r); /* XXX just temporary... soon we will hash */
+    printf("const int start_rule_id = %d;\n", n->first->next->id);
     g_name = n->text;
     printf("union %s_union {\n", g_name);
+    /* XXX we still need u0! */
+    printf("    %s u0;\n", n->first->next->first->text);
     for (p = n->first, i = 0; p; p = p->next) {
 	if (p->type != rule) continue;
 	/* XXX obviously, we need to weed out duplicates, "void", etc. */
-	printf("    %s u%d;\n", p->first->text, i);
+	printf("    %s u%d;\n", p->first->text, p->id);
 	++i;
     }
     printf("};\n");
@@ -237,9 +240,9 @@ static void any_emit(struct s_node *n) {
 }
 
 static void rule_pre(struct s_node *n) {
-    cur_rule_node = n;
+    cur_rule = n->id;
     printf("case %d: /* %s */\n", n->id, n->text); 
-    printf("Trace fprintf(stderr, \"rule %d (%s) col %%d\\n\", col);\n", cur_rule, n->text);
+    printf("Trace fprintf(stderr, \"rule %d (%s) col %%d\\n\", col);\n", n->id, n->text);
     printf("rule_col = col;\n");
     printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
     printf("if (cur->status == uncomputed) {\n");
@@ -254,7 +257,6 @@ static void rule_post(struct s_node *n) {
     printf("    }\n");
     printf("}\n");
     printf("goto contin;\n");
-    ++cur_rule;
 }
 
 static void savecol(void) {
@@ -330,8 +332,8 @@ static void bind_pre(struct s_node *n) {
     printf("/* bind: %s */\n", n->text);
     printf("Trace fprintf(stderr, \"%%d: bind_pre()\\n\", %d);\n", n->id);
     pushn(n->text);
-    bind_rule = lookup_rule[n->first->first->id];
-    pushi(bind_rule);
+    //bind_rule = lookup_rule[n->first->first->id];
+    pushi(n->first->first->id);
     binding = 1;
     printf("Trace fprintf(stderr, \"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, bind_rule);
 }
@@ -387,8 +389,9 @@ static void declarations(struct s_node *n) {
 printf("/* i is %d */\n", i);
 	q = g_node->first;
 	if (q->type == preamble) q = q->next;
-	for (j = 0; j < i_stack[i]; ++j)
-	    q = q->next;
+	for ( ; q; q = q->next)
+	    if (q->id == i_stack[i]) break;
+	assert(q);
     printf("/* rule id is %d */\n", p->id);
     printf("/* type is %s */\n", q->first->text);
 	printf("    %s %s;\n", q->first->text, n_stack[i]);
@@ -536,7 +539,7 @@ static void guard_post(struct s_node *n) {
 }
 
 static void emit_call(struct s_node *n) {
-    printf("pusheval(%d, col, thr_%s);\n", lookup_rule[n->first->id],
+    printf("pusheval(%d, col, thr_%s);\n", n->first->id,
 	    binding ? "bound" : "rule");
     //if (binding)
 //	printf("pusheval(%d, thr_bound);\n", lookup_rule[n->first->id]);

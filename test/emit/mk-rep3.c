@@ -2,9 +2,9 @@
 chars
 parse xx xx
 parse xyx xyx
-noparse xyyx "x" 2
-noparse xyyyx "x" 2
-noparse xyyyyyyyyyyx "x" 2
+noparse xyyx '"x"' 2
+noparse xyyyx '"x"' 2
+noparse xyyyyyyyyyyx '"x"' 2
 */
 
 #include <sys/types.h>

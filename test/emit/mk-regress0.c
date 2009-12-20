@@ -1,7 +1,8 @@
 /*
-int
-parse 5 5
-noparse 6 A 1
+chars
+parse fred fred
+parse 'fred ' fred
+noparse 'fred barney' End 5
 */
 
 #include <sys/types.h>

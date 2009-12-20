@@ -1,7 +1,7 @@
 /*
 chars
-noparse f "o" 1
-noparse fo "o" 2
+noparse f '"o"' 1
+noparse fo '"o"' 2
 parse foo yes
 noparse food S 3
 */

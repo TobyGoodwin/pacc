@@ -4,14 +4,12 @@ passes=0
 fails=0
 
 check() {
-    a="`echo $1 | sed 's/_/ /g'`"
-    e="`echo $2 | sed 's/_/ /g'`"
-    r=`./harness "$a" 2>&1`
-    if [ "$r" = "$e" ]; then
-	echo "PASS: $a ==> $e"
+    r=`./harness "$1" 2>&1`
+    if [ "$r" = "$2" ]; then
+	echo "PASS: $1 ==> $2"
 	passes=`expr $passes + 1`
     else
-	echo "FAIL: $a ==> $r (expected $e)"
+	echo "FAIL $target: $1 ==> $r (expected $2)"
 	fails=`expr $fails + 1`
     fi
 }
@@ -34,12 +32,10 @@ for target in mk-*.c; do
     # and $passes and $fails don't get set.
     t=`mktemp`
     egrep '^check|^parse|^noparse' $target > $t
-    while read l; do
-	# Turn off globbing for the duration, so 2*3 works as expected.
-	set -f
-	$l
-	set +f
-    done < $t
+    # Turn off globbing for the duration, so 2*3 works as expected.
+    set -f
+    . $t
+    set +f
     rm $t
 done
 

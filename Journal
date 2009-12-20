@@ -1,3 +1,39 @@
+2009-12-20
+----------
+
+Right, so we have working emit tests. I think I've got some insight into
+why we need thunk stacks in intermed results: suppose we have a grammar
+like S <- A B / A C. Having parsed an A at column 0, and worked out
+which thunks we need to call to evaluate it, we then look for a B. If we
+don't find it, the alt code must unwind everything we've discovered so
+far, and then try again to match an A at column 0. So along with the
+cached result that there is indeed an A at col 0, we need to cache what
+thunks must be stored to evaluate it. (Obviously in this case we could
+simply left factor the rule into S <- A (B / C), but in general this
+doesn't solve the problem.)
+
+And it's not obvious that we easily manage the memory better than with a
+dynamic array per struct intermed. Hmm...
+
+One way that we could make the thunk list smaller is to use distinct
+numbers for thunks and rules. In particular, if we start numbering
+thunks from n_rules, then anything < n_rules must be a rule, anything
+greater must be a thunk. That almost eliminates the need for the
+discriminator, except that I've just remembered that we currently
+distinguish calls that are / are not bound to a variable. Hmm...
+
+Anyway, one thing to look at very soon: there are some promises in
+emit.c that lookup_rule can go away when we hash. Now that we hash, is
+that true? Yes: the idea was to hash not on the rule number, but simply
+its id. Under hashing, it doesn't matter - in fact it's probably an
+advantage! - that rule ids are large and non-contiguous.
+
+2009-12-19
+----------
+
+Oh bugger. I really need to review how the thunk stack is built. But to
+do that, we're going to have to make the emit tests work again. OK...
+
 Source Files
 ============
 
@@ -765,10 +801,3 @@ So hashing fundamentally works. We now have:
 That's a distinct improvement, although still a rather enormous 7576
 bytes per input byte. Oh well, we still have a thunk stack in each
 struct intermed.
-
-2009-12-19
-----------
-
-Oh bugger. I really need to review how the thunk stack is built. But to
-do that, we're going to have to make the emit tests work again. OK...
-

@@ -1,6 +1,6 @@
 /*
 int
-check 5 hello,_world!parsed_with_value_5
+check 5 'hello, world!parsed with value 5'
 noparse x A 0
 */
 

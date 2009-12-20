@@ -2,7 +2,7 @@
 chars
 parse {} {}
 parse {_any_chars_here_} {_any_chars_here_}
-noparse {_no "}" 4
+noparse {_no '"}"' 4
 */
 
 #include <sys/types.h>

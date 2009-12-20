@@ -1,5 +1,5 @@
 /*
-int
+chars
 parse 5 5
 */
 

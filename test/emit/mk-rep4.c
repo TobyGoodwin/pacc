@@ -1,8 +1,8 @@
 /*
 chars
 parse a a
-parse a_b a_b
-parse a__b a__b
+parse 'a b' 'a b'
+parse 'a  b' 'a  b'
 */
 
 #include <sys/types.h>
