@@ -332,6 +332,10 @@ static void bind_pre(struct s_node *n) {
     printf("/* bind: %s */\n", n->text);
     printf("Trace fprintf(stderr, \"%%d: bind_pre()\\n\", %d);\n", n->id);
     pushn(n->text);
+    /* XXX It would be better to have a stack of "struct s_node *"s, and
+     * push a pointer to the rule itself; currently we push the rule id
+     * here, then have to search every rule later on to find it!
+     */
     pushi(n->first->first->id);
     binding = 1;
     printf("Trace fprintf(stderr, \"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, n->first->first->id);
