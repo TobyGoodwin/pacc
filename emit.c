@@ -327,15 +327,14 @@ static void not_post(struct s_node *n) {
 
 /* A binding may only contain a call. */
 static void bind_pre(struct s_node *n) {
-    int bind_rule;
-
+    assert(n->first && n->first->type == call);
+    assert(n->first->first->type == rule);
     printf("/* bind: %s */\n", n->text);
     printf("Trace fprintf(stderr, \"%%d: bind_pre()\\n\", %d);\n", n->id);
     pushn(n->text);
-    //bind_rule = lookup_rule[n->first->first->id];
     pushi(n->first->first->id);
     binding = 1;
-    printf("Trace fprintf(stderr, \"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, bind_rule);
+    printf("Trace fprintf(stderr, \"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, n->first->first->id);
 }
 
 static void bind_post(struct s_node *n) {
@@ -382,18 +381,23 @@ static void declarations(struct s_node *n) {
 
     for (p = n->first; p; p = p->next) {
 	struct s_node *q;
-	int j;
+
+	/* XXX At this point, we have a list of names (n_stack) which we
+	 * search from the back. That gives us the rule id (i_stack[i])
+	 * to which this name is bound. */
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-printf("/* i is %d */\n", i);
+	printf("/* i is %d */\n", i);
+	/* XXX Now we search all the rules to find one with the given
+	 * id. */
 	q = g_node->first;
 	if (q->type == preamble) q = q->next;
 	for ( ; q; q = q->next)
 	    if (q->id == i_stack[i]) break;
-	assert(q);
-    printf("/* rule id is %d */\n", p->id);
-    printf("/* type is %s */\n", q->first->text);
+	assert(q && q->type == rule);
+	printf("/* rule id is %d */\n", p->id);
+	printf("/* type is %s */\n", q->first->text);
 	printf("    %s %s;\n", q->first->text, n_stack[i]);
     }
 }

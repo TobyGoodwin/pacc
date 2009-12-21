@@ -1,3 +1,14 @@
+2009-12-21
+----------
+
+So hashing on rule id works! And indeed, it does appear slightly
+advantageous to use non-contiguous IDs: the longest hash chain is now 21
+items (was 22), and we're down to 7369 bytes per input byte. (But is
+that just noise, really?)
+
+There's some code in emit.c that looks quadratic, searching for rules by
+name. I'm sure that can be improved.
+
 2009-12-20
 ----------
 
@@ -33,6 +44,18 @@ advantage! - that rule ids are large and non-contiguous.
 
 Oh bugger. I really need to review how the thunk stack is built. But to
 do that, we're going to have to make the emit tests work again. OK...
+
+2009-12-17
+----------
+
+So hashing fundamentally works. We now have:
+
+==7607== malloc/free: in use at exit: 11,534,549 bytes in 5,898 blocks.
+==7607== malloc/free: 8,508 allocs, 2,610 frees, 20,116,713 bytes allocated.
+
+That's a distinct improvement, although still a rather enormous 7576
+bytes per input byte. Oh well, we still have a thunk stack in each
+struct intermed.
 
 Source Files
 ============
@@ -789,15 +812,3 @@ actually saves an entire push()!
 And that now works in the mainline. Hmph: the pushm2() code does
 actually work as is, because we never allocate new matrix entries while
 evaluating. So we could leave it for now.
-
-2009-12-17
-----------
-
-So hashing fundamentally works. We now have:
-
-==7607== malloc/free: in use at exit: 11,534,549 bytes in 5,898 blocks.
-==7607== malloc/free: 8,508 allocs, 2,610 frees, 20,116,713 bytes allocated.
-
-That's a distinct improvement, although still a rather enormous 7576
-bytes per input byte. Oh well, we still have a thunk stack in each
-struct intermed.
