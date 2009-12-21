@@ -30,14 +30,14 @@ static void pushn(char *n) {
     n_stack[n_ptr++] = n;
 }
 
-int i_stack[N_STACK_BODGE];
-int i_ptr = 0;
-static void pushi(int i) {
-    if (i_ptr == N_STACK_BODGE) {
-	fprintf(stderr, "i_stack overflow\n");
+struct s_node *s_stack[N_STACK_BODGE];
+int s_ptr = 0;
+static void pushs(struct s_node *s) {
+    if (s_ptr == N_STACK_BODGE) {
+	fprintf(stderr, "s_stack overflow\n");
 	exit(1);
     }
-    i_stack[i_ptr++] = i;
+    s_stack[s_ptr++] = s;
 }
 
 int binding = 0;
@@ -279,7 +279,7 @@ static void seq_pre(struct s_node *n) {
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
     printf("status = parsed;\n"); /* empty sequence */
-    i_ptr = n_ptr = 0;
+    s_ptr = n_ptr = 0;
 }
 
 static void seq_mid(struct s_node *n) {
@@ -325,18 +325,16 @@ static void not_post(struct s_node *n) {
     debug_post("not", n);
 }
 
-/* A binding may only contain a call. */
 static void bind_pre(struct s_node *n) {
+    /* A binding may only contain a call... */
     assert(n->first && n->first->type == call);
+    /* ... which itself must refer to a rule. */
     assert(n->first->first->type == rule);
     printf("/* bind: %s */\n", n->text);
     printf("Trace fprintf(stderr, \"%%d: bind_pre()\\n\", %d);\n", n->id);
+    /* Save the name bound, and the rule to which it is bound. */
     pushn(n->text);
-    /* XXX It would be better to have a stack of "struct s_node *"s, and
-     * push a pointer to the rule itself; currently we push the rule id
-     * here, then have to search every rule later on to find it!
-     */
-    pushi(n->first->first->id);
+    pushs(n->first->first);
     binding = 1;
     printf("Trace fprintf(stderr, \"will bind %s @ rule %d, col %%d\\n\", col);\n", n->text, n->first->first->id);
 }
@@ -384,25 +382,19 @@ static void declarations(struct s_node *n) {
 #endif
 
     for (p = n->first; p; p = p->next) {
-	struct s_node *q;
-
-	/* XXX At this point, we have a list of names (n_stack) which we
-	 * search from the back. That gives us the rule id (i_stack[i])
-	 * to which this name is bound. */
+	/* We have a list of names (n_stack) which are bound in the
+	 * current sequence. XXX Should we not search from the back?
+	 */
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
+	/* It is not an error if we have a name without a binding: the
+	 * parser will pick out names like "printf" from the code. */
 	if (i == n_ptr) continue;
+	assert(s_stack[i]->type == rule);
+	assert(s_stack[i]->first->type == type);
 	printf("/* i is %d */\n", i);
-	/* XXX Now we search all the rules to find one with the given
-	 * id. */
-	q = g_node->first;
-	if (q->type == preamble) q = q->next;
-	for ( ; q; q = q->next)
-	    if (q->id == i_stack[i]) break;
-	assert(q && q->type == rule);
-	printf("/* rule id is %d */\n", p->id);
-	printf("/* type is %s */\n", q->first->text);
-	printf("    %s %s;\n", q->first->text, n_stack[i]);
+	printf("/* type is %s */\n", s_stack[i]->first->text);
+	printf("    %s %s;\n", s_stack[i]->first->text, n_stack[i]);
     }
 }
 
@@ -429,15 +421,15 @@ static void bindings(struct s_node *n) {
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%d\\n\", pos, _pacc_p->thrs[pos].col);\n", p->text);
 	printf("_pacc_i = popcont();\n");
 
-	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->thrs[pos].col);\n", p->text, i_stack[i]);
-	printf("    cur = _pacc_result(_pacc, _pacc_p->thrs[pos].col, %d);\n", i_stack[i]);
+	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->thrs[pos].col);\n", p->text, s_stack[i]->id);
+	printf("    cur = _pacc_result(_pacc, _pacc_p->thrs[pos].col, %d);\n", s_stack[i]->id);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
 	printf("	_pacc_i = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
-	printf("    %s = cur->value.u%d;\n", p->text, i_stack[i]);
-	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%d ==> \" TYPE_PRINTF \"\\n\", _pacc_p->thrs[pos].col, cur->value.u0);\n", p->text, i_stack[i]);
+	printf("    %s = cur->value.u%d;\n", p->text, s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%d ==> \" TYPE_PRINTF \"\\n\", _pacc_p->thrs[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);
 #if 0
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
@@ -573,7 +565,7 @@ static void alt_pre(struct s_node *n) {
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);
     savecol();
-    i_ptr = n_ptr = 0;
+    s_ptr = n_ptr = 0;
 }
 
 static void alt_mid(struct s_node *n) {
@@ -586,7 +578,7 @@ static void alt_mid(struct s_node *n) {
     savecol();
     printf("Trace fprintf(stderr, \"col restored to %%d\\n\", col);\n");
     printf("Trace fprintf(stderr, \"alt %d @ col %%d? (next alternative)\\n\", col);\n", n->id);
-    i_ptr = n_ptr = 0;
+    s_ptr = n_ptr = 0;
 }
 
 static void alt_post(struct s_node *n) {
@@ -599,7 +591,7 @@ static void alt_post(struct s_node *n) {
     printf("cont = popcont();\n");
     printf("Trace fprintf(stderr, \"alt %d @ col %%d => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("Trace fprintf(stderr, \"col is %%d\\n\", col);\n");
-    i_ptr = n_ptr = 0;
+    s_ptr = n_ptr = 0;
 }
 
 static void rep_pre(struct s_node *n) {
