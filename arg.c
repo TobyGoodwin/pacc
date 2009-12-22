@@ -9,6 +9,7 @@
 
 static const struct option long_opts[] = {
     { "output", required_argument, 0, 'o' },
+    { "partial-rule", required_argument, 0, 'p' },
     { 0, 0, 0, 0 }
 };
 
@@ -22,6 +23,11 @@ static char *output = 0;
 char *arg_output() {
     assert(output);
     return output;
+}
+
+static char *partial = 0;
+char *arg_partial() {
+    return partial;
 }
 
 static void usage(void) {
@@ -60,10 +66,13 @@ static char *munge(const char *i) {
 void arg(int argc, char **argv) {
     int c, opt_i;
 
-    while ((c = getopt_long(argc, argv, "o:", long_opts, &opt_i)) != -1) {
+    while ((c = getopt_long(argc, argv, "o:p:", long_opts, &opt_i)) != -1) {
 	switch (c) {
 	case 'o':
 	    output = optarg;
+	    break;
+	case 'p':
+	    partial = optarg;
 	    break;
 	case '?':
 	    usage();

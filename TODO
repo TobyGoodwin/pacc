@@ -10,7 +10,10 @@ Error handling
 Complete the command-line interface
 
     Need --help for one. And --defines, although I'm inclined to think
-    that that should be the default.
+    that that should be the default. And something to switch on the
+    partialization hack, and something to say what the rule that matches
+    end-of-line is.
+
 
 Detect (and handle?) left recursion
 
