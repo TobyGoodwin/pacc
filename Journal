@@ -76,6 +76,693 @@ That's a distinct improvement, although still a rather enormous 7576
 bytes per input byte. Oh well, we still have a thunk stack in each
 struct intermed.
 
+2009-12-16
+----------
+
+All's broken, and I started trying to get the emit tests back to fix it.
+But although that might be a useful thing to do anyway, it's not
+strictly necessary. What I can do is roll back to a version that worked
+with the full matrix, make the emit.c changes I have to recalculate cur
+and debug those, then reinstate hashing. Here goes...
+
+OK, well there's a serious snag in the theory: pacc0 can't build
+anything other than pacc1, and if the emit code is broken, that pacc1
+doesn't work! So we really do need to get the emit tests back. But I've
+managed to sort out at least part of the puzzle anyway. Even better, it
+actually saves an entire push()!
+
+And that now works in the mainline. Hmph: the pushm2() code does
+actually work as is, because we never allocate new matrix entries while
+evaluating. So we could leave it for now.
+
+2009-12-14
+----------
+
+OK, so some hashing is in place, and it doesn't work! At least one
+problem is that we have been in the habit of pushing "cur" addresses:
+this is what pushm() and pushm2() do. But the way the hash buckets work,
+struct intermed pointers are likely to be realloc()ed under our feet! So
+we will instead have to push col/rule pairs, and call _pacc_result()
+again when we pop them. Hmm... is this what we really want? Well, yes.
+Unless we go for linked list hash buckets, this is inevitable. And I'm
+not going to start implementing anything that mangles pointers on a
+stack... had enough of that with es!
+
+OK, so in emit.c, cur_rule always holds the current rule: we *don't*
+need to push that, just col will do fine. I think.
+
+2009-12-13
+----------
+
+Messing about with matrix names, and it occurs to me that I ought to
+make explicit my goal: a pacc parser should be re-entrant. More
+specifically, an application should be able to include several parsers
+(one parser understands one grammar), and several instances of a parser.
+Furthermore, although most applications will include only a single
+parser, which will come from a single C source file (well, a .[ch]
+pair), for applications that do include more than one parser, as much
+code as possible that's shared between parsers should occur only once
+(in a separate .[ch] pair). This means that template.sh will have to get
+a lot more complicated!
+
+Anyway, that's the goal. Now back to your regular schedule...
+
+Of course, _pacc_result() is all very well, but shouldn't this code be
+inlined some day?
+
+Now, I'm pretty close to doing hashing; It Would Be Nice to have some
+non-trivial examples other than pacc.pacc. Should we get baf's Java
+parser, and make it work? On 'tother hand, there's plenty else to do,
+and, y'know, there's going to be enormous memory savings just on
+pacc.pacc. Do I really need to glory in just how wondrous they will be
+on other examples? The current implementation can hardly be considered
+serious when...
+
+; wc pacc.pacc
+ 129  465 2655 pacc.pacc
+; valgrind ./pacc2 pacc.pacc -o pacc3.c
+...
+==7661== malloc/free: in use at exit: 72,312,011 bytes in 4,488 blocks.
+==7661== malloc/free: 4,496 allocs, 8 frees, 72,312,063 bytes allocated.
+
+
+That's 27236 bytes of memory for every byte in the input file! I think
+we can do better than that...
+
+By the way, here's a valgrind command to take account of the way we're
+using stdin:
+
+valgrind '--db-command=gdb -nw %f %p < /dev/tty' '--db-attach=yes' '--input-fd=7' ./pacc1 pacc.pacc -o pacc2.c <[7] /dev/tty
+
+2009-12-11
+----------
+
+Interesting. So, I have made the same problem pop up somewhere else. Let
+me review this...
+
+Make s_alt do nothing clever, so alts are always nested. When the Rule
+result reads "s_kid(alt, cons(s,r))", with 5 names in the code, we have
+the problem. Change the result to "s_alt(s, r)", with just 3 names, and
+it all works. Add in "/* x y */" and it fails. With 4 names or 6 names
+in scope, it all works; with 5 it fails.
+
+Now, the Rule rule is *much* simpler than the Matcher rule. In fact, it
+doesn't *have* nested alts. Hmm... "s_alt(s, r) /* x y */" fails when
+s_alt creates nested alts. When s_alt denests alts, it succeeds. (Here,
+"it" means "make check", that is, pacc2 can parse its own grammar and
+build the phase 3 compiler.)
+
+Proposal: I can make this problem go away by denesting alts, which is
+the Right Thing anyway (although it probably ought to live in the
+optimization pass, rather than initial tree building). *All* the code in
+emit.c needs a severe reviewing, and I may just happen to solve the
+problem anyway. And I've got a few new tests up my sleeve to try and
+elicit bogus binding behaviour. Let's try those...
+
+2009-12-10
+----------
+
+One of those utterly baffling bugs. In both pacc0.c and pacc.pacc, a
+bound call is constructed by "s_bind(n, u)". Turns out that s_bind() is
+not declared, so this produces integer / pointer warnings, but works.
+Replace that call, in pacc.pacc, with "s_both(bind, n, u)", which
+appears to be completely equivalent, and the resultant pacc2 just
+doesn't work: it fails to parse even the simplest grammar.
+
+It's hard to see what's wrong, or even different, about this pacc2. I
+wonder if there is some shared structure somewhere? Or am I wrong about
+the two calls being equivalent? Next step: rewrite s_bind to use s_both.
+
+OK, so now I have s_bind() defined as "return s_both(bind, n, c)", and
+declared in syntax.h. Every works. "Inline" the call to s_both into
+pacc.pacc, and it falls over, in just the same way that it did before.
+What on earth is going on?
+
+I still have absolutely no idea what is going on, but I have narrowed
+the problem down to the following. The call to "s_both(bind, n, u)"
+brings 4 names into scope (s_both, bind, n, and u), whereas "s_bind(n,
+u)" only 3. Any time we have 4 names, even with something like
+"s_bind(n, u) /* x */" the resultant parser is broken in exactly the
+same way. First guess was that it was something to do with stack
+overflow in emit.c, but apparently not. (We do have a lot of stacks, but
+most of them now indicate when they overflow.)
+
+Another data point: adding *more* identifiers ("s_bind(n, u) /* x y z
+*/") also makes the problem go away, so it's not merely something
+overflowing, and in any case I believe that all stacks are now overflow
+protected. The mighty valgrind doesn't report any problems.
+
+I'm still baffled.
+
+OK. I believe that the problem is as follows. Something about the syntax
+tree we build for the Matcher rule causes us to emit code that is
+faulty, and somehow fails to recognise valid inputs. If this is so, then
+making the s_bind -> s_both change in pacc0.c should result in a pacc1
+that fails the same way pacc2 now does. Try it... No, because the
+salient property is the length of bind list; change *that* to include
+extra names... 
+
+No, this is not the case. When pacc0.c builds this tree:
+
+        expr 371: s_bind(n, u) /* x */ 
+          ident 370: s_bind 
+          ident 369: n 
+          ident 368: u 
+          ident 367: x 
+
+and pacc1 parses pacc.pacc to produce this tree:
+
+                  expr 326:  s_bind(n, u) /* x */  
+                    ident 325: s_bind 
+                    ident 324: n 
+                    ident 323: u 
+                    ident 322: x 
+
+This implies that the problem is a bizarre interaction between the
+nested alt nodes, and the bind count. Now, at some point nested alts
+should go away... shall we do this? But I'd also like to understand why
+they fail in this case (if, indeed, making them go away fixes the
+problem). Hah...
+
+OK, denesting alts makes the s_both() code work. What about renesting
+them, by removing the conditional case in s_alt()? Err, no, *that* also
+works fine. Hang about...
+
+Restoring the old nested alts code in pacc.pacc brings back the
+"expected Char at column 55". Brain fade. Good night.
+
+2009-12-07
+----------
+
+I'm starting to implement hashing, and have been reading up on hash
+chains, open probing, double hashing, radix searching, patricia and so
+on. It occurs to me that in the current interface we always know the
+input length before we start parsing, and the number of rules. So
+assuming we can guess the "matrix density" fairly sensibly, we've got a
+pretty good idea exactly how many slots we will need. So it should be
+possible to avoid rehashing.
+
+(There might be an option to generate a parser which doesn't know its
+input size up front, in which case rehashing would be necessary. But
+let's worry about that another time.)
+
+Not many data points so far; basically pacc itself is the only serious
+grammar we have. At present, that allocates 143154 results, and used
+16426 of them, or 11.5%. Looking at that and a couple of the larger test
+cases suggests that 10% - 15% is about right for the matrix density. So
+that gives us a few options.
+
+1. Using hash chains, we can say that we will never need to rehash; the
+worst that can possibly happen is that the chains get a bit longer than
+we'd like. Suppose we have (rules * input length / 100) chains, then the
+average length of chains equals the percentage density; about 12 items
+per chain. We'd want around 1500 hash buckets for pacc.pacc. The only
+disadvantage is that we need a next pointer in every result.
+
+2. If we double hash, although we can size the table so that it *should*
+be big enough, we can't guarantee that. We save on the next pointer, but
+we will need to be prepared to rehash if the table gets more than about
+70% full. Hmm...  and the initial estimate will be big. We'd maybe go
+for (rules * input length * 0.17), so for pacc.pacc we'd allocate about
+24000 slots. The wastage there kinda dwarfs a few next pointers, but on
+the other hand we never have to allocate any memory.
+
+In either case, we have the interesting problem of picking a size for
+the hash table. Ideally, of course, it should be prime, which makes me
+think of testing for primality on the fly, or (better) starting with a
+lookup table of a few dozen primes.
+
+2009-12-04
+----------
+
+Template file done as described, and aren't I glad I did! The best part
+is that, because it's (almost) a real C file, vim's syntax highlighting
+works, unlike emit.c where all the emitted code is just pink. (Now that
+gives me an idea, what about a vim syntax definition that can understand
+embedded code... :-)
+
+Anycase, I'm just redoing the test harness so that it can make use of
+errors, and it occurs to me that we need to generate useful errors for
+failing predicates.
+
+2009-12-03
+----------
+
+OK, so I'm starting to get error handling working, and it's actually
+rather pretty! (The interface, not the implementation, yet.) When
+harness is a baf3 parser, we get:
+
+    ; ./harness '3+4*('
+    expected Additive at column 5
+
+However, I'm not entirely happy with this:
+
+    ; ./harness '3+4*(5'
+    expected Right at column 6
+
+I would prefer the error to read like this.
+
+    expected ")" at column 6
+
+And this error is actually generated initially (by the failing lit
+matcher), but then over-written when pacc discovers that the Right rule
+(which is just Right <- ")" Space) has made no progress at all. To do
+this, we'd either need a heuristic to identify when rules should
+over-write error information, or a way to annotate such rules in the
+grammar. (Or both!)
+
+Heuristics might include: capitalization of the rule name (but I really
+hate this); whether the rule contains any alternatives.
+
+Annotations look more flexible, but I don't know what syntax I'd like to
+use. Straw man: something like this?
+
+   D <- "0" { 0 } / "1" { 1 } / ... / "9" { 9 } ~ "decimal digit"
+
+Just at the moment, I can't see how Pappy handles errors at all, and I
+don't have the Rats! documentation to hand.
+
+Any case, at the moment, I'm not going to make any radical changes,
+except to clean up the code.
+
+OK, so now I'm thinking about getting rid of the -part.c bodge, and have
+decided that we really must have a template file (rather than emit.c
+sprouting a new rash of printf()s). So how would that work? Suppose we
+have pacc.tmpl, with some kinda marker at the points where we currently
+include pacc-part.c. Then a sed script could create template.c, which
+holds the three functions pre_decl(), pre_engine(), and post_engine().
+Let's do it!
+
+2009-11-27
+----------
+
+OK, so I worked out why pacc2 and pacc3 were different! (A bug in
+pacc.pacc.)
+
+The interface has already changed, and I'm starting to think
+that we probably *do* want a "-d" ("--defines"!?) option that also
+writes a .h file. The current interface to the parse function is:
+
+    int parse(char *, off_t, <type of start rule> *)
+
+(The appearance of off_t is a bit of a nuisance, since it means that we
+depend on <sys/types.h>, but it *is* correct.)
+
+Anycase, the TODO list has moved to (you guessed it) TODO.
+
+2009-11-25
+----------
+
+Here are a few interesting statistics:
+
+    ; make clean; time make
+    ...
+    mv pacc2 pacc
+    2.10user 0.52system 0:03.88elapsed 67%CPU (0avgtext+0avgdata 0maxresident)k
+    0inputs+4664outputs (0major+57028minor)pagefaults 0swaps
+
+    ; time ./pacc1 ``() { cat pacc.pacc } >/dev/null
+    ...
+    0.05user 0.17system 0:00.34elapsed 63%CPU (0avgtext+0avgdata 0maxresident)k
+    0inputs+0outputs (0major+17741minor)pagefaults 0swaps
+
+    ; wc pacc.pacc 
+     129  460 2643 pacc.pacc
+    ; wc pacc2.c
+      6334  28437 193367 pacc2.c
+
+I can't think of anything much else to measure at the moment.
+
+So that brings us to the command line interface. Obviously enough,
+
+    pacc pacc.pacc
+
+should read pacc.pacc and write a parser to pacc.c. The "-o" option can
+specify a different output file.  Just at present, I can't see any
+reason for a separate .h file, since the interface is generally
+predictable: int parse(<type of start rule> *, const char *).
+
+2009-11-24
+----------
+
+Where next? Here are some things that are outstanding, in no particular
+order.
+
+1. Work out what the command-line interface to pacc is
+2. Replace the intermediate results matrix with hashing
+3. Review of the parsing engine - do we really need so many stacks?
+4. New test cases and harness
+5. Autoconfiscation
+6. Only one instance of each type per union
+7. Handle void types
+8. Dynamically allocate everything
+9. Parser optimization / manipulation (including partialization hack)
+10. Tidy up tracing
+11. Instrument and measure current time / space performance
+12. UTF-8 support
+
+Just off the top of my head, the most urgent would be 10, 11, 1, and 4.
+
+OK, and I have tidied up tracing, at least to the point where it's
+possible to remove all the sed hacks from the Makefile.
+
+2009-11-13
+----------
+
+Friday the Thirteenth, and the loop is tied! Specifically, paccman.c
+builds a parser (stage1) which can parse pacc.pacc and build another
+parser (stage2), which can parse pacc.pacc and build another parser
+(stage3), which can... As you would expect, stage2 and stage3 are
+identical. A brief eyeball suggests that the stage1 parser differs only
+in id numbers (since the tree is built in a slightly different order).
+
+2009-11-05
+----------
+
+It's funny how even the trivialest aspects require design decisions
+(which I hope to get "right": partly to save time later, but mostly just
+out of a sense of elegance). For example, it's just become crystal clear
+exactly how identical "expr" and "guard" nodes are in the tree: they
+both hold a hunk of code in the node itself, and a list of identifiers
+used in that code as child. But we can't distinguish them by context
+(both are typically children of a seq).
+
+So I think I can see s_retype() about to be created...
+
+2009-10-14
+----------
+
+Interesting, becoming an expert in a system which doesn't yet exist!
+I've been trying (once again) to get my head around how we can tell
+where a rule ends. For quite a while, I was under the mistaken
+impression that Ford can parse "a <- b c <- d" because the parser backs
+up when it sees the second arrow, and decides that the "c" must belong
+to a new rule. This isn't how PEGs work!
+
+In fact, Ford can tell where a rule ends, because every rule *ends* with
+an expression "a <- b -> foo c <- d -> bar". Since only one thing
+appears to the right of a right arrow, the "c" must start a new rule.
+OK.
+
+D'oh! And Piumarta solves it so easily, by saying that an identifier
+that is a call is "identifier !EQUAL". Guess who'd forgotten about
+syntactic predicates?
+
+2009-10-08
+----------
+
+I seem to have all the above worked out, and almost working. I'm about
+to wave a wand of simplification over the thrs array. Here goes...
+
+2009-10-03
+----------
+
+OK, so the problem is with getting the right column for bindings.
+Suppose we decide that the parse we are working on will need to evaluate
+a thunk, which binds names "a" and "c"... we need to push onto the
+thr_stack the columns at which those names were bound. (Note that we
+must be prepared to undo this if we abandon this parse, but I think
+that's handled fine already by restoring thrs_ptr.)
+
+So, when we see the binding of "a", we need to record the current
+column. This can't simply go straight onto the stack already, because we
+don't know what thunk(s) are coming up, nor yet what names they will
+need. (What about "b", which was bound, but is unused in a given thunk?)
+
+Currently, there is a single list of names encountered and the columns
+at which they occur (oh, well, actually two coupled lists). That might
+work, but we will need to save / restore its pointer along with all the
+others. Hmm... let's have another look.
+
+No, it's hairier than that. What col we are at is dynamic (in the
+parser), whereas what names are bound is static (in the
+parser-generator).
+
+2009-10-02
+----------
+
+Ugly hacking session, all is confusion. I have a feeling that the
+intermediate results matrix is built funny. I don't really care, since
+it's going away soon, but it doesn't help my head!
+
+2009-09-30
+----------
+
+Major progress on the parser, but I've run into a tricky problem with
+bind / guard. When a name is bound, bind_pre() calls pushcol() to record
+the column where it will be bound. Then emit_expr() popcol()s each
+column from col_stack to do the actual binding. Note that emit_expr()
+assumes that all names in scope will be bound.
+
+Guards, on the other hand, declare which identifiers they will bind, and
+guard_pre() uses this information to bind only those, *without* calling
+popcol(). It finds the appropriate column from the thrs stack. Needless
+to say, this means that there are more pushes than pops of the
+col_stack, and hilarity ensues.
+
+Obviously the right fix is to make exprs follow guards, and declare
+which identifiers they need bound. (Apart from anything else, what
+happens if you have two exprs in a seq?)
+
+This is easy enough to do, but the hard part is that almost every test
+case, and certainly every rule in paccman.c will need to be rewritten.
+So, just for a temporary workaround, I've made guard_pre() call popcol()
+once for each binding.
+
+2009-09-17
+----------
+
+OK, so there's been a bit of a hiatus, but now I'm back on the case. The
+file paccman.c contains code to build, manually, a tree that will
+represent a parser for PEG itself. This needs to be copied to mktree.c
+(and there is also a slightly customised foo.c to go with it for now).
+
+Call the (fully-featured) language that pacc will understand tPEG. Call
+a simplified version of this sPEG. Then the code in paccman.c builds a
+parser for sPEG. 
+
+We will also need a definition of tPEG written in sPEG. This will be
+called, say, pacc.pacc. The parser built by paccman.c will read
+pacc.pacc, and build a parser for tPEG.
+
+What, if any, are the differences between sPEG and tPEG? Obvious
+candidates include constructs that will eventually be desugared, such as
+repetitions. And where there are alternate syntaxes, for example "←" or
+"<-", sPEG need only support one alternative. And sPEG need not
+understand defaults, such as default types, nor comments.
+
+So it's going to be useful actually to *define* sPEG and tPEG. OK.
+
+There's some other stuff going on too. In syntax.c we are starting to
+acquire tree builders (with unsatisfactory names like mkcall(); would
+not s_new_call() or s_call() do as well, if not better?). These are
+necessary because we have semantic *expressions*, not actions, in pacc.
+So for example, the matcher that calls another rule definition is
+expressed like this.
+
+    struct s_node *SeqRule ← i:Identifier { mkcall(i) }
+
+Thing is, these tree builders are mighty useful. We ought to use them in
+paccman.c itself. In fact, we ought to rewrite *all* the examples and
+test cases we have so far to utilize the tree builders.
+
+Or maybe not. After all, they need to be convenient to express trees as
+built by pacc, not manually. Let's get the parser going first, then see
+if we want to rewrite anything!
+
+2009-07-24
+----------
+
+Well, repetitions work as advertised. However, I believe that although
+the direct implementation is very straightforward, we must in fact
+desugar repetitions into alts and seqs. If not, we risk the parser
+becoming non-linear. (I need to cook up a test case which does in fact
+show non-linearity here.) Basically the point is that only an entire
+rule is memoized; if repetitions don't utilize rules, they are not
+memoized. I'm inclined to leave the working repetition code for the time
+being, though.
+
+2009-07-07
+----------
+
+Repetition: star, plus, query. I'm minded to implement a generic
+repetition operator, that matches any number of reps between a given min
+and max (with max = 0 implying infinity). Thus query is rep(0,1), plus
+is rep(1,0), and star is rep(0,0). (Interesting that this covers 3 out
+of four quadrants: the fourth - rep(1,1) - is simply a normal match.)
+
+This would also allow rep(2,3), for instance, although we currently
+don't have a syntax for that. Errm, I guess "x @ 2 3" would do at least
+as a straw man.
+
+Now, the only possible hitch here is that we now need a s_node of type
+"rep" to hold two integers. Do we just add them into struct? Or union
+them with char *text? Or have some kinda "number" s_type, that we can
+hang off "rep", like "call"s hang off "bind"s?
+
+2009-06-30
+----------
+
+Blimey. Here's something really mad. If we keep the number of specials
+in the grammar really small, then instead of this::
+
+     int Additive <- m:Multitive PLUS a:Additive { m + a } / Multitive
+
+you could instead say this::
+
+     int Additive <- m:Multitive + a:Additive { m + a } / Multitive
+
+This is a really groovy idea, but we almost certainly do need at least
+the characters ?*+.(){}/<>-"!: which doesn't leave many. Darn.
+
+2009-06-27
+----------
+
+A showstopper?
+
+I'm starting to close the loop, since pacc is almost clever enough to
+emit a parser that can read its own grammar. However...
+
+    char *Item ← s:Whatever { n = s_new(rule); n->text = s; n; }
+
+The idea of semantic expressions starts to look a bit murky.
+
+We could just say that we don't care: you must define functions like
+
+    struct s_node *new_rule(char *t) {
+	struct s_node *r = s_new(rule);
+	if (r) r->text = t;
+    }
+
+    char *Item ← s:Whatever { new_rule(s) }
+
+Is that too draconian?
+
+2009-06-26
+----------
+
+OK, what I have right now is a "match()" macro, which returns the text
+matched by the entire rule. It's kinda groovy, but considering cases
+like this:
+
+  char *Ident ← IdentStart IdentCont* { match() } Spacing
+  void Spacing ← (' ' / '\t')*
+
+it's a pity that match() will return the Spacing too.
+
+(By the way, I think it would be insane to have anything like match() as
+a default! It allocates memory...)
+
+It would be easy to store the column where an expression is encountered
+so that the above would work. (I was considering lmatch(), rmatch(), and
+match(), which respectively match everything before, after the
+expression; or the entire text matched by the rule. In fact, it would be
+simpler just to have match() and rmatch(), which match to the left and
+right respectively; if you want the entire expression, put match() at
+the end - or rmatch() at the beginning.)
+
+Arguably, Piumarta's bra & ket syntax is even more flexible, and there
+are times when that flexibility is warranted.
+
+  char *String ← '"' < [^"]* > '"' Spacing
+
+(Note that this doesn't allow a string to contain " characters.)
+
+  char *String ← '"' d:StrEsc '"' Spacing → d
+  StrEsc ← ( '\\' . / . )* { match() }
+
+Combination of match() with stashing col_expr handles all the simple
+cases. And particularly if we allow binding to anything (by generating
+extra rules), you can get this, which is barely even any longer.
+
+  char *String ← '"' d:([^"]*) '"' Spacing → d
+
+Here's a wacky one: why not phrase that as
+
+  char *String ← '"' =:([^"]*) '"' Spacing
+
+Oh dear, oh dear. Stop it now. Make match() work as you said you could,
+and move on. We can always revisit this later.
+
+OK, match() means lmatch(), and rmatch() exists. Cool.
+
+Here's a bit of a puzzle that I really don't know the answer to. First,
+is it permitted to have more than one expression per rule? For example,
+what about something like this.
+
+  char *Concat ← Word { a = match() } '^' { b = rmatch() } Word { strcat(a,b) }
+
+Well, no, it certainly will never be possible to bind names in an
+expression. At best, all bar the rightmost expression are evaluated - as
+expressions - in a void context, as if left-hand operands of ",".
+
+Anycase, the obvious thing to do at this stage is to say that there can
+only be one expression per rule. Or rather, one active expression per
+rule: we need this to work.
+
+  int Digit ← '5' { 5 } / '6' { 6 }
+
+So the top-level of a rule can be an alt, in which case each leg of the
+alt can have its own expr. But what about non-top-level alts?
+
+  <example here>
+
+2009-06-17
+----------
+
+Pressing on with semantic expressions. Each rule has a type (worry about
+defaulting later).
+
+Rules of type "void" never yield a value, of course. Should we allow
+expressions that are evaluated for their side effects? I guess so.
+Clearly it is not legal to bind a name to a "void" rule.
+
+Rules of most other types are fine: the semantic expression must yield a
+value of the given type:
+
+  int Additive <- m:Multitive '+' a:Additive { m + a }
+
+But we need at least something else: a way to extract parts of the input
+text. A rule of type [ haven't decided: either "char *", or some special
+type like "text" ] has a default value (in the absence of a semantic
+expression) of [ haven't decided: either the entire text matched by the
+rule, or the concatenation of the parts of it that aren't matched by a
+"void" call, or ... ]. This default value is freshly allocated by a call
+to realloc() - to use your own memory allocator, simply #define realloc
+in the raw code at the top of the file.
+
+And the first decision is instantly made: since this is only a default,
+certainly we should use "char *", and not something special. Hmm... 
+
+  char *Name <- Letter LetterOrDigit*
+
+The value is the text matched. We've said that in general a missing
+expression is an error, unless the only thing happening here is a call,
+in which case the value is simply propagated. So that normally
+
+  A <- B
+
+means
+
+  A <- b:B -> b
+
+But these two defaults can collide. In this grammar:
+
+  char *Name <- NamePlus
+  char *NamePlus <- l:Letter LetterOrDigit* -> l
+
+does Name get the value of all the text it matches, or the value of the
+solitary call? Ways out: 1) introduce "text" and say that solitary call
+is indeed the default for all types except "text", which otherwise
+behaves identically to "char *". 2) Say that, for "char *" only, matched
+text beats solitary call: write "char *Name <- np:NamePlus -> np" when
+that's what you want. 3) Do away with one of the defaults altogether:
+3a) just say that solitary call is not a default; 3b) say that we use
+Piumarta-style bra kets to mark the matched text. 4) Provide a function
+/ macro that means "all the matched text".
+
+I don't like any of these!
+
 Source Files
 ============
 
@@ -143,691 +830,3 @@ different / better syntax? OK, all sorts of stuff coming out here (I
 don't like Piumarta's < > syntax; ...). However, the idea of typing each
 rule seems plausible. And the type of the first rule can become the
 default type.
-
-2009-06-17
-----------
-
-Pressing on with semantic expressions. Each rule has a type (worry about
-defaulting later).
-
-Rules of type "void" never yield a value, of course. Should we allow
-expressions that are evaluated for their side effects? I guess so.
-Clearly it is not legal to bind a name to a "void" rule.
-
-Rules of most other types are fine: the semantic expression must yield a
-value of the given type:
-
-  int Additive <- m:Multitive '+' a:Additive { m + a }
-
-But we need at least something else: a way to extract parts of the input
-text. A rule of type [ haven't decided: either "char *", or some special
-type like "text" ] has a default value (in the absence of a semantic
-expression) of [ haven't decided: either the entire text matched by the
-rule, or the concatenation of the parts of it that aren't matched by a
-"void" call, or ... ]. This default value is freshly allocated by a call
-to realloc() - to use your own memory allocator, simply #define realloc
-in the raw code at the top of the file.
-
-And the first decision is instantly made: since this is only a default,
-certainly we should use "char *", and not something special. Hmm... 
-
-  char *Name <- Letter LetterOrDigit*
-
-The value is the text matched. We've said that in general a missing
-expression is an error, unless the only thing happening here is a call,
-in which case the value is simply propagated. So that normally
-
-  A <- B
-
-means
-
-  A <- b:B -> b
-
-But these two defaults can collide. In this grammar:
-
-  char *Name <- NamePlus
-  char *NamePlus <- l:Letter LetterOrDigit* -> l
-
-does Name get the value of all the text it matches, or the value of the
-solitary call? Ways out: 1) introduce "text" and say that solitary call
-is indeed the default for all types except "text", which otherwise
-behaves identically to "char *". 2) Say that, for "char *" only, matched
-text beats solitary call: write "char *Name <- np:NamePlus -> np" when
-that's what you want. 3) Do away with one of the defaults altogether:
-3a) just say that solitary call is not a default; 3b) say that we use
-Piumarta-style bra kets to mark the matched text. 4) Provide a function
-/ macro that means "all the matched text".
-
-I don't like any of these!
-
-2009-06-26
-----------
-
-OK, what I have right now is a "match()" macro, which returns the text
-matched by the entire rule. It's kinda groovy, but considering cases
-like this:
-
-  char *Ident ← IdentStart IdentCont* { match() } Spacing
-  void Spacing ← (' ' / '\t')*
-
-it's a pity that match() will return the Spacing too.
-
-(By the way, I think it would be insane to have anything like match() as
-a default! It allocates memory...)
-
-It would be easy to store the column where an expression is encountered
-so that the above would work. (I was considering lmatch(), rmatch(), and
-match(), which respectively match everything before, after the
-expression; or the entire text matched by the rule. In fact, it would be
-simpler just to have match() and rmatch(), which match to the left and
-right respectively; if you want the entire expression, put match() at
-the end - or rmatch() at the beginning.)
-
-Arguably, Piumarta's bra & ket syntax is even more flexible, and there
-are times when that flexibility is warranted.
-
-  char *String ← '"' < [^"]* > '"' Spacing
-
-(Note that this doesn't allow a string to contain " characters.)
-
-  char *String ← '"' d:StrEsc '"' Spacing → d
-  StrEsc ← ( '\\' . / . )* { match() }
-
-Combination of match() with stashing col_expr handles all the simple
-cases. And particularly if we allow binding to anything (by generating
-extra rules), you can get this, which is barely even any longer.
-
-  char *String ← '"' d:([^"]*) '"' Spacing → d
-
-Here's a wacky one: why not phrase that as
-
-  char *String ← '"' =:([^"]*) '"' Spacing
-
-Oh dear, oh dear. Stop it now. Make match() work as you said you could,
-and move on. We can always revisit this later.
-
-OK, match() means lmatch(), and rmatch() exists. Cool.
-
-
-Here's a bit of a puzzle that I really don't know the answer to. First,
-is it permitted to have more than one expression per rule? For example,
-what about something like this.
-
-  char *Concat ← Word { a = match() } '^' { b = rmatch() } Word { strcat(a,b) }
-
-Well, no, it certainly will never be possible to bind names in an
-expression. At best, all bar the rightmost expression are evaluated - as
-expressions - in a void context, as if left-hand operands of ",".
-
-Anycase, the obvious thing to do at this stage is to say that there can
-only be one expression per rule. Or rather, one active expression per
-rule: we need this to work.
-
-  int Digit ← '5' { 5 } / '6' { 6 }
-
-So the top-level of a rule can be an alt, in which case each leg of the
-alt can have its own expr. But what about non-top-level alts?
-
-  <example here>
-
-2009-06-27
-----------
-
-A showstopper?
-
-I'm starting to close the loop, since pacc is almost clever enough to
-emit a parser that can read its own grammar. However...
-
-    char *Item ← s:Whatever { n = s_new(rule); n->text = s; n; }
-
-The idea of semantic expressions starts to look a bit murky.
-
-We could just say that we don't care: you must define functions like
-
-    struct s_node *new_rule(char *t) {
-	struct s_node *r = s_new(rule);
-	if (r) r->text = t;
-    }
-
-    char *Item ← s:Whatever { new_rule(s) }
-
-Is that too draconian?
-
-2009-06-30
-----------
-
-Blimey. Here's something really mad. If we keep the number of specials
-in the grammar really small, then instead of this::
-
-     int Additive <- m:Multitive PLUS a:Additive { m + a } / Multitive
-
-you could instead say this::
-
-     int Additive <- m:Multitive + a:Additive { m + a } / Multitive
-
-This is a really groovy idea, but we almost certainly do need at least
-the characters ?*+.(){}/<>-"!: which doesn't leave many. Darn.
-
-2009-07-07
-----------
-
-Repetition: star, plus, query. I'm minded to implement a generic
-repetition operator, that matches any number of reps between a given min
-and max (with max = 0 implying infinity). Thus query is rep(0,1), plus
-is rep(1,0), and star is rep(0,0). (Interesting that this covers 3 out
-of four quadrants: the fourth - rep(1,1) - is simply a normal match.)
-
-This would also allow rep(2,3), for instance, although we currently
-don't have a syntax for that. Errm, I guess "x @ 2 3" would do at least
-as a straw man.
-
-Now, the only possible hitch here is that we now need a s_node of type
-"rep" to hold two integers. Do we just add them into struct? Or union
-them with char *text? Or have some kinda "number" s_type, that we can
-hang off "rep", like "call"s hang off "bind"s?
-
-2009-07-24
-----------
-
-Well, repetitions work as advertised. However, I believe that although
-the direct implementation is very straightforward, we must in fact
-desugar repetitions into alts and seqs. If not, we risk the parser
-becoming non-linear. (I need to cook up a test case which does in fact
-show non-linearity here.) Basically the point is that only an entire
-rule is memoized; if repetitions don't utilize rules, they are not
-memoized. I'm inclined to leave the working repetition code for the time
-being, though.
-
-2009-09-17
-----------
-
-OK, so there's been a bit of a hiatus, but now I'm back on the case. The
-file paccman.c contains code to build, manually, a tree that will
-represent a parser for PEG itself. This needs to be copied to mktree.c
-(and there is also a slightly customised foo.c to go with it for now).
-
-Call the (fully-featured) language that pacc will understand tPEG. Call
-a simplified version of this sPEG. Then the code in paccman.c builds a
-parser for sPEG. 
-
-We will also need a definition of tPEG written in sPEG. This will be
-called, say, pacc.pacc. The parser built by paccman.c will read
-pacc.pacc, and build a parser for tPEG.
-
-What, if any, are the differences between sPEG and tPEG? Obvious
-candidates include constructs that will eventually be desugared, such as
-repetitions. And where there are alternate syntaxes, for example "←" or
-"<-", sPEG need only support one alternative. And sPEG need not
-understand defaults, such as default types, nor comments.
-
-So it's going to be useful actually to *define* sPEG and tPEG. OK.
-
-There's some other stuff going on too. In syntax.c we are starting to
-acquire tree builders (with unsatisfactory names like mkcall(); would
-not s_new_call() or s_call() do as well, if not better?). These are
-necessary because we have semantic *expressions*, not actions, in pacc.
-So for example, the matcher that calls another rule definition is
-expressed like this.
-
-    struct s_node *SeqRule ← i:Identifier { mkcall(i) }
-
-Thing is, these tree builders are mighty useful. We ought to use them in
-paccman.c itself. In fact, we ought to rewrite *all* the examples and
-test cases we have so far to utilize the tree builders.
-
-Or maybe not. After all, they need to be convenient to express trees as
-built by pacc, not manually. Let's get the parser going first, then see
-if we want to rewrite anything!
-
-2009-09-30
-----------
-
-Major progress on the parser, but I've run into a tricky problem with
-bind / guard. When a name is bound, bind_pre() calls pushcol() to record
-the column where it will be bound. Then emit_expr() popcol()s each
-column from col_stack to do the actual binding. Note that emit_expr()
-assumes that all names in scope will be bound.
-
-Guards, on the other hand, declare which identifiers they will bind, and
-guard_pre() uses this information to bind only those, *without* calling
-popcol(). It finds the appropriate column from the thrs stack. Needless
-to say, this means that there are more pushes than pops of the
-col_stack, and hilarity ensues.
-
-Obviously the right fix is to make exprs follow guards, and declare
-which identifiers they need bound. (Apart from anything else, what
-happens if you have two exprs in a seq?)
-
-This is easy enough to do, but the hard part is that almost every test
-case, and certainly every rule in paccman.c will need to be rewritten.
-So, just for a temporary workaround, I've made guard_pre() call popcol()
-once for each binding.
-
-2009-10-02
-----------
-
-Ugly hacking session, all is confusion. I have a feeling that the
-intermediate results matrix is built funny. I don't really care, since
-it's going away soon, but it doesn't help my head!
-
-2009-10-03
-----------
-
-OK, so the problem is with getting the right column for bindings.
-Suppose we decide that the parse we are working on will need to evaluate
-a thunk, which binds names "a" and "c"... we need to push onto the
-thr_stack the columns at which those names were bound. (Note that we
-must be prepared to undo this if we abandon this parse, but I think
-that's handled fine already by restoring thrs_ptr.)
-
-So, when we see the binding of "a", we need to record the current
-column. This can't simply go straight onto the stack already, because we
-don't know what thunk(s) are coming up, nor yet what names they will
-need. (What about "b", which was bound, but is unused in a given thunk?)
-
-Currently, there is a single list of names encountered and the columns
-at which they occur (oh, well, actually two coupled lists). That might
-work, but we will need to save / restore its pointer along with all the
-others. Hmm... let's have another look.
-
-No, it's hairier than that. What col we are at is dynamic (in the
-parser), whereas what names are bound is static (in the
-parser-generator).
-
-2009-10-08
-----------
-
-I seem to have all the above worked out, and almost working. I'm about
-to wave a wand of simplification over the thrs array. Here goes...
-
-2009-10-14
-----------
-
-Interesting, becoming an expert in a system which doesn't yet exist!
-I've been trying (once again) to get my head around how we can tell
-where a rule ends. For quite a while, I was under the mistaken
-impression that Ford can parse "a <- b c <- d" because the parser backs
-up when it sees the second arrow, and decides that the "c" must belong
-to a new rule. This isn't how PEGs work!
-
-In fact, Ford can tell where a rule ends, because every rule *ends* with
-an expression "a <- b -> foo c <- d -> bar". Since only one thing
-appears to the right of a right arrow, the "c" must start a new rule.
-OK.
-
-D'oh! And Piumarta solves it so easily, by saying that an identifier
-that is a call is "identifier !EQUAL". Guess who'd forgotten about
-syntactic predicates?
-
-2009-11-05
-----------
-
-It's funny how even the trivialest aspects require design decisions
-(which I hope to get "right": partly to save time later, but mostly just
-out of a sense of elegance). For example, it's just become crystal clear
-exactly how identical "expr" and "guard" nodes are in the tree: they
-both hold a hunk of code in the node itself, and a list of identifiers
-used in that code as child. But we can't distinguish them by context
-(both are typically children of a seq).
-
-So I think I can see s_retype() about to be created...
-
-2009-11-13
-----------
-
-Friday the Thirteenth, and the loop is tied! Specifically, paccman.c
-builds a parser (stage1) which can parse pacc.pacc and build another
-parser (stage2), which can parse pacc.pacc and build another parser
-(stage3), which can... As you would expect, stage2 and stage3 are
-identical. A brief eyeball suggests that the stage1 parser differs only
-in id numbers (since the tree is built in a slightly different order).
-
-2009-11-24
-----------
-
-Where next? Here are some things that are outstanding, in no particular
-order.
-
-1. Work out what the command-line interface to pacc is
-2. Replace the intermediate results matrix with hashing
-3. Review of the parsing engine - do we really need so many stacks?
-4. New test cases and harness
-5. Autoconfiscation
-6. Only one instance of each type per union
-7. Handle void types
-8. Dynamically allocate everything
-9. Parser optimization / manipulation (including partialization hack)
-10. Tidy up tracing
-11. Instrument and measure current time / space performance
-12. UTF-8 support
-
-Just off the top of my head, the most urgent would be 10, 11, 1, and 4.
-
-OK, and I have tidied up tracing, at least to the point where it's
-possible to remove all the sed hacks from the Makefile.
-
-2009-11-25
-----------
-
-Here are a few interesting statistics:
-
-    ; make clean; time make
-    ...
-    mv pacc2 pacc
-    2.10user 0.52system 0:03.88elapsed 67%CPU (0avgtext+0avgdata 0maxresident)k
-    0inputs+4664outputs (0major+57028minor)pagefaults 0swaps
-
-    ; time ./pacc1 ``() { cat pacc.pacc } >/dev/null
-    ...
-    0.05user 0.17system 0:00.34elapsed 63%CPU (0avgtext+0avgdata 0maxresident)k
-    0inputs+0outputs (0major+17741minor)pagefaults 0swaps
-
-    ; wc pacc.pacc 
-     129  460 2643 pacc.pacc
-    ; wc pacc2.c
-      6334  28437 193367 pacc2.c
-
-I can't think of anything much else to measure at the moment.
-
-So that brings us to the command line interface. Obviously enough,
-
-    pacc pacc.pacc
-
-should read pacc.pacc and write a parser to pacc.c. The "-o" option can
-specify a different output file.  Just at present, I can't see any
-reason for a separate .h file, since the interface is generally
-predictable: int parse(<type of start rule> *, const char *).
-
-2009-11-27
-----------
-
-OK, so I worked out why pacc2 and pacc3 were different! (A bug in
-pacc.pacc.)
-
-The interface has already changed, and I'm starting to think
-that we probably *do* want a "-d" ("--defines"!?) option that also
-writes a .h file. The current interface to the parse function is:
-
-    int parse(char *, off_t, <type of start rule> *)
-
-(The appearance of off_t is a bit of a nuisance, since it means that we
-depend on <sys/types.h>, but it *is* correct.)
-
-Anycase, the TODO list has moved to (you guessed it) TODO.
-
-2009-12-03
-----------
-
-OK, so I'm starting to get error handling working, and it's actually
-rather pretty! (The interface, not the implementation, yet.) When
-harness is a baf3 parser, we get:
-
-    ; ./harness '3+4*('
-    expected Additive at column 5
-
-However, I'm not entirely happy with this:
-
-    ; ./harness '3+4*(5'
-    expected Right at column 6
-
-I would prefer the error to read like this.
-
-    expected ")" at column 6
-
-And this error is actually generated initially (by the failing lit
-matcher), but then over-written when pacc discovers that the Right rule
-(which is just Right <- ")" Space) has made no progress at all. To do
-this, we'd either need a heuristic to identify when rules should
-over-write error information, or a way to annotate such rules in the
-grammar. (Or both!)
-
-Heuristics might include: capitalization of the rule name (but I really
-hate this); whether the rule contains any alternatives.
-
-Annotations look more flexible, but I don't know what syntax I'd like to
-use. Straw man: something like this?
-
-   D <- "0" { 0 } / "1" { 1 } / ... / "9" { 9 } ~ "decimal digit"
-
-Just at the moment, I can't see how Pappy handles errors at all, and I
-don't have the Rats! documentation to hand.
-
-Any case, at the moment, I'm not going to make any radical changes,
-except to clean up the code.
-
-OK, so now I'm thinking about getting rid of the -part.c bodge, and have
-decided that we really must have a template file (rather than emit.c
-sprouting a new rash of printf()s). So how would that work? Suppose we
-have pacc.tmpl, with some kinda marker at the points where we currently
-include pacc-part.c. Then a sed script could create template.c, which
-holds the three functions pre_decl(), pre_engine(), and post_engine().
-Let's do it!
-
-2009-12-04
-----------
-
-Template file done as described, and aren't I glad I did! The best part
-is that, because it's (almost) a real C file, vim's syntax highlighting
-works, unlike emit.c where all the emitted code is just pink. (Now that
-gives me an idea, what about a vim syntax definition that can understand
-embedded code... :-)
-
-Anycase, I'm just redoing the test harness so that it can make use of
-errors, and it occurs to me that we need to generate useful errors for
-failing predicates.
-
-2009-12-07
-----------
-
-I'm starting to implement hashing, and have been reading up on hash
-chains, open probing, double hashing, radix searching, patricia and so
-on. It occurs to me that in the current interface we always know the
-input length before we start parsing, and the number of rules. So
-assuming we can guess the "matrix density" fairly sensibly, we've got a
-pretty good idea exactly how many slots we will need. So it should be
-possible to avoid rehashing.
-
-(There might be an option to generate a parser which doesn't know its
-input size up front, in which case rehashing would be necessary. But
-let's worry about that another time.)
-
-Not many data points so far; basically pacc itself is the only serious
-grammar we have. At present, that allocates 143154 results, and used
-16426 of them, or 11.5%. Looking at that and a couple of the larger test
-cases suggests that 10% - 15% is about right for the matrix density. So
-that gives us a few options.
-
-1. Using hash chains, we can say that we will never need to rehash; the
-worst that can possibly happen is that the chains get a bit longer than
-we'd like. Suppose we have (rules * input length / 100) chains, then the
-average length of chains equals the percentage density; about 12 items
-per chain. We'd want around 1500 hash buckets for pacc.pacc. The only
-disadvantage is that we need a next pointer in every result.
-
-2. If we double hash, although we can size the table so that it *should*
-be big enough, we can't guarantee that. We save on the next pointer, but
-we will need to be prepared to rehash if the table gets more than about
-70% full. Hmm...  and the initial estimate will be big. We'd maybe go
-for (rules * input length * 0.17), so for pacc.pacc we'd allocate about
-24000 slots. The wastage there kinda dwarfs a few next pointers, but on
-the other hand we never have to allocate any memory.
-
-In either case, we have the interesting problem of picking a size for
-the hash table. Ideally, of course, it should be prime, which makes me
-think of testing for primality on the fly, or (better) starting with a
-lookup table of a few dozen primes.
-
-2009-12-10
-----------
-
-One of those utterly baffling bugs. In both pacc0.c and pacc.pacc, a
-bound call is constructed by "s_bind(n, u)". Turns out that s_bind() is
-declared, so this produces integer / pointer warnings, but works.
-Replace that call, in pacc.pacc, with "s_both(bind, n, u)", which
-appears to be completely equivalent, and the resultant pacc2 just
-doesn't work: it fails to parse even the simplest grammar.
-
-It's hard to see what's wrong, or even different, about this pacc2. I
-wonder if there is some shared structure somewhere? Or am I wrong about
-the two calls being equivalent? Next step: rewrite s_bind to use s_both.
-
-OK, so now I have s_bind() defined as "return s_both(bind, n, c)", and
-declared in syntax.h. Every works. "Inline" the call to s_both into
-pacc.pacc, and it falls over, in just the same way that it did before.
-What on earth is going on?
-
-I still have absolutely no idea what is going on, but I have narrowed
-the problem down to the following. The call to "s_both(bind, n, u)"
-brings 4 names into scope (s_both, bind, n, and u), whereas "s_bind(n,
-u)" only 3. Any time we have 4 names, even with something like
-"s_bind(n, u) /* x */" the resultant parser is broken in exactly the
-same way. First guess was that it was something to do with stack
-overflow in emit.c, but apparently not. (We do have a lot of stacks, but
-most of them now indicate when they overflow.)
-
-Another data point: adding *more* identifiers ("s_bind(n, u) /* x y z
-*/") also makes the problem go away, so it's not merely something
-overflowing, and in any case I believe that all stacks are now overflow
-protected. The mighty valgrind doesn't report any problems.
-
-I'm still baffled.
-
-OK. I believe that the problem is as follows. Something about the syntax
-tree we build for the Matcher rule causes us to emit code that is
-faulty, and somehow fails to recognise valid inputs. If this is so, then
-making the s_bind -> s_both change in pacc0.c should result in a pacc1
-that fails the same way pacc2 now does. Try it... No, because the
-salient property is the length of bind list; change *that* to include
-extra names... 
-
-No, this is not the case. When pacc0.c builds this tree:
-
-        expr 371: s_bind(n, u) /* x */ 
-          ident 370: s_bind 
-          ident 369: n 
-          ident 368: u 
-          ident 367: x 
-
-and pacc1 parses pacc.pacc to produce this tree:
-
-                  expr 326:  s_bind(n, u) /* x */  
-                    ident 325: s_bind 
-                    ident 324: n 
-                    ident 323: u 
-                    ident 322: x 
-
-This implies that the problem is a bizarre interaction between the
-nested alt nodes, and the bind count. Now, at some point nested alts
-should go away... shall we do this? But I'd also like to understand why
-they fail in this case (if, indeed, making them go away fixes the
-problem). Hah...
-
-OK, denesting alts makes the s_both() code work. What about renesting
-them, by removing the conditional case in s_alt()? Err, no, *that* also
-works fine. Hang about...
-
-Restoring the old nested alts code in pacc.pacc brings back the
-"expected Char at column 55". Brain fade. Good night.
-
-2009-12-11
-----------
-
-Interesting. So, I have made the same problem pop up somewhere else. Let
-me review this...
-
-Make s_alt do nothing clever, so alts are always nested. When the Rule
-result reads "s_kid(alt, cons(s,r))", with 5 names in the code, we have
-the problem. Change the result to "s_alt(s, r)", with just 3 names, and
-it all works. Add in "/* x y */" and it fails. With 4 names or 6 names
-in scope, it all works; with 5 it fails.
-
-Now, the Rule rule is *much* simpler than the Matcher rule. In fact, it
-doesn't *have* nested alts. Hmm... "s_alt(s, r) /* x y */" fails when
-s_alt creates nested alts. When s_alt denests alts, it succeeds. (Here,
-"it" means "make check", that is, pacc2 can parse its own grammar and
-build the phase 3 compiler.)
-
-Proposal: I can make this problem go away by denesting alts, which is
-the Right Thing anyway (although it probably ought to live in the
-optimization pass, rather than initial tree building). *All* the code in
-emit.c needs a severe reviewing, and I may just happen to solve the
-problem anyway. And I've got a few new tests up my sleeve to try and
-elicit bogus binding behaviour. Let's try those...
-
-2009-12-13
-----------
-
-Messing about with matrix names, and it occurs to me that I ought to
-make explicit my goal: a pacc parser should be re-entrant. More
-specifically, an application should be able to include several parsers
-(one parser understands one grammar), and several instances of a parser.
-Furthermore, although most applications will include only a single
-parser, which will come from a single C source file (well, a .[ch]
-pair), for applications that do include more than one parser, as much
-code as possible that's shared between parsers should occur only once
-(in a separate .[ch] pair). This means that template.sh will have to get
-a lot more complicated!
-
-Anyway, that's the goal. Now back to your regular schedule...
-
-Of course, _pacc_result() is all very well, but shouldn't this code be
-inlined some day?
-
-Now, I'm pretty close to doing hashing; It Would Be Nice to have some
-non-trivial examples other than pacc.pacc. Should we get baf's Java
-parser, and make it work? On 'tother hand, there's plenty else to do,
-and, y'know, there's going to be enormous memory savings just on
-pacc.pacc. Do I really need to glory in just how wondrous they will be
-on other examples? The current implementation can hardly be considered
-serious when...
-
-; wc pacc.pacc
- 129  465 2655 pacc.pacc
-; valgrind ./pacc2 pacc.pacc -o pacc3.c
-...
-==7661== malloc/free: in use at exit: 72,312,011 bytes in 4,488 blocks.
-==7661== malloc/free: 4,496 allocs, 8 frees, 72,312,063 bytes allocated.
-
-
-That's 27236 bytes of memory for every byte in the input file! I think
-we can do better than that...
-
-By the way, here's a valgrind command to take account of the way we're
-using stdin:
-
-valgrind '--db-command=gdb -nw %f %p < /dev/tty' '--db-attach=yes' '--input-fd=7' ./pacc1 pacc.pacc -o pacc2.c <[7] /dev/tty
-
-2009-12-14
-----------
-
-OK, so some hashing is in place, and it doesn't work! At least one
-problem is that we have been in the habit of pushing "cur" addresses:
-this is what pushm() and pushm2() do. But the way the hash buckets work,
-struct intermed pointers are likely to be realloc()ed under our feet! So
-we will instead have to push col/rule pairs, and call _pacc_result()
-again when we pop them. Hmm... is this what we really want? Well, yes.
-Unless we go for linked list hash buckets, this is inevitable. And I'm
-not going to start implementing anything that mangles pointers on a
-stack... had enough of that with es!
-
-OK, so in emit.c, cur_rule always holds the current rule: we *don't*
-need to push that, just col will do fine. I think.
-
-2009-12-16
-----------
-
-All's broken, and I started trying to get the emit tests back to fix it.
-But although that might be a useful thing to do anyway, it's not
-strictly necessary. What I can do is roll back to a version that worked
-with the full matrix, make the emit.c changes I have to recalculate cur
-and debug those, then reinstate hashing. Here goes...
-
-OK, well there's a serious snag in the theory: pacc0 can't build
-anything other than pacc1, and if the emit code is broken, that pacc1
-doesn't work! So we really do need to get the emit tests back. But I've
-managed to sort out at least part of the puzzle anyway. Even better, it
-actually saves an entire push()!
-
-And that now works in the mainline. Hmph: the pushm2() code does
-actually work as is, because we never allocate new matrix entries while
-evaluating. So we could leave it for now.
