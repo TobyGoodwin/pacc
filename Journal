@@ -1,3 +1,22 @@
+2009-12-24
+----------
+
+I've started to implement the "partialization hack". On reflection, I
+think I'm going to refer to this as "feeding", so for example we might
+say "pacc --feed-rule __ --feeder catline ...", where "--feeder"
+specifies the function that will be called to get another line of input
+from the user. But I need to be sure what the interface to all this will
+look like: bearing in mind that there are two different parsers
+involved. I kinda think that pacc should provide the code to tie them
+together, but might be a little way off. Be nice to make it work,
+though, because I could then start playing with the es grammar as
+another client for pacc.
+
+On the same lines, I could quickly whip up an approximate XML parser in
+pacc. Of course, baf suggests that XML is the sort of thing that pacc
+isn't particularly good at (not much syntax, lots of data), but for
+precisely those reasons it would make for some interesting test cases.
+
 2009-12-21
 ----------
 

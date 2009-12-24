@@ -14,9 +14,6 @@ int main(int argc, char **argv) {
 
     arg(argc, argv);
 
-fprintf(stderr, "partial is %s\n", arg_partial());
-return 0;
-
     in = load(arg_input(), &size);
 
     if (parse(in, size, &p)) {
