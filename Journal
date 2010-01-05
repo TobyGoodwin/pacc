@@ -1,3 +1,57 @@
+2010-01-05
+----------
+
+Happy New Year, pacc! 
+
+Picking up on the last comment, surely the whole point of the --feeder
+function is that pacc *does* tie everything together into a single
+parser.
+
+Here's a one-liner to output some places to start searching for primes
+(unfortunately I don't have primegen handy here, so I'll continue this
+one at the shop).
+
+perl -le '$x=0;while(($e=int(exp($x/1)))<2**32){print $e," ",100+$e;++$x}'
+
+This only produces 23 numbers, which I don't think is quite enough.
+Change the "1" to "1.8", say, for more numbers.
+
+Anyway, back to the more efficient encoding of thunk/rules. The current
+struct thunkrule contains a discriminator, an int (which is either a
+thunk number or a rule number), and a column (which is only meaningful
+if the item is a rule call). Obviously we can push rules and columns
+separately, but columns are really of type off_t, not int. I do think
+it's desparately important to use 64 bit offsets, otherwise we can't
+parse any input larger than 4G. (On the other hand, we can't currently
+parse anything that won't fit into memory, so that limits us to 4G on a
+32 bit machine already. But maybe one day we have to lift that
+restriction.)
+
+Whilst poking around in /usr/include/bits/types.h, I notice that "in all
+the GCC configurations we [glibc] support: long long is always 64 bits,
+long is always word/address size, and int is always 32 bits." This makes
+me think that many of the current uses of int should be long.
+
+Anyway, how to deal with two potentially different sizes of thunk/rule?
+We could union them up, I suppose, although the idea of using the bottom
+2 bits to discriminate types of different sizes ain't gonna work. OK,
+here's the most compact representation I can think of: there is a long
+on the stack; if the bottom 2 bits indicate that it is a call, the next
+thing on the stack is a column, of type off_t. But we can't express that
+in portable C. If we union up the two types, the union type is as large
+as the larger of its members.
+
+OK, so it's a bit strong to say "can't express in portable C". At the
+bottom level, we *could* have an unsigned char array, and manipulate it
+directly with much use of sizeof etc. But then we have to worry about
+alignment issues instead. So scrap that.
+
+Here's yet another thought. The struct thrs array is used as a FIFO: we
+always push new values onto one end and always read linearly from the
+front. So we could simply have two arrays, one of longs and one of
+off_ts. Read first element of the long array: if it's a call, read the
+first element of the off_t array. Yes, that should do it.
+
 2009-12-24
 ----------
 
@@ -8,9 +62,9 @@ specifies the function that will be called to get another line of input
 from the user. But I need to be sure what the interface to all this will
 look like: bearing in mind that there are two different parsers
 involved. I kinda think that pacc should provide the code to tie them
-together, but might be a little way off. Be nice to make it work,
-though, because I could then start playing with the es grammar as
-another client for pacc.
+together, but implementing this might be a little way off. Be nice to
+make it work, though, because I could then start playing with the es
+grammar as another client for pacc.
 
 On the same lines, I could quickly whip up an approximate XML parser in
 pacc. Of course, baf suggests that XML is the sort of thing that pacc
@@ -42,8 +96,8 @@ thunks must be stored to evaluate it. (Obviously in this case we could
 simply left factor the rule into S <- A (B / C), but in general this
 doesn't solve the problem.)
 
-And it's not obvious that we easily manage the memory better than with a
-dynamic array per struct intermed. Hmm...
+And it's not obvious that we can easily manage the memory any better
+than we currently do, with a dynamic array per struct intermed. Hmm...
 
 One way that we could make the thunk list smaller is to use distinct
 numbers for thunks and rules. In particular, if we start numbering
