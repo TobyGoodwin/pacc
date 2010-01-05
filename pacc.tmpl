@@ -105,7 +105,7 @@ static void pusheval(int t, int col, enum thr type) {
 	fprintf(stderr, "thr_stack overflow\n");
 	exit(1);
     }
-    fprintf(stderr, "pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
+    Trace fprintf(stderr, "pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
     cur->thrs[cur->thrs_ptr].discrim = type;
     cur->thrs[cur->thrs_ptr].x = t;
     cur->thrs[cur->thrs_ptr].col = col;

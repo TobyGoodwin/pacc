@@ -340,19 +340,22 @@ static void bindings(struct s_node *n) {
 
 static void emit_expr(struct s_node *n) {
     printf("Trace fprintf(stderr, \"%d: emit_expr()\\n\");\n", n->id);
-    /* uh, no, we need to push a col for each variable, like decls() and
-     * bindings() do */
+    /* When we encounter an expression whilst parsing, simply record the
+     * fact on the eval list. We record the expression's id (which will
+     * become the new state when we evaluate) the start column of this
+     * rule (so we can find its intermediate result) and the current
+     * column for this expression (which is used by match() and
+     * rmatch()). */
     printf("pusheval(%d, rule_col, thr_thunk);\n", n->id);
     printf("pusheval(0, col, thr_col);\n");
-    //printf("pusheval(col, thr_col);\n");
-    //promises(n);
+
+    /* When evaluating, we need to evaluate the expression! */
     printf("case %d:\n", n->id);
     printf("if (evaluating) {\n");
     printf("    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
     printf("    Trace fprintf(stderr, \"%d: evaluating\\n\");\n", n->id);
     printf("    _pacc_p = cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
-    printf("    evaluating = 1;\n");
     bindings(n);
     printf("    cur = _pacc_p;\n");
     printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
