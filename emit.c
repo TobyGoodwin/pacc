@@ -193,15 +193,18 @@ static void rule_post(struct s_node *n) {
 static void savecol(void) {
     printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
     printf("pushcont(col); pushcont(col_ptr); pushcont(cur->thrs_ptr);\n");
+    printf("pushcont(cur->cores_valid); pushcont(cur->cols_valid);\n");
 }
 
 static void restcol(void) {
     printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
+    printf("cur->cols_valid = popcont(); cur->cores_valid = popcont();\n");
     printf("cur->thrs_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
 }
 
 static void accept_col(void) {
     printf("Trace fprintf(stderr, \"accept column registers\\n\");\n");
+    printf("popcont(); popcont();\n");
     printf("popcont(); popcont(); popcont();\n");
 }
 
@@ -319,11 +322,17 @@ static void bindings(struct s_node *n) {
 	if (i == n_ptr) continue;
 	printf("pushcont(_pacc_i);\n");
 	printf("_pacc_i = %d + 1;\n", i);
-	printf("for (pos = 0; pos < _pacc_p->thrs_ptr; ++pos) {\n");
-	printf("    if (_pacc_p->thrs[pos].discrim == thr_bound) --_pacc_i;\n");
+	printf("pushcont(_pacc_cols_p); _pacc_cols_p = 0;\n");
+	printf("for (pos = 0; pos < _pacc_p->cores_valid; ++pos) {\n");
+	printf("    enum thr discrim = thr_thunk + (_pacc_p->cores[pos] & 3);\n");
+	printf("    if (discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
+	printf("    if (discrim == thr_thunk) ++_pacc_cols_p;\n");
+	printf("    ++_pacc_cols_p;\n");
 	printf("}\n");
-	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%d\\n\", pos, _pacc_p->thrs[pos].col);\n", p->text);
+	printf("pos = _pacc_cols_p;\n");
+	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%d\\n\", pos, _pacc_p->cols[pos]);\n", p->text);
+	printf("_pacc_cols_p = popcont();\n");
 	printf("_pacc_i = popcont();\n");
 
 	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->thrs[pos].col);\n", p->text, s_stack[i]->id);

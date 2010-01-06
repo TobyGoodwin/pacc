@@ -143,15 +143,12 @@ static void pusheval(int t, int col, enum thr type) {
     cur->thrs[cur->thrs_ptr].col = col;
     ++cur->thrs_ptr;
     /* XXX new style */
-    if (type == thr_col) {
-	_pacc_save_col(col);
-    } else {
+    if (type != thr_col) {
 	/* XXX first, need to somewhere check that the shift is valid,
 	 * secondly, need to tidy up the enum. */
 	_pacc_save_core(t << 2 | (type - thr_thunk));
-	//if (type == thr_bound || type == thr_rule)
-	_pacc_save_col(col);
     }
+    _pacc_save_col(col);
 }
 
 static int input_length;

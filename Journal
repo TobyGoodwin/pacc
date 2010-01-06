@@ -1,3 +1,16 @@
+2010-01-06
+----------
+
+So the new-style encoding of the call/eval list is working, in that the
+evaluator is running off the new-style lists. Currently something else
+(bindings, I think) still requires the old-style.
+
+Eugh. The bindings stuff is pretty grody, since we've broken the link
+between cols and cores. Let me see... we find the position on the stack
+of the column by counting how many bindings there are. OK, OK... it
+should work now, but removing the old-style pushing breaks it. I wonder
+why?
+
 2010-01-05
 ----------
 
