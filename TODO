@@ -9,11 +9,12 @@ Error handling
 
 Complete the command-line interface
 
-    Need --help for one. And --defines, although I'm inclined to think
-    that that should be the default. And something to switch on the
-    partialization hack, and something to say what the rule that matches
-    end-of-line is.
-
+    Need --help for one. And --defines (write a .h file), although I'm
+    inclined to think that that should be the default. And for the
+    partialization hack: --feeder to specify the function that extends a
+    line (if that's the interface we want); --feed-rule to specify what
+    the rule that matches end-of-line is called; if we have defaults for
+    both of these, --feed to turn on feeding.
 
 Detect (and handle?) left recursion
 
@@ -22,6 +23,16 @@ Detect (and handle?) left recursion
     checking that every rule is reached; checking that non-void rules
     always return a value (and that void rules never do).
 
+Optimize
+
+    First for space - this is ongoing with hashing, and eval list stuff.
+    Then (and we will need some more test cases) for time.
+
+Revisit match() versus bra/ket versus auto-typing
+
+    This can be independent of the eval stack stuff, 'cos we need two
+    lists (for long call_or_expr and off_t column) anyway.
+
 Parser optimization / manipulation (including partialization hack)
 
 Value inheritance
@@ -29,9 +40,14 @@ Value inheritance
     In your rule "SeqRule ← s:Sequence → s / u:UnaryRule → u" would not
     "SeqRule ← Sequence / UnaryRule" do as well, if not better?
 
-Replace the intermediate results matrix with hashing
+Complete the hashing regime
 
-Reinstate emit tests: they can still be useful (see Internals)
+    We need to select a suitable size for the hash table. I'd like
+    instrumentation too.
+
+Make the test scaffold better
+
+    It's still several button presses to run both sets of tests.
 
 Many many cleanups (XXX)
 

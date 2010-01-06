@@ -90,15 +90,46 @@ off_t _pacc_err_col;
 #define THR_STACK_BODGE 40
 
 struct intermed {
+    /* Where in the matrix are we? */
+    long rule; off_t col;
     enum status status;
     union yy_union value; /* semantic value XXX needs to use g_name */
-    int remainder; /* unparsed string */
+    off_t remainder; /* unparsed string */
+    /* XXX old style */
     struct thunkrule thrs[THR_STACK_BODGE]; /* XXX */
     int thrs_ptr;
-    int rule, col; /* XXX: redundant, but handy for debugging */
+    /* XXX new style */
+    /* A dynamic array of "call or eval"s. */
+    long *cores;
+    size_t cores_alloc;
+    size_t cores_valid;
+    /* A dynamic array of columns. */
+    off_t *cols;
+    size_t cols_alloc;
+    size_t cols_valid;
 };
 
 static struct intermed *cur;
+
+static void _pacc_save_col(off_t c) {
+    if (cur->cols_valid == cur->cols_alloc) {
+	cur->cols_alloc = cur->cols_alloc * 2 + 1;
+	cur->cols = realloc(cur->cols, cur->cols_alloc * sizeof(c));
+	if (!cur->cols) nomem();
+    }
+    cur->cols[cur->cols_valid] = c;
+    ++cur->cols_valid;
+}
+
+static void _pacc_save_core(long c) {
+    if (cur->cores_valid == cur->cores_alloc) {
+	cur->cores_alloc = cur->cores_alloc * 2 + 1;
+	cur->cores = realloc(cur->cores, cur->cores_alloc * sizeof(c));
+	if (!cur->cores) nomem();
+    }
+    cur->cores[cur->cores_valid] = c;
+    ++cur->cores_valid;
+}
 
 static void pusheval(int t, int col, enum thr type) {
     if (cur->thrs_ptr == THR_STACK_BODGE) {
@@ -106,10 +137,21 @@ static void pusheval(int t, int col, enum thr type) {
 	exit(1);
     }
     Trace fprintf(stderr, "pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
+    /* XXX old style */
     cur->thrs[cur->thrs_ptr].discrim = type;
     cur->thrs[cur->thrs_ptr].x = t;
     cur->thrs[cur->thrs_ptr].col = col;
     ++cur->thrs_ptr;
+    /* XXX new style */
+    if (type == thr_col) {
+	_pacc_save_col(col);
+    } else {
+	/* XXX first, need to somewhere check that the shift is valid,
+	 * secondly, need to tidy up the enum. */
+	_pacc_save_core(t << 2 | (type - thr_thunk));
+	//if (type == thr_bound || type == thr_rule)
+	_pacc_save_col(col);
+    }
 }
 
 static int input_length;
@@ -166,9 +208,16 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) 
 	p->m_valid[h * 2 + 1] = p->m_chain_max;
     }
     r = bkt + i;
+    /* Initialize the new element. */
     r->status = uncomputed;
-    r->thrs_ptr = 0;
     r->col = col; r->rule = rule;
+    /* XXX old style */
+    r->thrs_ptr = 0;
+    /* XXX new style */
+    r->cores = 0;
+    r->cores_alloc = r->cores_valid = 0;
+    r->cols = 0;
+    r->cols_alloc = r->cols_valid = 0;
     ++(p->m_valid[h * 2]);
     return r;
 }
@@ -193,6 +242,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     cont = -1;
     evaluating = 0;
     int pos;
+    size_t _pacc_cols_p;
 
 #EMIT_ENGINE
 
@@ -201,8 +251,34 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	evaluating = 1;
 	_pacc_i = 0;
+	_pacc_cols_p = 0;
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_i == %d\n", _pacc_i);
+	if (_pacc_i < cur->cores_valid) {
+	    enum thr discrim = thr_thunk + (cur->cores[_pacc_i] & 3);
+	    if (discrim == thr_rule || discrim == thr_bound) {
+		int col, rule;
+		rule = cur->cores[_pacc_i] >> 2;
+		assert(_pacc_cols_p < cur->cols_valid);
+		col = cur->cols[_pacc_cols_p];
+		++_pacc_i; ++_pacc_cols_p;
+		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
+		pushm(cur); pushcont(_pacc_i);
+		pushcont(_pacc_cols_p); /* XXX type? */
+		cur = _pacc_result(_pacc, col, rule);
+		_pacc_i = _pacc_cols_p = 0;
+		goto eval_loop;
+	    } else {
+		st = cur->cores[_pacc_i] >> 2; ++_pacc_i;
+		assert(_pacc_cols_p < cur->cols_valid);
+		col = cur->cols[_pacc_cols_p]; ++_pacc_cols_p;
+		assert(_pacc_cols_p < cur->cols_valid);
+		col_expr = cur->cols[_pacc_cols_p]; ++_pacc_cols_p;
+		goto top;
+	    }
+	    goto eval_loop;
+	}
+#if 0
 	if (_pacc_i < cur->thrs_ptr) {
 	    if (cur->thrs[_pacc_i].discrim == thr_rule ||
 		    cur->thrs[_pacc_i].discrim == thr_bound) {
@@ -227,9 +303,10 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    }
 	    goto eval_loop;
 	}
+#endif
 	cur->status = evaluated;
 	if (m_ptr) {
-	    _pacc_i = popcont(); cur = popm();
+	    _pacc_cols_p = popcont(); _pacc_i = popcont(); cur = popm();
 	    goto eval_loop;
 	}
 	Trace fprintf(stderr, "eval finished\n");

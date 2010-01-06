@@ -330,7 +330,7 @@ static void bindings(struct s_node *n) {
 	printf("    cur = _pacc_result(_pacc, _pacc_p->thrs[pos].col, %d);\n", s_stack[i]->id);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
-	printf("	_pacc_i = 0; goto eval_loop;\n");
+	printf("	_pacc_i = _pacc_cols_p = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u%d;\n", p->text, s_stack[i]->id);
