@@ -121,16 +121,20 @@ static void _pacc_save_col(off_t c) {
     ++cur->cols_valid;
 }
 
-static void _pacc_save_core(long c) {
+static void _pacc_save_core(long c, int type, int cols) {
     if (cur->cores_valid == cur->cores_alloc) {
 	cur->cores_alloc = cur->cores_alloc * 2 + 1;
 	cur->cores = realloc(cur->cores, cur->cores_alloc * sizeof(c));
 	if (!cur->cores) nomem();
     }
-    cur->cores[cur->cores_valid] = c;
+    /* XXX are these really assertions? */
+    assert(c << 4 > c);
+    assert(cols < 4); assert(type - thr_thunk < 4);
+    cur->cores[cur->cores_valid] = c << 4 | (type - thr_thunk) << 2 | cols;
     ++cur->cores_valid;
 }
 
+#if 0
 static void pusheval(int t, int col, enum thr type) {
     if (cur->thrs_ptr == THR_STACK_BODGE) {
 	fprintf(stderr, "thr_stack overflow\n");
@@ -150,6 +154,7 @@ static void pusheval(int t, int col, enum thr type) {
     }
     _pacc_save_col(col);
 }
+#endif
 
 static int input_length;
 
@@ -252,10 +257,10 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_i == %d\n", _pacc_i);
 	if (_pacc_i < cur->cores_valid) {
-	    enum thr discrim = thr_thunk + (cur->cores[_pacc_i] & 3);
+	    enum thr discrim = thr_thunk + (cur->cores[_pacc_i] >> 2 & 3);
 	    if (discrim == thr_rule || discrim == thr_bound) {
 		int col, rule;
-		rule = cur->cores[_pacc_i] >> 2;
+		rule = cur->cores[_pacc_i] >> 4;
 		assert(_pacc_cols_p < cur->cols_valid);
 		col = cur->cols[_pacc_cols_p];
 		++_pacc_i; ++_pacc_cols_p;
@@ -266,11 +271,16 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 		_pacc_i = _pacc_cols_p = 0;
 		goto eval_loop;
 	    } else {
-		st = cur->cores[_pacc_i] >> 2; ++_pacc_i;
+		st = cur->cores[_pacc_i] >> 4;
 		assert(_pacc_cols_p < cur->cols_valid);
 		col = cur->cols[_pacc_cols_p]; ++_pacc_cols_p;
-		assert(_pacc_cols_p < cur->cols_valid);
-		col_expr = cur->cols[_pacc_cols_p]; ++_pacc_cols_p;
+		/* XXX currently, we only permit one additional column,
+		 * which always goes into col_expr. */
+		if (cur->cores[_pacc_i] & 3) {
+		    assert(_pacc_cols_p < cur->cols_valid);
+		    col_expr = cur->cols[_pacc_cols_p]; ++_pacc_cols_p;
+		}
+		++_pacc_i;
 		goto top;
 	    }
 	    goto eval_loop;

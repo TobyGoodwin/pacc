@@ -1,3 +1,15 @@
+2010-01-07
+----------
+
+Looking at, thinking about it some more. We need: the cores list, using
+2 bits for discrimination and 2 bits to indicate how many additional
+columns are pushed. (We will define macros to access the parts.) So
+we're down to 28 bits for ids, but that still allows 268m nodes in a
+tree!
+
+OK, got that going. (I haven't actually defined macros to access the
+parts; perhaps we don't need to.) Next let's remove the thrs stuff.
+
 2010-01-06
 ----------
 

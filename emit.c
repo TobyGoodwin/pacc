@@ -192,20 +192,20 @@ static void rule_post(struct s_node *n) {
 
 static void savecol(void) {
     printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
-    printf("pushcont(col); pushcont(col_ptr); pushcont(cur->thrs_ptr);\n");
+    printf("pushcont(col); pushcont(col_ptr);\n");
     printf("pushcont(cur->cores_valid); pushcont(cur->cols_valid);\n");
 }
 
 static void restcol(void) {
     printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
     printf("cur->cols_valid = popcont(); cur->cores_valid = popcont();\n");
-    printf("cur->thrs_ptr = popcont(); col_ptr = popcont(); col = popcont();\n");
+    printf("col_ptr = popcont(); col = popcont();\n");
 }
 
 static void accept_col(void) {
     printf("Trace fprintf(stderr, \"accept column registers\\n\");\n");
     printf("popcont(); popcont();\n");
-    printf("popcont(); popcont(); popcont();\n");
+    printf("popcont(); popcont();\n");
 }
 
 static void seq_pre(struct s_node *n) {
@@ -324,26 +324,25 @@ static void bindings(struct s_node *n) {
 	printf("_pacc_i = %d + 1;\n", i);
 	printf("pushcont(_pacc_cols_p); _pacc_cols_p = 0;\n");
 	printf("for (pos = 0; pos < _pacc_p->cores_valid; ++pos) {\n");
-	printf("    enum thr discrim = thr_thunk + (_pacc_p->cores[pos] & 3);\n");
+	printf("    enum thr discrim = thr_thunk + (_pacc_p->cores[pos] >> 2 & 3);\n");
 	printf("    if (discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
-	printf("    if (discrim == thr_thunk) ++_pacc_cols_p;\n");
-	printf("    ++_pacc_cols_p;\n");
+	printf("    _pacc_cols_p += 1 + (_pacc_p->cores[pos] & 3);\n");
 	printf("}\n");
 	printf("pos = _pacc_cols_p;\n");
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%d\\n\", pos, _pacc_p->cols[pos]);\n", p->text);
 	printf("_pacc_cols_p = popcont();\n");
 	printf("_pacc_i = popcont();\n");
 
-	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->thrs[pos].col);\n", p->text, s_stack[i]->id);
-	printf("    cur = _pacc_result(_pacc, _pacc_p->thrs[pos].col, %d);\n", s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->cols[pos]);\n", p->text, s_stack[i]->id);
+	printf("    cur = _pacc_result(_pacc, _pacc_p->cols[pos], %d);\n", s_stack[i]->id);
 	printf("    if (cur->status != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
 	printf("	_pacc_i = _pacc_cols_p = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u%d;\n", p->text, s_stack[i]->id);
-	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%d ==> \" TYPE_PRINTF \"\\n\", _pacc_p->thrs[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%d ==> \" TYPE_PRINTF \"\\n\", _pacc_p->cols[pos], cur->value.u0);\n", p->text, s_stack[i]->id);
     }
 }
 
@@ -355,8 +354,12 @@ static void emit_expr(struct s_node *n) {
      * rule (so we can find its intermediate result) and the current
      * column for this expression (which is used by match() and
      * rmatch()). */
-    printf("pusheval(%d, rule_col, thr_thunk);\n", n->id);
-    printf("pusheval(0, col, thr_col);\n");
+    /* XXX old style */
+    //printf("pusheval(%d, rule_col, thr_thunk);\n", n->id);
+    //printf("pusheval(0, col, thr_col);\n");
+    /* XXX new style */
+    printf("_pacc_save_core(%d, thr_thunk, 1);\n", n->id);
+    printf("_pacc_save_col(rule_col); _pacc_save_col(col);\n");
 
     /* When evaluating, we need to evaluate the expression! */
     printf("case %d:\n", n->id);
@@ -391,8 +394,12 @@ static void guard_post(struct s_node *n) {
 }
 
 static void emit_call(struct s_node *n) {
-    printf("pusheval(%d, col, thr_%s);\n", n->first->id,
-	    binding ? "bound" : "rule");
+    /* XXX old style */
+    //printf("pusheval(%d, col, thr_%s);\n", n->first->id,
+	    //binding ? "bound" : "rule");
+    /* XXX new style */
+    printf("_pacc_save_core(%d, thr_%s, 0);\n", n->first->id, binding ? "bound" : "rule");
+    printf("_pacc_save_col(col);\n");
     //if (binding)
 //	printf("pusheval(%d, thr_bound);\n", lookup_rule[n->first->id]);
  //   else
