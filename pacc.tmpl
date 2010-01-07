@@ -19,11 +19,12 @@ static void pushcont(int c) {
 	fprintf(stderr, "st_stack overflow\n");
 	exit(1);
     }
-    Trace fprintf(stderr, "push(%d) -> stack[%d]\n", c, st_ptr);
+    assert(st_ptr >= 0);
+    Trace fprintf(stderr, "pushcont(%d) -> stack[%d]\n", c, st_ptr);
     st_stack[st_ptr++] = c;
 }
 static int popcont(void) {
-    Trace fprintf(stderr, "pop() stack[%d] -> %d\n", st_ptr - 1, st_stack[st_ptr - 1]);
+    Trace fprintf(stderr, "popcont() stack[%d] -> %d\n", st_ptr - 1, st_stack[st_ptr - 1]);
     return st_stack[--st_ptr];
 }
 
@@ -93,6 +94,13 @@ struct intermed {
     //enum status status;
     union yy_union value; /* semantic value XXX needs to use g_name */
     off_t remainder; /* unparsed string */
+    union {
+	off_t col;
+	long core;
+    } *evlis;
+    size_t ev_alloc;
+    size_t ev_valid;
+#if 0
     /* A dynamic array of "call or eval"s. */
     long *cores;
     size_t cores_alloc;
@@ -101,10 +109,36 @@ struct intermed {
     off_t *cols;
     size_t cols_alloc;
     size_t cols_valid;
+#endif
 };
 
 static struct intermed *cur;
 
+static void _pacc_save_col(off_t c) {
+    if (cur->ev_valid == cur->ev_alloc) {
+	cur->ev_alloc = cur->ev_alloc * 2 + 1;
+	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
+	if (!cur->evlis) nomem();
+    }
+    cur->evlis[cur->ev_valid].col = c;
+    ++cur->ev_valid;
+}
+
+static void _pacc_save_core(long c, int type, int cols) {
+    if (cur->ev_valid == cur->ev_alloc) {
+	cur->ev_alloc = cur->ev_alloc * 2 + 1;
+	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
+	if (!cur->evlis) nomem();
+    }
+    /* XXX are these really assertions? In principle, an enormous input
+     * could blow them away. */
+    assert(c << 4 > c);
+    assert(cols < 4); assert(type - thr_thunk < 4);
+    cur->evlis[cur->ev_valid].core = c << 4 | (type - thr_thunk) << 2 | cols;
+    ++cur->ev_valid;
+}
+
+#if 0
 static void _pacc_save_col(off_t c) {
     if (cur->cols_valid == cur->cols_alloc) {
 	cur->cols_alloc = cur->cols_alloc * 2 + 1;
@@ -127,6 +161,7 @@ static void _pacc_save_core(long c, int type, int cols) {
     cur->cores[cur->cores_valid] = c << 4 | (type - thr_thunk) << 2 | cols;
     ++cur->cores_valid;
 }
+#endif
 
 static int input_length;
 
@@ -184,10 +219,8 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rul
     r = bkt + i;
     /* Initialize the new element. */
     r->col = col; r->rule = rule << 4 | uncomputed;
-    r->cores = 0;
-    r->cores_alloc = r->cores_valid = 0;
-    r->cols = 0;
-    r->cols_alloc = r->cols_valid = 0;
+    r->evlis = 0;
+    r->ev_alloc = r->ev_valid = 0;
     ++(p->m_valid[h * 2]);
     return r;
 }
@@ -211,7 +244,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     col = 0;
     cont = -1;
     evaluating = 0;
-    size_t pos, _pacc_cores_i, _pacc_cols_i;
+    size_t pos, _pacc_ev_i;
 
 #EMIT_ENGINE
 
@@ -219,41 +252,41 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     if (parsed && !evaluating && (cur->rule & 3) == parsed) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	evaluating = 1;
-	_pacc_cores_i = _pacc_cols_i = 0;
+	_pacc_ev_i = 0;
     eval_loop:
-	Trace fprintf(stderr, "eval loop with _pacc_i == %d\n", _pacc_i);
-	if (_pacc_cores_i < cur->cores_valid) {
-	    enum thr discrim = thr_thunk + (cur->cores[_pacc_cores_i] >> 2 & 3);
+	Trace fprintf(stderr, "eval loop with _pacc_ev_i == %d\n", _pacc_ev_i);
+	if (_pacc_ev_i < cur->ev_valid) {
+	    enum thr discrim = thr_thunk + (cur->evlis[_pacc_ev_i].core >> 2 & 3);
 	    if (discrim == thr_rule || discrim == thr_bound) {
 		int col, rule;
-		rule = cur->cores[_pacc_cores_i] >> 4;
-		assert(_pacc_cols_i < cur->cols_valid);
-		col = cur->cols[_pacc_cols_i];
-		++_pacc_cores_i; ++_pacc_cols_i;
+		rule = cur->evlis[_pacc_ev_i].core >> 4;
+		++_pacc_ev_i;
+		assert(_pacc_ev_i < cur->ev_valid);
+		col = cur->evlis[_pacc_ev_i].col;
+		++_pacc_ev_i;
 		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-		pushm(cur); pushcont(_pacc_cores_i);
-		pushcont(_pacc_cols_i); /* XXX type? */
+		pushm(cur); pushcont(_pacc_ev_i);
 		cur = _pacc_result(_pacc, col, rule);
-		_pacc_cores_i = _pacc_cols_i = 0;
+		_pacc_ev_i = 0;
 		goto eval_loop;
 	    } else {
-		st = cur->cores[_pacc_cores_i] >> 4;
-		assert(_pacc_cols_i < cur->cols_valid);
-		col = cur->cols[_pacc_cols_i]; ++_pacc_cols_i;
+		st = cur->evlis[_pacc_ev_i].core >> 4;
+		++_pacc_ev_i;
+		assert(_pacc_ev_i < cur->ev_valid);
+		col = cur->evlis[_pacc_ev_i].col; ++_pacc_ev_i;
 		/* XXX currently, we only permit one additional column,
 		 * which always goes into col_expr. */
-		if (cur->cores[_pacc_cores_i] & 3) {
-		    assert(_pacc_cols_i < cur->cols_valid);
-		    col_expr = cur->cols[_pacc_cols_i]; ++_pacc_cols_i;
+		if (cur->evlis[_pacc_ev_i - 2].core & 3) {
+		    assert(_pacc_ev_i < cur->ev_valid);
+		    col_expr = cur->evlis[_pacc_ev_i].col; ++_pacc_ev_i;
 		}
-		++_pacc_cores_i;
 		goto top;
 	    }
 	    goto eval_loop;
 	}
 	cur->rule = (cur->rule & ~3) | evaluated;
 	if (m_ptr) {
-	    _pacc_cols_i = popcont(); _pacc_cores_i = popcont(); cur = popm();
+	    _pacc_ev_i = popcont(); cur = popm();
 	    goto eval_loop;
 	}
 	Trace fprintf(stderr, "eval finished\n");

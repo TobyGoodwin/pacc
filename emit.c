@@ -193,18 +193,18 @@ static void rule_post(struct s_node *n) {
 static void savecol(void) {
     printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
     printf("pushcont(col); pushcont(col_ptr);\n");
-    printf("pushcont(cur->cores_valid); pushcont(cur->cols_valid);\n");
+    printf("pushcont(cur->ev_valid);\n");
 }
 
 static void restcol(void) {
     printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
-    printf("cur->cols_valid = popcont(); cur->cores_valid = popcont();\n");
+    printf("cur->ev_valid = popcont();\n");
     printf("col_ptr = popcont(); col = popcont();\n");
 }
 
 static void accept_col(void) {
     printf("Trace fprintf(stderr, \"accept column registers\\n\");\n");
-    printf("popcont(); popcont();\n");
+    printf("popcont();\n");
     printf("popcont(); popcont();\n");
 }
 
@@ -320,29 +320,30 @@ static void bindings(struct s_node *n) {
 	for (i = 0; i < n_ptr; ++i)
 	    if (strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-	printf("pushcont(_pacc_i);\n");
+	printf("pushcont(_pacc_i);\n"); /* XXX do we need to save? */
 	printf("_pacc_i = %d + 1;\n", i);
-	printf("pushcont(_pacc_cols_i); _pacc_cols_i = 0;\n");
-	printf("for (pos = 0; pos < _pacc_p->cores_valid; ++pos) {\n");
-	printf("    enum thr discrim = thr_thunk + (_pacc_p->cores[pos] >> 2 & 3);\n");
+	//printf("pushcont(_pacc_ev_i); _pacc_ev_i = 0;\n");
+	printf("pos = 0;\n");
+	printf("while (pos < _pacc_p->ev_valid) {\n");
+	printf("    enum thr discrim = thr_thunk + (_pacc_p->evlis[pos].core >> 2 & 3);\n");
+	printf("    int step = _pacc_p->evlis[pos].core & 3;\n");
 	printf("    if (discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
-	printf("    _pacc_cols_i += 1 + (_pacc_p->cores[pos] & 3);\n");
+	printf("    pos += 1 + step;\n");
 	printf("}\n");
-	printf("pos = _pacc_cols_i;\n");
-	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->cols[pos]);\n", p->text);
-	printf("_pacc_cols_i = popcont();\n");
+	printf("++pos;\n");
+	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);
 	printf("_pacc_i = popcont();\n");
 
-	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%ld\\n\", _pacc_p->cols[pos]);\n", p->text, s_stack[i]->id);
-	printf("    cur = _pacc_result(_pacc, _pacc_p->cols[pos], %d);\n", s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, s_stack[i]->id);
+	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %d);\n", s_stack[i]->id);
 	printf("    if ((cur->rule & 3) != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
-	printf("	_pacc_cores_i = _pacc_cols_i = 0; goto eval_loop;\n");
+	printf("	_pacc_ev_i = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u%d;\n", p->text, s_stack[i]->id);
-	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->cols[pos], cur->value.u0);\n", p->text, s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);
     }
 }
 

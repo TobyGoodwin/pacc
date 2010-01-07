@@ -22,11 +22,14 @@ space. Onwards...
 
 Here's a thought. Since we have decided that the space for rule ids is
 (long - 4bits), we could use the rule in struct intermed to encode the
-status. Sigh. And although separating cores and cols looks promising, it
-means that we've got *4* size_t counters in the struct. This means that
-the union version would probably be more efficient: we might lose 4
-bytes every time we save a core (assuming long = 32 and off_t = 64
-bits), but we'll save 8 bytes in every struct intermed. Better try it.
+status. Sigh. OK, this yields 694.
+
+And although separating cores and cols looks promising, it means that
+we've got *4* size_t counters in the struct. This means that the union
+version would probably be more efficient: we might lose 4 bytes every
+time we save a core (assuming long = 32 and off_t = 64 bits), but we'll
+save 8 bytes in every struct intermed. There'll also be less wastage in
+allocated but unused core/col list entries. Better try it.
 
 2010-01-06
 ----------
