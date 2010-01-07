@@ -87,18 +87,12 @@ off_t _pacc_err_col;
 
 #EMIT_DECLARATIONS
 
-#define THR_STACK_BODGE 40
-
 struct intermed {
     /* Where in the matrix are we? */
     long rule; off_t col;
-    enum status status;
+    //enum status status;
     union yy_union value; /* semantic value XXX needs to use g_name */
     off_t remainder; /* unparsed string */
-    /* XXX old style */
-    struct thunkrule thrs[THR_STACK_BODGE]; /* XXX */
-    int thrs_ptr;
-    /* XXX new style */
     /* A dynamic array of "call or eval"s. */
     long *cores;
     size_t cores_alloc;
@@ -134,28 +128,6 @@ static void _pacc_save_core(long c, int type, int cols) {
     ++cur->cores_valid;
 }
 
-#if 0
-static void pusheval(int t, int col, enum thr type) {
-    if (cur->thrs_ptr == THR_STACK_BODGE) {
-	fprintf(stderr, "thr_stack overflow\n");
-	exit(1);
-    }
-    Trace fprintf(stderr, "pusheval(%d, %d, %d) -> thrs[%d]\n", t, col, type, cur->thrs_ptr);
-    /* XXX old style */
-    cur->thrs[cur->thrs_ptr].discrim = type;
-    cur->thrs[cur->thrs_ptr].x = t;
-    cur->thrs[cur->thrs_ptr].col = col;
-    ++cur->thrs_ptr;
-    /* XXX new style */
-    if (type != thr_col) {
-	/* XXX first, need to somewhere check that the shift is valid,
-	 * secondly, need to tidy up the enum. */
-	_pacc_save_core(t << 2 | (type - thr_thunk));
-    }
-    _pacc_save_col(col);
-}
-#endif
-
 static int input_length;
 
 /* a pacc parser */
@@ -188,7 +160,7 @@ static struct _pacc_parser *_pacc_parser_new(void) {
 }
 
 /* hash chains */
-static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) {
+static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rule) {
     unsigned char i;
     unsigned int h;
     struct intermed *bkt, *r;
@@ -199,7 +171,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) 
     bkt = p->m_bkt[h];
     for (i = 0; i < p->m_valid[h * 2]; ++i) {
 	r = bkt + i;
-	if (r->col == col && r->rule == rule)
+	if (r->col == col && r->rule >> 4 == rule)
 	    return r;
     }
     if (i == p->m_valid[h * 2 + 1]) {
@@ -211,11 +183,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, int col, int rule) 
     }
     r = bkt + i;
     /* Initialize the new element. */
-    r->status = uncomputed;
-    r->col = col; r->rule = rule;
-    /* XXX old style */
-    r->thrs_ptr = 0;
-    /* XXX new style */
+    r->col = col; r->rule = rule << 4 | uncomputed;
     r->cores = 0;
     r->cores_alloc = r->cores_valid = 0;
     r->cols = 0;
@@ -243,77 +211,49 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     col = 0;
     cont = -1;
     evaluating = 0;
-    int pos;
-    size_t _pacc_cols_p;
+    size_t pos, _pacc_cores_i, _pacc_cols_i;
 
 #EMIT_ENGINE
 
     cur = _pacc_result(_pacc, 0, start_rule_id);
-    if (parsed && !evaluating && cur->status == parsed) {
+    if (parsed && !evaluating && (cur->rule & 3) == parsed) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	evaluating = 1;
-	_pacc_i = 0;
-	_pacc_cols_p = 0;
+	_pacc_cores_i = _pacc_cols_i = 0;
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_i == %d\n", _pacc_i);
-	if (_pacc_i < cur->cores_valid) {
-	    enum thr discrim = thr_thunk + (cur->cores[_pacc_i] >> 2 & 3);
+	if (_pacc_cores_i < cur->cores_valid) {
+	    enum thr discrim = thr_thunk + (cur->cores[_pacc_cores_i] >> 2 & 3);
 	    if (discrim == thr_rule || discrim == thr_bound) {
 		int col, rule;
-		rule = cur->cores[_pacc_i] >> 4;
-		assert(_pacc_cols_p < cur->cols_valid);
-		col = cur->cols[_pacc_cols_p];
-		++_pacc_i; ++_pacc_cols_p;
+		rule = cur->cores[_pacc_cores_i] >> 4;
+		assert(_pacc_cols_i < cur->cols_valid);
+		col = cur->cols[_pacc_cols_i];
+		++_pacc_cores_i; ++_pacc_cols_i;
 		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-		pushm(cur); pushcont(_pacc_i);
-		pushcont(_pacc_cols_p); /* XXX type? */
+		pushm(cur); pushcont(_pacc_cores_i);
+		pushcont(_pacc_cols_i); /* XXX type? */
 		cur = _pacc_result(_pacc, col, rule);
-		_pacc_i = _pacc_cols_p = 0;
+		_pacc_cores_i = _pacc_cols_i = 0;
 		goto eval_loop;
 	    } else {
-		st = cur->cores[_pacc_i] >> 4;
-		assert(_pacc_cols_p < cur->cols_valid);
-		col = cur->cols[_pacc_cols_p]; ++_pacc_cols_p;
+		st = cur->cores[_pacc_cores_i] >> 4;
+		assert(_pacc_cols_i < cur->cols_valid);
+		col = cur->cols[_pacc_cols_i]; ++_pacc_cols_i;
 		/* XXX currently, we only permit one additional column,
 		 * which always goes into col_expr. */
-		if (cur->cores[_pacc_i] & 3) {
-		    assert(_pacc_cols_p < cur->cols_valid);
-		    col_expr = cur->cols[_pacc_cols_p]; ++_pacc_cols_p;
+		if (cur->cores[_pacc_cores_i] & 3) {
+		    assert(_pacc_cols_i < cur->cols_valid);
+		    col_expr = cur->cols[_pacc_cols_i]; ++_pacc_cols_i;
 		}
-		++_pacc_i;
+		++_pacc_cores_i;
 		goto top;
 	    }
 	    goto eval_loop;
 	}
-#if 0
-	if (_pacc_i < cur->thrs_ptr) {
-	    if (cur->thrs[_pacc_i].discrim == thr_rule ||
-		    cur->thrs[_pacc_i].discrim == thr_bound) {
-		int col, rule;
-		rule = cur->thrs[_pacc_i].x; col = cur->thrs[_pacc_i].col;
-		++_pacc_i;
-		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-#if 0
-		pushcol(rule); pushcol(col); pushcont(_pacc_i);
-#else
-		pushm(cur); pushcont(_pacc_i);
-#endif
-		cur = _pacc_result(_pacc, col, rule);
-		_pacc_i = 0;
-		goto eval_loop;
-	    } else {
-		st = cur->thrs[_pacc_i].x; col = cur->thrs[_pacc_i].col;
-		++_pacc_i;
-		col_expr = cur->thrs[_pacc_i].col;
-		++_pacc_i;
-		goto top;
-	    }
-	    goto eval_loop;
-	}
-#endif
-	cur->status = evaluated;
+	cur->rule = (cur->rule & ~3) | evaluated;
 	if (m_ptr) {
-	    _pacc_cols_p = popcont(); _pacc_i = popcont(); cur = popm();
+	    _pacc_cols_i = popcont(); _pacc_cores_i = popcont(); cur = popm();
 	    goto eval_loop;
 	}
 	Trace fprintf(stderr, "eval finished\n");
@@ -321,7 +261,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     }
 
     //assert(cur == _pacc->m);
-    if (cur->status == no_parse) {
+    if ((cur->rule & 3) == no_parse) {
        size_t i;
        printf("expected ");
        for (i = 0; i < _pacc_err_valid; ++i) {
@@ -347,13 +287,13 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	}
 	fprintf(stderr, "\n%ld/%ld\n", v, a);
     }
-    if (cur->status == evaluated) {
+    if ((cur->rule & 3) == evaluated) {
 	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
 	*result = cur->value.u0;
-    } else if (cur->status == parsed) {
+    } else if ((cur->rule & 3) == parsed) {
 	Trace fprintf(stderr, "parsed with void value\n");
     } else Trace fprintf(stderr, "not parsed\n");
-    return cur->status == evaluated;
+    return (cur->rule & 3) == evaluated;
 
 contin:
     Trace fprintf(stderr, "continuing in state %d\n", cont);

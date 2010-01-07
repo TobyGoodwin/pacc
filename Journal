@@ -9,6 +9,24 @@ tree!
 
 OK, got that going. (I haven't actually defined macros to access the
 parts; perhaps we don't need to.) Next let's remove the thrs stuff.
+Done, and all warnings tidied up. So we now have:
+
+==17129== malloc/free: in use at exit: 1,230,881 bytes in 30,883 blocks.
+==17129== malloc/free: 44,716 allocs, 13,833 frees, 1,997,329 bytes allocated.
+
+Which, since pacc.pacc is still 2655 bytes, means that we are now down
+to 752 bytes of memory per input byte. Pretty impressive improvement,
+but I just checked and Ford achieves 441 (pappy) and 297 (hand
+generated) for his Java parsers, so we're still using way too much
+space. Onwards...
+
+Here's a thought. Since we have decided that the space for rule ids is
+(long - 4bits), we could use the rule in struct intermed to encode the
+status. Sigh. And although separating cores and cols looks promising, it
+means that we've got *4* size_t counters in the struct. This means that
+the union version would probably be more efficient: we might lose 4
+bytes every time we save a core (assuming long = 32 and off_t = 64
+bits), but we'll save 8 bytes in every struct intermed. Better try it.
 
 2010-01-06
 ----------

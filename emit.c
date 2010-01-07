@@ -176,11 +176,11 @@ static void rule_pre(struct s_node *n) {
     printf("Trace fprintf(stderr, \"rule %d (%s) col %%d\\n\", col);\n", n->id, n->text);
     printf("rule_col = col;\n");
     printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
-    printf("if (cur->status == uncomputed) {\n");
+    printf("if ((cur->rule & 3) == uncomputed) {\n");
 }
 
 static void rule_post(struct s_node *n) {
-    printf("    cur->status = status;\n");
+    printf("    cur->rule = (cur->rule & ~3) | status;\n");
     printf("    cur->remainder = col;\n");
     printf("    if (_pacc_err_col == rule_col) {\n");
     printf("        _pacc_err_valid = 0;\n"); /* Rule made no progress: over-write error */
@@ -322,27 +322,27 @@ static void bindings(struct s_node *n) {
 	if (i == n_ptr) continue;
 	printf("pushcont(_pacc_i);\n");
 	printf("_pacc_i = %d + 1;\n", i);
-	printf("pushcont(_pacc_cols_p); _pacc_cols_p = 0;\n");
+	printf("pushcont(_pacc_cols_i); _pacc_cols_i = 0;\n");
 	printf("for (pos = 0; pos < _pacc_p->cores_valid; ++pos) {\n");
 	printf("    enum thr discrim = thr_thunk + (_pacc_p->cores[pos] >> 2 & 3);\n");
 	printf("    if (discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
-	printf("    _pacc_cols_p += 1 + (_pacc_p->cores[pos] & 3);\n");
+	printf("    _pacc_cols_i += 1 + (_pacc_p->cores[pos] & 3);\n");
 	printf("}\n");
-	printf("pos = _pacc_cols_p;\n");
-	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%d\\n\", pos, _pacc_p->cols[pos]);\n", p->text);
-	printf("_pacc_cols_p = popcont();\n");
+	printf("pos = _pacc_cols_i;\n");
+	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->cols[pos]);\n", p->text);
+	printf("_pacc_cols_i = popcont();\n");
 	printf("_pacc_i = popcont();\n");
 
-	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%d\\n\", _pacc_p->cols[pos]);\n", p->text, s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%ld\\n\", _pacc_p->cols[pos]);\n", p->text, s_stack[i]->id);
 	printf("    cur = _pacc_result(_pacc, _pacc_p->cols[pos], %d);\n", s_stack[i]->id);
-	printf("    if (cur->status != evaluated) {\n");
+	printf("    if ((cur->rule & 3) != evaluated) {\n");
 	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
-	printf("	_pacc_i = _pacc_cols_p = 0; goto eval_loop;\n");
+	printf("	_pacc_cores_i = _pacc_cols_i = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u%d;\n", p->text, s_stack[i]->id);
-	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%d ==> \" TYPE_PRINTF \"\\n\", _pacc_p->cols[pos], cur->value.u0);\n", p->text, s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->cols[pos], cur->value.u0);\n", p->text, s_stack[i]->id);
     }
 }
 
@@ -413,7 +413,7 @@ static void emit_call(struct s_node *n) {
     printf("case %d: /* return from %s */\n", n->id, n->text);
     printf("last = cur;\n");
     printf("cont = popcont();\n");
-    printf("status = last->status;\n");
+    printf("status = last->rule & 3;\n");
     printf("col = last->remainder;\n");
     printf("rule_col = popcont();\n");
     printf("cur = _pacc_result(_pacc, rule_col, %d);\n", cur_rule);
