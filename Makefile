@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -W -Wall
+CFLAGS = -g -W -Wall '-D_FILE_OFFSET_BITS=64'
 
 all: pacc
 

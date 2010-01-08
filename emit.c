@@ -327,9 +327,10 @@ static void bindings(struct s_node *n) {
 	printf("while (pos < _pacc_p->ev_valid) {\n");
 	printf("    enum thr discrim = thr_thunk + (_pacc_p->evlis[pos].core >> 2 & 3);\n");
 	printf("    int step = _pacc_p->evlis[pos].core & 3;\n");
+	printf("    assert(step < 2);\n");
 	printf("    if (discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
-	printf("    pos += 1 + step;\n");
+	printf("    pos += 2 + step;\n");
 	printf("}\n");
 	printf("++pos;\n");
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);

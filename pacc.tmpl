@@ -125,16 +125,22 @@ static void _pacc_save_col(off_t c) {
 }
 
 static void _pacc_save_core(long c, int type, int cols) {
+    Trace fprintf(stderr, "_pacc_save_core(%ld, %d, %d)\n", c, type, cols);
     if (cur->ev_valid == cur->ev_alloc) {
 	cur->ev_alloc = cur->ev_alloc * 2 + 1;
 	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
 	if (!cur->evlis) nomem();
     }
-    /* XXX are these really assertions? In principle, an enormous input
-     * could blow them away. */
+    assert(cols < 4); /* property of the encoding */
+    assert(cols < 2); /* property of the current use of cols */
+    assert(type - thr_thunk < 4);
+    /* XXX is this really an assertion? In principle, an enormous input
+     * could blow it away. */
     assert(c << 4 > c);
-    assert(cols < 4); assert(type - thr_thunk < 4);
     cur->evlis[cur->ev_valid].core = c << 4 | (type - thr_thunk) << 2 | cols;
+    assert(c == cur->evlis[cur->ev_valid].core >> 4);
+    assert(type == (cur->evlis[cur->ev_valid].core >> 2 & 3) + thr_thunk);
+    assert(cols == (cur->evlis[cur->ev_valid].core & 3));
     ++cur->ev_valid;
 }
 

@@ -1,3 +1,15 @@
+2010-01-08
+----------
+
+D'oh! Stupid, stupid off-by-one error, took ages to spot. Now fixed, and
+the integrated core/col list yields 545 bytes of heap per input byte, or
+with _FILE_OFFSET_BITS=64, 787 bytes.
+
+I'm not sure that there's much more squeezing for space to be done at
+the moment. I should, of course, get hold of Ford's Java parsers, and
+see how they measure up. I strongly suspect that he doesn't actually
+build a parse tree, which would of course save loads of space.
+
 2010-01-07
 ----------
 
