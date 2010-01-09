@@ -1,3 +1,13 @@
+2010-01-09
+----------
+
+From TODO; now done!
+
+Complete the hashing regime
+
+    We need to select a suitable size for the hash table. I'd like
+    instrumentation too.
+
 2010-01-08
 ----------
 

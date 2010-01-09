@@ -150,8 +150,8 @@ static void literal(struct s_node *n) {
 	++l;
     }
     printf("Trace fprintf(stderr, \"lit %d @ col %%d => \", col);\n", n->id);
-    printf("if (col + %d <= input_length &&\n", l);
-    printf("        memcmp(\"%s\", string + col, %d) == 0) {\n", n->text, l);
+    printf("if (col + %d <= _pacc->input_length &&\n", l);
+    printf("        memcmp(\"%s\", _pacc->string + col, %d) == 0) {\n", n->text, l);
     printf("    status = parsed;\n");
     printf("    col += %d;\n", l);
     printf("    Trace fprintf(stderr, \"yes (col=%%d)\\n\", col);\n");
@@ -164,7 +164,7 @@ static void literal(struct s_node *n) {
 
 /* currently assumes 1 char == 1 byte (i.e. ASCII encoding) */
 static void any_emit(struct s_node *n) {
-    printf("if (col < input_length) {\n");
+    printf("if (col < _pacc->input_length) {\n");
     printf("    status = parsed;\n");
     printf("    ++col;\n");
     printf("} else status = no_parse;\n");
