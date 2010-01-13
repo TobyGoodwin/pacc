@@ -1,3 +1,26 @@
+2010-01-13
+----------
+
+As I mentioned before, space optimization is pretty much done; I can't
+think of much else to squeeze. Except that...
+
+    union { ... } *evlis;
+    size_t ev_alloc;
+    size_t ev_valid;
+
+This is using a lot of space for something that is unlikely to be more
+than a few elements long. It seems to me that the maximum length of an
+evlis can be computed statically, by walking the tree and recording:
+
+    for an expr, 3 (thunk id + 2 columns)
+    for a call, 2 (call id + 1 column)
+    for a seq, the sum of its children
+    for an alt, the maximum of its children
+
+That should allow us to get rid of ev_alloc altogether, since we would
+know in advance how many evlis entries to allocate. We could also use a
+smaller type for ev_valid. Maybe.
+
 2010-01-09
 ----------
 
