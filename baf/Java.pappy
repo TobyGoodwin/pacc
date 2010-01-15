@@ -1,0 +1,727 @@
+-- Pappy packrat parser specification for the Java language version 1.1
+parser Java:
+
+{
+import Char
+import System
+import Numeric
+
+
+-- Abstract syntax tree data types
+type Identifier = String
+type Name = [Identifier]
+
+data Literal =	  LitInt Integer
+		| LitLong Integer
+		| LitFloat Float
+		| LitDouble Double
+		| LitChar Char
+		| LitString String
+		| LitBool Bool
+		| LitNull
+
+data Expression = ExpLiteral Literal
+		| ExpIdent Identifier
+		| ExpPrefix String Expression
+		| ExpPostfix String Expression
+		| ExpBinary String Expression Expression
+		| ExpSelect Expression Expression
+		| ExpInstanceof Expression DeclType
+		| ExpNewClass [Identifier] [Expression] (Maybe [Declaration])
+		| ExpNewArray DeclType [Expression] Int
+		| ExpNewArrayInit DeclType Int [Initializer]
+		| ExpCall Expression [Expression]
+		| ExpArray Expression (Maybe Expression)
+		| ExpCast DeclType Expression
+		| ExpCond Expression Expression Expression
+		| ExpThis
+		| ExpSuper
+		| ExpDotClass Expression
+		| ExpVoidClass
+
+data Modifier =   ModPublic
+		| ModProtected
+		| ModPrivate
+		| ModStatic
+		| ModAbstract
+		| ModFinal
+		| ModNative
+		| ModSynchronized
+		| ModTransient
+		| ModVolatile
+		| ModStrictfp
+
+data DeclType =   DtByte
+		| DtShort
+		| DtChar
+		| DtInt
+		| DtLong
+		| DtFloat
+		| DtDouble
+		| DtBoolean
+		| DtName [Identifier]
+		| DtArray DeclType Int
+
+type Declarator = (Identifier, Int, Maybe Initializer)
+
+data Declaration =
+		  DeclSimple [Modifier] DeclType [Declarator]
+		| DeclMethod [Modifier] (Maybe DeclType) Identifier
+				[FormalParam] Int [Name]
+				(Maybe [Statement])
+		| DeclConstructor [Modifier] Identifier
+				[FormalParam] [Name] [Statement]
+		| DeclClass [Modifier] Identifier (Maybe DeclType) [DeclType]
+				[Declaration]
+		| DeclInterface [Modifier] Identifier [DeclType]
+				[Declaration]
+		| DeclBlock Bool [Statement]
+
+-- formal parameter: "final" flag, type, parameter name, array dimension
+type FormalParam = (Bool, DeclType, Identifier, Int)
+
+data Initializer =
+		  IniExpr Expression
+		| IniList [Initializer]
+
+data SwitchGroup =
+		  SwCase Expression [Statement]
+		| SwDefault [Statement]
+
+data ForInit =	  FiExpr [Expression]
+		| FiDecl Bool DeclType [Declarator]
+
+data Statement =  StLabel Identifier Statement
+		| StCase Expression Statement
+		| StDefault Statement
+		| StDecl Declaration
+		| StExpr Expression
+		| StBlock [Statement]
+		| StIf Expression Statement (Maybe Statement)
+		| StSwitch Expression [SwitchGroup]
+		| StWhile Expression Statement
+		| StDo Statement Expression
+		| StFor ForInit (Maybe Expression)
+			[Expression] Statement
+		| StTry [Statement] [CatchClause] (Maybe [Statement])
+		| StSynch Expression [Statement]
+		| StContinue (Maybe Identifier)
+		| StBreak (Maybe Identifier)
+		| StReturn (Maybe Expression)
+		| StThrow Expression
+		| StNull
+
+-- catch clause: 
+type CatchClause = (FormalParam, [Statement])
+
+-- import declaration: qualified name, ".*" flag
+type ImportDecl = (Name, Bool)
+
+-- compilation unit: package name, import declarations, type declarations
+type CompUnit = (Maybe Name, [ImportDecl], [Declaration])
+
+
+-- List of Java's reserved words, used in Keyword below
+keywords = [
+	"abstract",
+	"boolean", "break", "byte",
+	"case", "catch", "char", "class", "const", "continue",
+	"default", "do", "double",
+	"else", "extends",
+	"final", "finally", "float", "for",
+	"goto",
+	"if", "implements", "import", "instanceof", "int", "interface",
+	"long",
+	"native", "new",
+	"package", "private", "protected", "public",
+	"return",
+	"short", "static", "strictfp", "super", "switch", "synchronized",
+	"this", "throw", "throws", "transient", "try",
+	"void", "volatile",
+	"while"
+    ]
+}
+
+
+top CompilationUnit
+
+-------------------- Lexical Structure --------------------
+
+
+-- Whitespace and comments
+
+LineTerminator :: Char =
+	'\n'		-- \r's have been canonicalized by javaPrep
+
+InputCharacter :: Char =
+	!LineTerminator c:Char					-> c
+
+Spacing :: {()} =
+	  Space*						-> {()}
+
+Space :: {()} =
+	  WhiteSpace						-> {()}
+	/ Comment						-> {()}
+
+WhiteSpace :: Char =
+	  ' ' / '\t' / '\f' / LineTerminator
+
+Comment :: {()} =
+	  TraditionalComment
+	/ EndOfLineComment
+
+TraditionalComment :: {()} =
+	"/*" (!"*/" c:Char -> c)* "*/"				-> {()}
+EndOfLineComment :: {()} =
+	"//" (!LineTerminator c:Char -> c)* '\n'		-> {()}
+
+
+-- Keywords and identifiers
+
+Identifier :: Identifier =
+	!Keyword !BooleanLiteral !NullLiteral s:Word		-> s
+
+Keyword :: String =
+	  s:Word	&{s `elem` keywords}			-> s
+
+Word :: String =
+	  c:JavaLetter cs:JavaLetterOrDigit* Spacing 		-> {c : cs}
+
+JavaLetter :: Char =
+	  c:Char		&{isAlpha c}			-> c
+	/ '_'
+	/ '$'
+
+JavaLetterOrDigit :: Char =
+	  c:Char		&{isAlphaNum c}			-> c
+	/ '_'
+	/ '$'
+
+
+-- Symbols (operators and punctuation)
+Sym :: String =
+	  s:SymChars Spacing					-> s
+
+SymChars :: String =
+	  ">>>="
+	/ ">>=" / "<<=" / ">>>"
+	/ ">>" / "<<"
+	/ "+=" / "-=" / "*=" / "/=" / "%=" / "&=" / "^=" / "|="
+	/ "++" / "--" / "&&" / "||" / "<=" / ">=" / "==" / "!="
+	/ ";" / ":" / "," / "." / "{" / "}" / "(" / ")"
+	/ "[" / "]" / "!" / "~" / "+" / "-" / "*" / "/"
+	/ "%" / "<" / ">" / "=" / "&" / "^" / "|" / "?"
+
+
+-- Literals
+Literal :: Literal =
+	  FloatingPointLiteral
+	/ IntegerLiteral
+	/ BooleanLiteral
+	/ CharacterLiteral
+	/ StringLiteral	
+	/ NullLiteral
+
+
+-- Integer literals
+IntegerLiteral :: Literal =
+	  v:HexNumeral t:IntegerTypeSuffixOpt Spacing	->	{t v}
+	/ v:OctalNumeral t:IntegerTypeSuffixOpt Spacing ->	{t v}
+	/ v:DecimalNumeral t:IntegerTypeSuffixOpt Spacing ->	{t v}
+
+IntegerTypeSuffixOpt :: {Integer -> Literal} =
+	  ('l' / 'L')				-> {LitLong}
+	/ 					-> {LitInt}
+
+HexNumeral :: Integer =
+	  ("0x" / "0X") v:HexDigits		-> {v}
+
+HexDigits :: Integer =
+	  v:HexDigits d:HexDigit		-> {v * 16 + toInteger d}
+	/ d:HexDigit				-> {toInteger d}
+
+HexDigit :: Int =
+	  c:Char	&{isHexDigit c}		-> {digitToInt c}
+
+OctalNumeral :: Integer =
+	  '0' v:OctalDigits			-> {v}
+
+OctalDigits :: Integer =
+	  v:OctalDigits d:OctalDigit		-> {v * 8 + toInteger d}
+	/ d:OctalDigit				-> {toInteger d}
+
+OctalDigit :: Int =
+	  c:Char	&{isOctDigit c}		-> {digitToInt c}
+
+DecimalNumeral :: Integer =
+	  v:Digits				-> {v}
+
+Digits :: Integer =
+	  v:Digits d:Digit			-> {v * 10 + toInteger d}
+	/ d:Digit				-> {toInteger d}
+
+Digit :: Int =
+	  c:Char	&{isDigit c}		-> {digitToInt c}
+
+
+-- Floating point
+FloatingPointLiteral :: Literal =
+	  m:Digits '.' f:FractionPartOpt e:ExponentPartOpt t:FloatTypeSuffixOpt
+	  Spacing
+		-> {t (fromRational ((fromInteger m + f) * 10.0 ^^ e))}
+
+	/ '.' f:FractionPart e:ExponentPartOpt t:FloatTypeSuffixOpt Spacing
+		-> {t (fromRational (f * 10.0 ^^ e))}
+
+	/ m:Digits e:ExponentPart t:FloatTypeSuffixOpt Spacing
+		-> {t (fromInteger m * 10.0 ^^ e)}
+
+	/ m:Digits e:ExponentPartOpt t:FloatTypeSuffix Spacing
+		-> {t (fromInteger m * 10.0 ^^ e)}
+
+FractionPartOpt :: Rational =
+	  f:FractionPart		-> {f}
+	/ 				-> {0.0}
+
+FractionPart :: Rational =
+	  d:Digit			-> { toEnum d / 10.0 }
+	/ d:Digit f:FractionPart	-> { (f + toEnum d) / 10.0 }
+
+ExponentPartOpt :: Integer =
+	  e:ExponentPart		-> { e }
+	/ 				-> { 0 }
+
+ExponentPart :: Integer =
+	  ('e' / 'E') '-' e:Digits	-> { -e }
+	/ ('e' / 'E') '+'? e:Digits	-> { e }
+
+FloatTypeSuffixOpt :: {Rational -> Literal} =
+	  t:FloatTypeSuffix		-> t
+	/ 				-> {\r -> LitDouble (fromRational r)}
+
+FloatTypeSuffix :: {Rational -> Literal} =
+	  ('f' / 'F')			-> {\r -> LitFloat (fromRational r)}
+	/ ('d' / 'D')			-> {\r -> LitDouble (fromRational r)}
+
+
+-- Boolean literals
+BooleanLiteral :: Literal =
+	  "true":Word			-> { LitBool True }
+	/ "false":Word			-> { LitBool False }
+
+
+-- Character and string literals
+CharacterLiteral :: Literal =
+	  "'" c:SingleCharacter "'" Spacing	-> { LitChar c }
+	/ "'" c:EscapeSequence "'" Spacing	-> { LitChar c }
+
+SingleCharacter :: Char =
+	  !"'" !"\\" c:InputCharacter		-> c
+
+StringLiteral :: Literal =
+	  '"' s:StringCharacter* '"' Spacing	-> { LitString s }
+
+StringCharacter :: Char =
+	  !'"' !'\\' c:InputCharacter		-> c
+	/ c:EscapeSequence			-> c
+
+EscapeSequence :: Char =
+	  '\\' 'b'				-> {'\b'}
+	/ '\\' 't'				-> {'\t'}
+	/ '\\' 'n'				-> {'\n'}
+	/ '\\' 'f'				-> {'\f'}
+	/ '\\' 'r'				-> {'\r'}
+	/ '\\' '"'				-> {'\"'}
+	/ '\\' "'"				-> {'\''}
+	/ '\\' '\\'				-> {'\\'}
+	/ c:OctalEscape				-> c
+
+OctalEscape :: Char =
+	  '\\' x:ZeroToThree y:OctalDigit z:OctalDigit
+						-> {chr (x*8*8 + y*8 + z)}
+	/ '\\' y:OctalDigit z:OctalDigit	-> {chr (y*8 + z)}
+	/ '\\' z:OctalDigit			-> {chr (z)}
+
+ZeroToThree :: Int =
+	  '0'					-> {0}
+	/ '1'					-> {1}
+	/ '2'					-> {2}
+	/ '3'					-> {3}
+
+
+-- Null literals
+NullLiteral :: Literal =
+	  "null":Word				-> { LitNull }
+
+
+-------------------- Types --------------------
+
+TypeSpec :: DeclType =
+	  t:TypeName d:Dims			-> {DtArray t d}
+	/ TypeName
+
+TypeName :: DeclType =
+	  PrimitiveType
+	/ n:QualifiedName			-> {DtName n}
+
+PrimitiveType :: DeclType =
+	  "byte":Word				-> {DtByte}
+	/ "short":Word				-> {DtShort}
+	/ "char":Word				-> {DtChar}
+	/ "int":Word				-> {DtInt}
+	/ "long":Word				-> {DtLong}
+	/ "float":Word				-> {DtFloat}
+	/ "double":Word				-> {DtDouble}
+	/ "boolean":Word			-> {DtBoolean}
+
+QualifiedName :: {[Identifier]} =
+	  i:Identifier is:(".":Sym i:Identifier -> i)*	-> {i : is}
+
+DimsOpt :: Int =
+	  d:Dims				-> d
+	/					-> {0}
+
+Dims :: Int =
+	  "[":Sym "]":Sym d:Dims		-> {d+1}
+	/ "[":Sym "]":Sym			-> {1}
+
+
+-------------------- Expressions --------------------
+
+Expression :: Expression =
+	  l:CondExpr op:AssignmentOperator r:Expression
+						-> {ExpBinary op l r}
+	/ CondExpr
+
+AssignmentOperator :: String =
+	  "=":Sym				-> {"="}
+	/ "+=":Sym				-> {"+="}
+	/ "-=":Sym				-> {"-="}
+	/ "*=":Sym				-> {"*="}
+	/ "/=":Sym				-> {"/="}
+	/ "%=":Sym				-> {"%="}
+	/ "&=":Sym				-> {"&="}
+	/ "|=":Sym				-> {"|="}
+	/ "^=":Sym				-> {"^="}
+	/ "<<=":Sym				-> {"<<="}
+	/ ">>=":Sym				-> {">>="}
+	/ ">>>=":Sym				-> {">>>="}
+
+CondExpr :: Expression =
+	  c:CondOrExpr "?":Sym t:Expression ":":Sym f:CondExpr
+						-> {ExpCond c t f}
+	/ CondOrExpr
+
+CondOrExpr :: Expression =
+	  l:CondOrExpr "||":Sym r:CondAndExpr	-> {ExpBinary "||" l r}
+	/ CondAndExpr
+
+CondAndExpr :: Expression =
+	  l:CondAndExpr "&&":Sym r:OrExpr	-> {ExpBinary "&&" l r}
+	/ OrExpr
+
+OrExpr :: Expression =
+	  l:OrExpr "|":Sym r:XorExpr		-> {ExpBinary "|" l r}
+	/ XorExpr
+
+XorExpr :: Expression =
+	  l:XorExpr "^":Sym r:AndExpr		-> {ExpBinary "^" l r}
+	/ AndExpr
+
+AndExpr :: Expression =
+	  l:AndExpr "&":Sym r:EqExpr		-> {ExpBinary "&" l r}
+	/ EqExpr
+
+EqExpr :: Expression =
+	  l:EqExpr "==":Sym r:RelExpr		-> {ExpBinary "==" l r}
+	/ l:EqExpr "!=":Sym r:RelExpr		-> {ExpBinary "!=" l r}
+	/ RelExpr
+
+RelExpr :: Expression =
+	  l:RelExpr "<=":Sym r:ShiftExpr	-> {ExpBinary "<=" l r}
+	/ l:RelExpr ">=":Sym r:ShiftExpr	-> {ExpBinary ">=" l r}
+	/ l:RelExpr "<":Sym r:ShiftExpr		-> {ExpBinary "<" l r}
+	/ l:RelExpr ">":Sym r:ShiftExpr		-> {ExpBinary ">" l r}
+	/ l:RelExpr "instanceof":Word t:TypeSpec -> {ExpInstanceof l t}
+	/ ShiftExpr
+
+ShiftExpr :: Expression =
+	  l:ShiftExpr "<<":Sym r:AddExpr	-> {ExpBinary "<<" l r}
+	/ l:ShiftExpr ">>":Sym r:AddExpr	-> {ExpBinary ">>" l r}
+	/ l:ShiftExpr ">>>":Sym r:AddExpr	-> {ExpBinary ">>>" l r}
+	/ AddExpr
+
+AddExpr :: Expression =
+	  l:AddExpr "+":Sym r:MultExpr		-> {ExpBinary "+" l r}
+	/ l:AddExpr "-":Sym r:MultExpr		-> {ExpBinary "-" l r}
+	/ MultExpr
+
+MultExpr :: Expression =
+	  l:MultExpr "*":Sym r:UnaryExpr	-> {ExpBinary "*" l r}
+	/ l:MultExpr "/":Sym r:UnaryExpr	-> {ExpBinary "/" l r}
+	/ l:MultExpr "%":Sym r:UnaryExpr	-> {ExpBinary "%" l r}
+	/ UnaryExpr
+
+UnaryExpr :: Expression =
+	  "++":Sym e:UnaryExpr			-> {ExpPrefix "++" e}
+	/ "--":Sym e:UnaryExpr			-> {ExpPrefix "--" e}
+	/ "+":Sym e:UnaryExpr			-> {ExpPrefix "+" e}
+	/ "-":Sym e:UnaryExpr			-> {ExpPrefix "-" e}
+	/ UnaryExprNotPlusMinus
+
+UnaryExprNotPlusMinus :: Expression =
+	  "~":Sym e:UnaryExpr			-> {ExpPrefix "~" e}
+	/ "!":Sym e:UnaryExpr			-> {ExpPrefix "!" e}
+	/ "(":Sym t:TypeName d:Dims ")":Sym e:UnaryExpr
+						-> {ExpCast (DtArray t d) e}
+	/ "(":Sym t:PrimitiveType ")":Sym e:UnaryExpr
+						-> {ExpCast t e}
+	/ "(":Sym t:TypeName ")":Sym e:UnaryExprNotPlusMinus
+						-> {ExpCast t e}
+	/ PostfixExpr
+
+PostfixExpr :: Expression =
+	  l:PostfixExpr "[":Sym r:Expression? "]":Sym
+						-> {ExpArray l r}
+	/ l:PostfixExpr a:Arguments		-> {ExpCall l a}
+	/ l:PostfixExpr ".":Sym r:PrimExpr	-> {ExpSelect l r}
+	/ l:PostfixExpr ".":Sym "class":Word	-> {ExpDotClass l}
+	/ l:PostfixExpr "++":Sym		-> {ExpPostfix "++" l}
+	/ l:PostfixExpr "--":Sym		-> {ExpPostfix "--" l}
+	/ PrimExpr
+
+PrimExpr :: Expression =
+	  l:Literal				-> {ExpLiteral l}
+	/ i:Identifier				-> {ExpIdent i}
+	/ "(":Sym e:Expression ")":Sym		-> e
+	/ "this":Word				-> {ExpThis}
+	/ "super":Word				-> {ExpSuper}
+	/ "new":Word n:QualifiedName a:Arguments b:ClassBody?
+						-> {ExpNewClass n a b}
+	/ "new":Word t:TypeName de:DimExpr+ d:DimsOpt
+						-> {ExpNewArray t de d}
+	/ "new":Word t:TypeName d:Dims i:ArrayInitializer
+						-> {ExpNewArrayInit t d i}
+	/ "void":Word ".":Sym "class":Word	-> {ExpVoidClass}
+
+Arguments :: {[Expression]} =
+	  "(":Sym e:Expression es:(",":Sym e:Expression -> e)* ")":Sym
+						-> {e : es}
+	/ "(":Sym ")":Sym				-> {[]}
+
+DimExpr :: Expression =
+	  "[":Sym e:Expression "]":Sym	-> e
+
+ArrayInitializer :: {[Initializer]} =
+	  "{":Sym is:(i:Initializer ",":Sym -> i)* "}":Sym
+						-> is
+	/ "{":Sym i:Initializer is:(",":Sym i:Initializer -> i)* "}":Sym
+						-> {i : is}
+
+Initializer :: Initializer =
+	  ai:ArrayInitializer			-> {IniList ai}
+	/ e:Expression				-> {IniExpr e}
+
+
+-------------------- Statements --------------------
+
+Block :: {[Statement]} =
+	  "{":Sym ss:BlockStatement* "}":Sym	-> ss
+
+BlockStatement :: Statement =
+	  d:Declaration				-> {StDecl d}
+	/ Statement
+
+Statement :: Statement =
+	  b:Block				-> {StBlock b}
+
+	/ "if":Word e:ParExpr t:Statement f:("else":Word s:Statement -> s)?
+						-> {StIf e t f}
+
+	/ "for":Word "(":Sym
+		i:ForInitOpt ";":Sym
+		c:Expression? ";":Sym
+		n:ExpressionsOpt ")":Sym
+	  b:Statement				-> {StFor i c n b}
+
+	/ "while":Word e:ParExpr b:Statement	-> {StWhile e b}
+
+	/ "do":Word b:Statement "while":Word e:ParExpr ";":Sym	-> {StDo b e}
+
+	/ "try":Word b:Block c:CatchClause* "finally":Word f:Block
+						-> {StTry b c (Just f)}
+	/ "try":Word b:Block c:CatchClause+	-> {StTry b c Nothing}
+
+	/ "switch":Word e:ParExpr "{":Sym b:SwitchGroup* "}":Sym
+						-> {StSwitch e b}
+
+	/ "synchronized":Word e:ParExpr b:Block	-> {StSynch e b}
+
+	/ "return":Word e:Expression? ";":Sym	-> {StReturn e}
+
+	/ "throw":Word e:Expression ";":Sym	-> {StThrow e}
+
+	/ "break":Word i:Identifier? ";":Sym	-> {StBreak i}
+
+	/ "continue":Word i:Identifier? ";":Sym	-> {StContinue i}
+
+	/ l:Identifier ":":Sym s:Statement	-> {StLabel l s}
+
+	/ e:Expression ";":Sym			-> {StExpr e}
+
+	/ ";":Sym					-> {StNull}
+
+ParExpr :: Expression =
+	  "(":Sym e:Expression ")":Sym		-> e
+
+ForInitOpt :: ForInit =
+	  f:FinalOpt t:TypeSpec d:Declarators	-> {FiDecl f t d}
+	/ e:ExpressionsOpt			-> {FiExpr e}
+
+FinalOpt :: Bool =
+	  "final":Word				-> {True}
+	/					-> {False}
+
+ExpressionsOpt :: {[Expression]} =
+	  e:Expression es:(",":Sym e:Expression -> e)*	-> {e : es}
+	/ 						-> {[]}
+
+CatchClause :: CatchClause =
+	  "catch":Word "(":Sym p:FormalParam ")":Sym b:Block
+						-> {(p, b)}
+
+SwitchGroup :: SwitchGroup =
+	  "case":Word e:Expression ":":Sym ss:BlockStatement*
+						-> {SwCase e ss}
+	/ "default":Word ":":Sym ss:BlockStatement*
+						-> {SwDefault ss}
+
+
+-------------------- Declarations --------------------
+
+Modifier :: Modifier =
+	  "public":Word				-> {ModPublic}
+	/ "protected":Word			-> {ModProtected}
+	/ "private":Word			-> {ModPrivate}
+	/ "static":Word				-> {ModStatic}
+	/ "abstract":Word			-> {ModAbstract}
+	/ "final":Word				-> {ModFinal}
+	/ "native":Word				-> {ModNative}
+	/ "synchronized":Word			-> {ModSynchronized}
+	/ "transient":Word			-> {ModTransient}
+	/ "volatile":Word			-> {ModVolatile}
+	/ "strictfp":Word			-> {ModStrictfp}
+
+FormalParam :: FormalParam =
+	  f:FinalOpt t:TypeSpec i:Identifier d:DimsOpt
+						-> {(f, t, i, d)}
+
+FormalParams :: {[FormalParam]} =
+	  "(":Sym p:FormalParam ps:(",":Sym p:FormalParam -> p)* ")":Sym
+						-> {p : ps}
+	/ "(":Sym ")":Sym				-> {[]}
+
+Declarators :: {[Declarator]} =
+	  d:Declarator ds:(",":Sym d:Declarator -> d)*
+						-> {d : ds}
+
+Declarator :: Declarator =
+	  id:Identifier dim:DimsOpt init:("=":Sym i:Initializer -> i)?
+						-> {(id, dim, init)}
+
+ClassBody :: {[Declaration]} =
+	  "{":Sym ds:Declaration* "}":Sym		-> ds
+
+Declaration :: Declaration =
+
+	  -- Variable declaration
+	  ms:Modifier* t:TypeSpec ds:Declarators ";":Sym
+				-> {DeclSimple ms t ds}
+
+	  -- Method declaration
+	/ mods:Modifier*
+	  typ:(t:TypeSpec -> {Just t} / "void":Word -> {Nothing})
+	  id:Identifier ps:FormalParams dim:DimsOpt th:ThrowsOpt
+	  body:(b:Block -> {Just b} / ";":Sym -> {Nothing})
+				-> {DeclMethod mods typ id ps dim th body}
+
+	  -- Constructor declaration
+	/ mods:Modifier* id:Identifier ps:FormalParams th:ThrowsOpt body:Block
+				-> {DeclConstructor mods id ps th body}
+
+	  -- Class declaration
+	/ mods:Modifier* "class":Word id:Identifier
+	  ext:("extends":Word t:TypeSpec -> t)?
+	  imp:("implements":Word t:TypeSpec ts:(",":Sym t:TypeSpec -> t)*
+		-> {t:ts} / -> {[]})
+	  body:ClassBody	-> {DeclClass mods id ext imp body}
+
+	  -- Interface declaration
+	/ mods:Modifier* "interface":Word id:Identifier
+	  ext:("extends":Word t:TypeSpec ts:(",":Sym t:TypeSpec -> t)* -> {t:ts}
+		/ -> {[]})
+	  body:ClassBody	-> {DeclInterface mods id ext body}
+
+	  -- Initialization block
+	/ st:("static":Word -> {True} / -> {False})
+	  b:Block
+				-> {DeclBlock st b}
+
+ThrowsOpt :: {[Name]} =
+	  "throws":Word n:QualifiedName ns:(",":Sym n:QualifiedName -> n)*
+						-> {n : ns}
+	/					-> {[]}
+
+
+-------------------- Top Level --------------------
+
+CompilationUnit :: CompUnit =
+	  Spacing		-- eat whitespace at beginning
+	  pkg:("package":Word n:QualifiedName ";":Sym -> {Just n}
+		/ -> {Nothing})
+	  imps:ImportDecl*
+	  decls:Declaration*
+	  !Char			-- make sure we consume all input text
+				-> {(pkg, imps, decls)}
+	
+
+ImportDecl :: ImportDecl =
+	  "import":Word name:QualifiedName
+	  allflag:(".":Sym "*":Sym -> {True} / -> {False})
+	  ";":Sym
+				-> {(name, allflag)}
+
+
+{
+
+-- Preprocess unicode escapes and newlines before parsing
+javaPrep :: String -> String
+javaPrep [] = []
+javaPrep ('\r':'\n':s) = '\n':javaPrep s
+javaPrep ('\r':s) = '\n':javaPrep s
+javaPrep ('\\':'\\':s) = '\\':'\\':javaPrep s
+javaPrep ('\\':'u':s) = case s of
+	h1:h2:h3:h4:s ->
+		if isHexDigit h1 && isHexDigit h2 &&
+		   isHexDigit h3 && isHexDigit h4
+		then chr v4:javaPrep s
+		else error "invalid Unicode escape sequence"
+		where	v1 = digitToInt h1
+			v2 = v1*16 + digitToInt h2
+			v3 = v2*16 + digitToInt h3
+			v4 = v3*16 + digitToInt h4
+	_ -> error "incomplete Unicode escape sequence"
+javaPrep (c:s) = c:javaPrep s
+
+
+javaParseFile :: FilePath -> IO CompUnit
+javaParseFile name =
+	do	text <- readFile name
+		let text' = javaPrep text
+		    derivs = javaParse name text'
+		case javaCompilationUnit derivs of
+			Parsed cu _ _ -> return cu
+			NoParse e -> fail (show e)
+
+}
+

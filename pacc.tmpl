@@ -6,7 +6,7 @@
 #include <string.h>
 
 #define Trace if (0)
-#define Instr if (1)
+#define Instr if (0)
 
 #define ST_STACK_BODGE 2000
 static int st_stack[ST_STACK_BODGE];
@@ -87,9 +87,9 @@ off_t _pacc_err_col;
 #EMIT_DECLARATIONS
 
 struct intermed {
-    /* Where in the matrix are we? */
+    /* Where in the matrix are we? Note that the bottom two bits of rule
+     * also encode a status. */
     long rule; off_t col;
-    //enum status status;
     union yy_union value; /* semantic value XXX needs to use g_name */
     off_t remainder; /* unparsed string */
     union {
@@ -98,16 +98,6 @@ struct intermed {
     } *evlis;
     size_t ev_alloc;
     size_t ev_valid;
-#if 0
-    /* A dynamic array of "call or eval"s. */
-    long *cores;
-    size_t cores_alloc;
-    size_t cores_valid;
-    /* A dynamic array of columns. */
-    off_t *cols;
-    size_t cols_alloc;
-    size_t cols_valid;
-#endif
 };
 
 static struct intermed *cur;
@@ -141,31 +131,6 @@ static void _pacc_save_core(long c, int type, int cols) {
     assert(cols == (cur->evlis[cur->ev_valid].core & 3));
     ++cur->ev_valid;
 }
-
-#if 0
-static void _pacc_save_col(off_t c) {
-    if (cur->cols_valid == cur->cols_alloc) {
-	cur->cols_alloc = cur->cols_alloc * 2 + 1;
-	cur->cols = realloc(cur->cols, cur->cols_alloc * sizeof(c));
-	if (!cur->cols) nomem();
-    }
-    cur->cols[cur->cols_valid] = c;
-    ++cur->cols_valid;
-}
-
-static void _pacc_save_core(long c, int type, int cols) {
-    if (cur->cores_valid == cur->cores_alloc) {
-	cur->cores_alloc = cur->cores_alloc * 2 + 1;
-	cur->cores = realloc(cur->cores, cur->cores_alloc * sizeof(c));
-	if (!cur->cores) nomem();
-    }
-    /* XXX are these really assertions? */
-    assert(c << 4 > c);
-    assert(cols < 4); assert(type - thr_thunk < 4);
-    cur->cores[cur->cores_valid] = c << 4 | (type - thr_thunk) << 2 | cols;
-    ++cur->cores_valid;
-}
-#endif
 
 /* a pacc parser */
 struct _pacc_parser {
@@ -228,8 +193,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rul
     struct intermed *bkt, *r;
 
     assert(col < p->input_length + 1);
-    //assert(rule < n_rules); Not any more!
-    //fprintf(stderr, "_pacc_result(%d, %d)\n", col, rule);
+    Trace fprintf(stderr, "_pacc_result(%ld, %ld)\n", col, rule);
     h = (col + (rule << 6) + (rule << 16) - rule) % p->m_bkt_cnt;
     bkt = p->m_bkt[h];
     for (i = 0; i < p->m_valid[h * 2]; ++i) {

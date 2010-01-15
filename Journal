@@ -1,3 +1,48 @@
+2010-01-15
+----------
+
+Some of Bryan Ford's stuff is now available in the git repo in baf/.
+I've had various ideas about pappy-compatibility, either directly or via
+a translator. However, this is not worth much. For a start, pappy is not
+maintained, so there are unlikely to be many extant pappy grammars. And
+even if there were, who would want to go from Haskell to C? Being
+compatible with Rats! would make more sense (and I don't intend to do
+that).
+
+More seriously, we can't support or translate Haskell code, including
+type definitions. So even if we don't care about semantic values, we
+can't automatically translate pappy into pacc. I guess I'll have to
+build my own Java.pacc - obviously it will be derived from Java.pappy.
+
+Incidentally, I was right to assume that Java.pappy includes no semantic
+expressions. I can achieve this effect with pacc.pacc by returning early
+in pacc2.c. This saves only 20000 bytes, yielding 539 heap bytes per
+input byte.
+
+Here's a crazy idea: write a pacc grammar, not for es (which has a
+somewhat broken back end, to say the least) but for rc. OK, I'd rather
+spend serious shell hacking time on es, but rc would be a "real world"
+client much sooner. Hmm.
+
+Another, less crazy, idea:
+
+    struct pacc_str {
+	char *start;
+	off_t length;
+    };
+
+We could then make match() yield a struct pacc_str, which would save a
+lot of copying.
+
+Also, I need to think whether I intend to support the syntax for
+matching a call to a literal, as in:
+
+    For <- "for":Word ...
+
+This is much used in Java.pappy. It should be, maybe using struct
+pacc_str, maybe not, to make this work without having to make a copy of
+the Word.
+
 2010-01-13
 ----------
 
