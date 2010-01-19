@@ -1,3 +1,48 @@
+2010-01-19
+----------
+
+OK, I'm thinking - yet again - about match(), and copy(), and also
+call/lit matching. I'm trying to come up with a mechanism that meets the
+following criteria.
+
+1. It could be even more general than match() - it is hard to argue that
+there's anything wrong with Piumarta syntax:
+
+    QuotStr <- '"' < (!'"' . )* > '"' _
+
+2. It should make it possible to handle call/lit matching as syntactic
+sugar.
+
+3. It should avoid the copying overhead (not to mention memory leaks!)
+associated with match(). This implies using struct pacc_str, or
+something similar to it. Although, with Chris Torek and Dan Bernstein, I
+abhor typedefs that eliminate structs, maybe we need one here.
+
+Here's what I'm thinking about at the moment.
+
+Invent some syntax (maybe any of the characters < > <> ⋄) which means
+"store the position of col". Then make all stored cols available to
+exprs, perhaps in the variables pacc_col0, pacc_col1... Maybe if no cols
+are stored, we have some defaults for the left, "middle" and right col.
+(The middle is where the current expression is, of course.)
+
+Make match() return a struct pacc_str, and copy() a char *. Finally,
+season with some defaults: a missing expr is equivalent to
+match(pacc_col0, pacc_col1) or copy(..), depending on the type of the
+rule. So the quoted string example would go something like:
+
+    QuotStr :: pacc_str <- '"' < (!'"' . )* > '"' _
+
+The current match0.pacc says:
+
+    A :: char * <- "5" "6" { match() } "7"
+
+That would become
+
+    A :: char * <- < "5" "6" > "7"
+
+But I need some more convincing examples to finish off the details.
+
 2010-01-15
 ----------
 
@@ -32,7 +77,8 @@ Another, less crazy, idea:
     };
 
 We could then make match() yield a struct pacc_str, which would save a
-lot of copying.
+lot of copying. Alternatively, the struct could hold two char *
+pointers, start and end.
 
 Also, I need to think whether I intend to support the syntax for
 matching a call to a literal, as in:
