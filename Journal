@@ -1,3 +1,41 @@
+2010-01-32
+----------
+
+Some more thoughts on this range stuff. Could we avoid a struct
+altogether, and say that a range is represented by off_t[2]? (Just at
+the moment, pacc.pacc doesn't recognise square brackets as type syntax,
+but that wouldn't be hard to fix.)
+
+    Char :: off_t[2] <- < . >
+    NameStart :: void <- c:Char &{ isalpha(pacc_byte(c[0])) || ... }
+
+Also, if we have <> some way to stash the current column, there is
+really no need ever to stash the column of an expr: if you need anything
+other than the entire match, you have to mark it.
+
+2010-01-21
+----------
+
+My thinking for struct pacc_str is wrong. I want to handle the case (or
+at least not make it infeasible to handle the case) where sizeof(off_t)
+> sizeof(char *). So we want something like this.
+
+    struct pacc_range {
+	off_t fst;
+	off_t lst;
+    }
+
+Also, accesses to a range must be made via a function / macro (since,
+potentially, we want to allow swapping of the input string). As a
+strawman, let's call this pacc_byte(). So the archetypal case would be
+something like this.
+
+    Char :: struct pacc_range <- < . >
+    NameStart :: void <- c:Char &{ isalpha(pacc_byte(c)) || pacc_byte(c) == '_' }
+
+We urgently need to sketch out a more complete interface between the
+pacc engine and the code fragments it holds.
+
 2010-01-19
 ----------
 
