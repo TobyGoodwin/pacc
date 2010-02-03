@@ -93,8 +93,8 @@ struct intermed {
     union yy_union value; /* semantic value XXX needs to use g_name */
     off_t remainder; /* unparsed string */
     union {
-	off_t col;
-	long core;
+	off_t col; /* a column */
+	long core; /* a call or expr */
     } *evlis;
     size_t ev_alloc;
     size_t ev_valid;

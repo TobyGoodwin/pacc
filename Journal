@@ -1,3 +1,70 @@
+2010-02-03
+----------
+
+Sigh. Mainly due to a complete lack of time, I've not managed to
+implement anything at all for all this stuff. I'm also hoping that I
+will finally hit on THE solution which makes everything go really
+simply. But probably I'll have to try a few things first.
+
+Yet another thought. If I'm saying, which I am, that we ought to support
+"swapping" the input, then couldn't we drop all this off_t stuff? We
+could just use size_t or int or long... no, no no! The point is that we
+must use a type large enough to address the entire input - hence off_t.
+
+So let's run it through one more time. Suppose we have a rule like this.
+
+    QuotStr <- '"' < EscStr > '"' _
+
+Ahem. It has just occurred to me that we could just as well say
+
+    QuotStr <- '"' e:EscStr '"' _ -> e
+
+Currently, it is not possible to have anything other than a call in a
+binding, but I do intend to add sugar to make that possible. As another
+shortcut, we could say that a binding to some particular name, or maybe
+the symbol $, gives the value of the rule. (Perhaps it would be cleaner
+to say something like this. It is an error if a sequence which is not
+void fails to contain an expression which gives the value of the rule.
+Exception: if a sequence contains no expression, but does contain a
+single binding, the bound value is the value of the expression.)
+
+What about this rule from pacc.pacc?
+
+    Name <- NameStart NameCont* { match() } _
+
+We're considering possibilities like these:
+
+    Name <- < NameStart NameCont* > _ { ref() }   # bra/ket matching
+    Name <- n:(NameStart NameCont*) _ -> n        # nothing special
+    Name <- $:(NameStart NameCont*) _             # $ rule
+    Name <- n:(NameStart NameCont*) _             # any binding rule
+
+What about this example from earlier?
+
+    QuotStr <- '"' < (!'"' . )* > '"' _
+
+Noting that repetition operators bind more tightly than, err, binding,
+we would write that as:
+
+    QuotStr <- '"' q:(!'"' . )* '"' _ -> q
+
+And the crux of it all:
+
+    Char <- c:. -> c
+
+So, blimey, all that stuff about marking matches is completely bogus.
+OK, good. I'll only be slightly sorry to drop ⋄.
+
+But there's still some work to be done! How do we extract references
+(and char* copies) from a rule? Let's call a rule which is created by
+the desugaring that handles a binding to something other than a call an
+"iRule". We could say that the type of an iRule is always ref_t; if you
+need a char* copy, you have to create it yourself (using ref_to_chars(),
+or somesuch).
+
+Do we actually need to create a new rule? Could we not revive the column
+marking idea, but with the cleaner syntax of binding?
+
 2010-01-22
 ----------
 
