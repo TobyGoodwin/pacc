@@ -4,7 +4,10 @@
 Sigh. Mainly due to a complete lack of time, I've not managed to
 implement anything at all for all this stuff. I'm also hoping that I
 will finally hit on THE solution which makes everything go really
-simply. But probably I'll have to try a few things first.
+simply. One good reason for this is that it will be an incompatible
+change, and I'll have to rewrite large chunks of tests, and presumably
+pacc.pacc itself. But probably I'll have to try a few different ideas
+first.
 
 Yet another thought. If I'm saying, which I am, that we ought to support
 "swapping" the input, then couldn't we drop all this off_t stuff? We
@@ -63,7 +66,13 @@ need a char* copy, you have to create it yourself (using ref_to_chars(),
 or somesuch).
 
 Do we actually need to create a new rule? Could we not revive the column
-marking idea, but with the cleaner syntax of binding?
+marking idea, but with the cleaner syntax of binding? Well, maybe,
+but...
+
+For a rule, we already know the start and end columns! (They are
+currently called col and remainder in struct intermed.) Aaahh! Did I say
+I was "hoping that I will hit on THE solution"? Well, this simple
+factlet makes me suspect that I'm getting close! :-)
 
 2010-01-22
 ----------
