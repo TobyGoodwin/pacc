@@ -1,3 +1,13 @@
+2010-02-06
+----------
+
+So I know -- more or less -- where I want to end up. This *is* a major
+change, which will break almost everything. What's my plan of attack? I
+think I'll start with desugaring non-call bindings, which won't impact
+anything else. Errm, then we need to implement the interface to embedded
+code (i.e. the replacement for match()) and finally rewrite pacc.pacc to
+use it. I think.
+
 2010-02-03
 ----------
 
