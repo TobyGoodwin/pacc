@@ -23,6 +23,7 @@ noparse() {
 }
 
 for target in mk-*.c; do
+#for target in mk-bind*.c; do
     echo $target
     cp $target emitter.c
     cp ../parse.h-`sed -n 2p $target` parse.h

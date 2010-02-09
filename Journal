@@ -1,3 +1,28 @@
+2010-02-09
+----------
+
+OK, here's my first sticking point. Consider this rule:
+
+    S :: char * <- "x" y:"y"* "x" -> y
+
+For a start, we need to get the precedence right here: * binds more
+tightly than :. But at the moment I'm building parse trees by hand; I
+don't need to worry about this till I change pacc.pacc to support
+non-call bindings.
+
+More urgently, two types of sugar collide here. The derep code in
+desugar turns "y"* into a pair of rules of type void (well, int
+currently, but that will be fixed). At this point, the binding of y *is*
+to a call, but it has the wrong type!
+
+I think all we need do is debind before we derep. So this rule would
+first become this pair of rules:
+
+    S :: char * <- "x" y:Y "x" -> y
+    Y :: ref_t <- "y"* { ref() }
+
+And then be dereped as usual.
+
 2010-02-06
 ----------
 

@@ -12,6 +12,21 @@
  * than recursion.
  */
 
+static void debind1(struct s_node *g, struct s_node *n) {
+    assert(0);
+}
+
+static void debind0(struct s_node *g, struct s_node *n) {
+    struct s_node *p;
+
+    if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    if (p->type == bind && p->first->type != call)
+		debind1(g, p);
+	    else
+		debind0(g, p);
+}
+
 static void derep1(struct s_node *g, struct s_node *n) {
     char *x0, *x1, *xx;
     int l;
@@ -86,21 +101,8 @@ static void derep0(struct s_node *g, struct s_node *n) {
 		derep0(g, p);
 }
 
-static void debind1(struct s_node *g, struct s_node *n) {
-    assert(0);
-}
-
-static void debind0(struct s_node *g, struct s_node *n) {
-    struct s_node *p;
-
-    if (s_has_children(n->type))
-	for (p = n->first; p; p = p->next)
-	    if (p->type == call && p->first->type != bind)
-		debind1(g, p);
-	    else
-		debind0(g, p);
-}
 
 void desugar(struct s_node *g) {
+    debind0(g, g);
     derep0(g, g);
 }
