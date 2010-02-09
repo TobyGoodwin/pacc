@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,7 +64,10 @@ static void derep1(struct s_node *g, struct s_node *n) {
     n->first = 0;
 
     /* can't just link onto the front of the rules, since the first rule
-     * is the start rule :-(
+     * is the start rule :-( XXX what about having struct node
+     * *new_rules; - dump any newly created rules (which presumably do
+     * not require further desugaring) into new_rules, then link them in
+     * all at one go at the end?
      */
     for (p = g->first; p; p = p->next)
 	q = p;
@@ -80,6 +84,21 @@ static void derep0(struct s_node *g, struct s_node *n) {
 		derep1(g, p);
 	    else
 		derep0(g, p);
+}
+
+static void debind1(struct s_node *g, struct s_node *n) {
+    assert(0);
+}
+
+static void debind0(struct s_node *g, struct s_node *n) {
+    struct s_node *p;
+
+    if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    if (p->type == call && p->first->type != bind)
+		debind1(g, p);
+	    else
+		debind0(g, p);
 }
 
 void desugar(struct s_node *g) {
