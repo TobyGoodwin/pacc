@@ -15,8 +15,11 @@ may well be quite large (I'd expect off_t[2] to be 16 bytes on most
 systems for the next 10 years, whereas almost everything else in the
 union will be 8 or even just 4 bytes). More drastically, the values are
 already in struct intermed for every rule. So we may have to handle
-ref_t extra specially. I'm sure this one is a serious problem to fix,
-but again I'll have to worry about it later.
+ref_t extra specially.
+
+Ah, OK, so the second one isn't really a problem at all: we just
+"typedef off_t *ref_t"; if the union wasn't already big enough to hold a
+pointer, then you're not doing anything serious anyway!
 
 2010-02-09
 ----------
