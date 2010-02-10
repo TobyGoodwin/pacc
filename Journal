@@ -21,6 +21,24 @@ Ah, OK, so the second one isn't really a problem at all: we just
 "typedef off_t *ref_t"; if the union wasn't already big enough to hold a
 pointer, then you're not doing anything serious anyway!
 
+OK, OK, it's all looking good; several emit examples now work using the
+new ref() stuff. I realise that match() is equivalent to
+ref_str0(ref()), except that it doesn't work for pacc.pacc! So why is
+that? Ah, OK, of course. ref_str0(ref()) is equivalent to match() at the
+end of the sequence. But in this rule we rely on the left-of-expression
+behaviour of the old match().
+
+    Name :: char * ← NameStart NameCont* { match() } _
+
+As far as I can see, this is the *only* rule where ref_str0(ref()) won't
+do. OK. We can't fix that till pacc0 knows how to parse a non-call
+binding (and pacc.pacc, come to that); I did say this was a major
+change! So let's get back to fixing emit tests; currently have 137
+passes, 13 fails... Sorted! And not only that, but I fixed mk-regress0.c
+to use references instead of match, and this saved 4 leaked memory
+blocks (according to valgrind). There are still memory leaks, but the
+fewer the better, eh?
+
 2010-02-09
 ----------
 

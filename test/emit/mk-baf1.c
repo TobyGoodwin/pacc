@@ -17,12 +17,12 @@ noparse x Additive 0
 int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
-    /* Bryan Ford's trivial grammar with ref_byte():
+    /* Bryan Ford's trivial grammar with ref_ptr():
      *
      * Additive <- m:Multitive '+' a:Additive { m + a } / Multitive
      * Multitive <- p:Primary '*' m:Multitive { p * m } / Primary
      * Primary <- '(' a:Additive ')' -> a / Decimal
-     * int Decimal <- d:Digit { ref_byte(d) - '0' }
+     * int Decimal <- d:Digit { *ref_ptr(d) - '0' }
      * ref_t Digit <- ('0' / '1' / ... / '9') { ref() }
      */
 
@@ -53,9 +53,8 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = cons(s_text(type, "ref_t"), p);
     p = s_both(rule, "Digit", p); r = p;
 
-    /* int Decimal ← Digit { match()[0] - '0' } */
-    /* int Decimal <- d:Digit { ref_byte(d) - '0' } */
-    p = s_both(expr, "ref_byte(d) - '0'", s_text(ident, "d")); q = p;
+    /* int Decimal <- d:Digit { *ref_ptr(d) - '0' } */
+    p = s_both(expr, "*ref_ptr(d) - '0'", s_text(ident, "d")); q = p;
     p = s_both(bind, "d", s_text(call, "Digit")); p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int"; p->next = q; q = p;

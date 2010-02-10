@@ -16,11 +16,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /* ... but binding to anything other than a call is sugar
      *
-     * S :: char * <- "x" y:"y"* "x" { ref_str0(y) }
+     * S :: char * <- "x" y:"y"* "x" { ref_str(y) }
      *
      */
 
-    p = s_both(expr, "ref_str0(y)", s_text(ident, "y"));
+    p = s_both(expr, "ref_str(y)", s_text(ident, "y"));
     p = cons(s_text(lit, "x"), p);
     p = cons(s_both(bind, "y", s_both(rep, 0, s_text(lit, "y"))), p);
     p = cons(s_text(lit, "x"), p);

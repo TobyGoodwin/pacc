@@ -13,9 +13,9 @@ parse aabaa aa
 int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
-    /* Type char * with call and match macro:
+    /* Type char * with call and ref() macro:
      *
-     * char *P <- A P { match() } / ε
+     * char *P <- A P { ref_str(ref()) } / ε
      * char *A <- 'a'
      *
      */
@@ -27,7 +27,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
     p = new_node(seq); s = p;
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(expr); p->text = "ref_str(ref())"; q = p;
     p = new_node(call); p->text = "P"; p->next = q; q = p;
     p = new_node(call); p->text = "A"; p->next = q; q = p;
     p = new_node(seq); p->first = q; p->next = s; q = p;
