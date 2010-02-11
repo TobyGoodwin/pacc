@@ -1,0 +1,9 @@
+# chars
+# parse foo foo
+# parse bar bar
+# noparse qux P 0
+
+# A simple alternative
+
+P :: char * ← A { ref_str(ref()) }
+A ← "foo" / "bar"

@@ -1,4 +1,0 @@
-# A simple alternative
-
-P :: char * ← A { match() }
-A ← "foo" / "bar"

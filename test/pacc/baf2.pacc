@@ -1,8 +1,20 @@
+# int
+# parse 5 5
+# parse 2+3 5
+# parse '2*3' 6
+# parse '2+3+4' 9
+# parse '2*3+4' 10
+# parse '2+3*4' 14
+# parse '2*3*4' 24
+# parse 456 456
+# parse '53*(13+75)' 4664
+# noparse x Additive 0
+
 # Bryan Ford"s trivial grammar with integers:
 
 Additive <- m:Multitive "+" a:Additive { m + a } / m:Multitive -> m
 Multitive <- p:Primary "*" m:Multitive { p * m } / p:Primary -> p
 Primary <- "(" a:Additive ")" -> a / d:Decimal -> d
-Decimal ← Digits1 { atoi(match()) }
+Decimal ← Digits1 { atoi(ref_ptr(ref())) }
 Digits1 ← Digit Digits1 / Digit
 Digit <- "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9"

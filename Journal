@@ -1,3 +1,17 @@
+2010-02-11
+----------
+
+Today's goal: make pacc.pacc understand non-call bindings. That was
+easy: it already does. (Hmm... I'm mildly disturbed by this; I will need
+to code review pacc.pacc carefully at some point.) As a side issue,
+there is yet another test harness; modelled on the automation in
+test/emit, test/pacc tests the complete pacc parser with far less boiler
+plate. Eventually I need to move all the pacc tests to here.
+
+So, it should be easy enough to make pacc.pacc work with ref_str. Here
+goes. OK, that was easy too. So I think this means that I can make
+match() entirely go away! Let's try it...
+
 2010-02-10
 ----------
 

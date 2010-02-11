@@ -88,10 +88,6 @@ build lit0
 parse foo foo
 noparse bar A 0
 
-build and0
-parse ab a
-noparse ac '"b"' 1
-
 build not0
 parse a a
 parse ac a
