@@ -1,0 +1,11 @@
+# chars
+# parse a a
+# parse q q
+# parse z z
+# noparse A A 1
+# noparse '%' A 1
+
+# Semantic predicate and any matcher:
+
+P :: char * ← b:A &{ *b >= 'a' && *b <= 'z' } { b }
+A <- . { ref_str() }

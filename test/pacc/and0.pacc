@@ -4,4 +4,4 @@
 
 # A single character with value:
 
-A :: char * ← "a" &( "b" ) { ref_str(ref()) }
+A :: char * ← "a" &( "b" ) { ref_str() }

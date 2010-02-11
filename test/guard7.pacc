@@ -1,5 +1,0 @@
-Start :: char * ← RawCode End { match() }
-RawCode ← "{" ( c:Char &{ *c != '}' } )* "}" { match() } _
-Char ← . { match() }
-_ ← (" " / "\n" ) *
-End ← !.

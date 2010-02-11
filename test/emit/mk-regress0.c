@@ -31,11 +31,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	NameCont
-	    ← c:Char &{ isalnum(*ref_ptr(c)) || ref_ptr(c) == '_' }
+	    ← c:Char &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
     */
 
     p = s_new(ident); p->text = "c"; s = p;
-    p = s_text(guard, "isalnum(*ref_ptr(c)) || *ref_ptr(c) == '_'"); p->first = s; q = p;
+    p = s_text(guard, "isalnum(ref_0(c)) || ref_0(c) == '_'"); p->first = s; q = p;
     p = s_new(call); p->text = "Char"; s = p;
     p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
@@ -65,10 +65,10 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	Name :: char *
-	    ← n:(NameStart NameCont*) _ { ref_str(n) }
+	    ← n:(NameStart NameCont*) _ { ref_dup(n) }
     */
 
-    p = s_both(expr, "ref_str(n)", s_text(ident, "n"));
+    p = s_both(expr, "ref_dup(n)", s_text(ident, "n"));
     p = cons(s_text(call, "_"), p);
     q = s_both(rep, 0, s_kid(seq, s_text(call, "NameCont")));
     q = cons(s_text(call, "NameStart"), q);

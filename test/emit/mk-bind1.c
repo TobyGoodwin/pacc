@@ -12,11 +12,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /* ... but binding to anything other than a call is sugar
      *
-     * S :: char * <- "x" r:("y" "z") "x" { ref_str(r) }
+     * S :: char * <- "x" r:("y" "z") "x" { ref_dup(r) }
      *
      */
 
-    p = s_both(expr, "ref_str(r)", s_text(ident, "r"));
+    p = s_both(expr, "ref_dup(r)", s_text(ident, "r"));
     p = cons(s_text(lit, "x"), p);
     p = cons(s_both(bind, "r", s_kid(seq, cons(s_text(lit, "y"), s_text(lit, "z")))), p);
     p = cons(s_text(lit, "x"), p);

@@ -62,11 +62,11 @@ CodeNames
     ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
     / StringLit ns:CodeNames → ns
     / CharLit ns:CodeNames → ns
-    / c:Char &{ *ref_ptr(c) != '}' } ns:CodeNames → ns
+    / c:Char &{ ref_0(c) != '}' } ns:CodeNames → ns
     / ε { 0 }
 
 CodeAndNames
-    ← n:CodeNames { s_both(expr, ref_str(ref()), n) }
+    ← n:CodeNames { s_both(expr, ref_str(), n) }
 
 Code
     ← "{" n:CodeAndNames "}" _ → n
@@ -78,15 +78,15 @@ Preamble
     / ε { s_text(preamble, 0) }
 
 Name :: char *
-    ← n:(NameStart NameCont*) _ { ref_str(n) }
+    ← n:(NameStart NameCont*) _ { ref_dup(n) }
 
 TypeOptional
-    ← ColCol TypeElement+ { s_stash_type(ref_str(ref())) }
+    ← ColCol TypeElement+ { s_stash_type(ref_str()) }
     / ε { s_stashed_type() }
 
 StringLit ← "\"" q:QuotedChars "\"" _ → q
 
-QuotedChars ← (!"\"" QuotedChar)* { ref_str(ref()) }
+QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
 
 Char :: ref_t
     ← . { ref() }
@@ -98,16 +98,16 @@ QuotedChar
     ← "\\n" / "\\t" / "\\\\" / "\\\"" / !"\\" Char
 
 NameStart
-    ← c:Char &{ isalpha(*ref_ptr(c)) || *ref_ptr(c) == '_' }
+    ← c:Char &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
 
 NameCont
-    ← c:Char &{ isalnum(*ref_ptr(c)) || *ref_ptr(c) == '_' }
+    ← c:Char &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
 
 TypeElement
     ← Name _ / "*" _
 
 Comment
-    ← "#" (c:Char &{ *ref_ptr(c) != '\n' })* "\n"
+    ← "#" (c:Char &{ ref_0(c) != '\n' })* "\n"
 
 _
     ← (" " / "\t" / "\n" / Comment) *

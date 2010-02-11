@@ -42,11 +42,15 @@ Value inheritance
 
 Make the test scaffold better
 
-    It's still several button presses to run both sets of tests.
+    It's still several button presses to run both sets of tests. This is
+    nearly done, but the two harnesses still need to be completely
+    pushed together.
 
 Many many cleanups (XXX)
 
 Recognise comments in raw code
+
+Use C style comments in .pacc files
 
 Generate #line directives
 

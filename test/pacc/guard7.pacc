@@ -1,0 +1,10 @@
+# chars
+# parse '{}' '{}'
+# parse '{ any chars here }' '{ any chars here }'
+# noparse '{ no' '"}"' 4
+
+Start :: char * ← RawCode End { ref_str() }
+RawCode :: int ← "{" ( c:Char &{ ref_0(c) != '}' } )* "}" _
+Char :: ref_t ← . { ref() }
+_ ← (" " / "\n" ) *
+End ← !.

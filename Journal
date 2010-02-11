@@ -12,6 +12,73 @@ So, it should be easy enough to make pacc.pacc work with ref_str. Here
 goes. OK, that was easy too. So I think this means that I can make
 match() entirely go away! Let's try it...
 
+Stop & Think is all very well, but a stroll round town can produce more
+thoughts (and good ones, too) than I can implement in a week. Sigh. Any
+case, I'd like to document the ref() interface, and change it slightly,
+and also tidy up the new test harness considerably.
+
+Currently we have this.
+
+ref_t
+    An opaque type which can hold a reference to a substring of the
+    input string.
+
+ref_t ref()
+    Returns a reference to everything that is matched by the current
+    rule.
+
+char *ref_ptr(ref_t r)
+    Returns a pointer to the start of the substring referenced by r.
+
+size_t(?) ref_len(ref_t r)
+    Returns the length of the substring referenced by r.
+
+char *ref_str(ref_t r)
+    Returns a newly-allocated, NUL-terminated copy of the substring.
+    Almost equivalent to strndup(ref_ptr(r), ref_len(r)), except that it
+    is more portable, and it calls nomem() if memory cannot be
+    allocated.
+
+Now, the uses that are coming up time and again are "ref_str(ref())",
+and less frequently "*ref_ptr(c)". I propose to rename ref_str() to
+ref_dup() and add either ref_str() or match() to mean ref_dup(ref()).
+
+Also, what about having ref_0(c) to mean *ref_ptr(c)? And in the future
+I intend to have ref_cmp(ref_t r, char *s). That would give us the
+following.
+
+ref_t
+    An opaque type which can hold a reference to a substring of the
+    input string.
+
+ref_t ref()
+    Returns a reference to everything that is matched by the current
+    rule.
+
+char *ref_ptr(ref_t r)
+    Returns a pointer to the start of the substring referenced by r.
+
+char ref_0(ref_t r)
+    Returns the first character of the substring referenced by r.
+
+size_t(?) ref_len(ref_t r)
+    Returns the length of the substring referenced by r.
+
+char *ref_dup(ref_t r)
+    Returns a newly-allocated, NUL-terminated copy of the substring.
+    Almost equivalent to strndup(ref_ptr(r), ref_len(r)), except that it
+    is more portable, and it calls nomem() if memory cannot be
+    allocated.
+
+char *ref_str()
+    Equivalent to ref_dup(ref()).
+
+int ref_cmp(ref_t r, char *s)
+    (Not implemented yet.) Has the same value as strcmp(ref_dup(r), s),
+    but allocates no memory.
+
+Complete? Consistent? Well, not too bad. Let's see how we get on.
+
 2010-02-10
 ----------
 

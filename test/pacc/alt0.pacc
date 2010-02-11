@@ -5,5 +5,5 @@
 
 # A simple alternative
 
-P :: char * ← A { ref_str(ref()) }
+P :: char * ← A { ref_str() }
 A ← "foo" / "bar"

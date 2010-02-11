@@ -1,4 +1,9 @@
+# int
+# parse a9 9
+# parse z3 3
+# noparse zx A 2
+
 # Semantic predicates, calls, and any matchers:
 
 P <- a:A &{ *a>='a' && *a<='z' } b:A &{ *b>='0' && *b<='9' } { *b - '0' }
-A :: char * <- . { match() }
+A :: char * <- . { ref_str() }

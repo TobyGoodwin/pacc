@@ -5,5 +5,5 @@
 
 # An alternative in column > 0
 
-P :: char * ← "foo " A { ref_str(ref()) }
+P :: char * ← "foo " A { ref_str() }
 A ← "bar" / "qux"

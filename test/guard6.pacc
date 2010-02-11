@@ -1,4 +1,0 @@
-Identifier :: char * ← IdentStart IdentCont* { match() } 
-IdentStart :: int ← c:Char &{ *c >= 'a' && *c <= 'z' }
-IdentCont :: int ← IdentStart / d:Char &{ *d >= '0' && *d <= '9' }
-Char :: char * ← . { match() }

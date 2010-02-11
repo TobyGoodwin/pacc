@@ -1,0 +1,12 @@
+# chars
+# parse q q
+# parse qux qux
+# parse q39a q39a
+# parse q. q
+# parse q3. q3
+# noparse 37 Char 1
+
+Identifier :: char * ← IdentStart IdentCont* { ref_str() } 
+IdentStart :: int ← c:Char &{ ref_0(c) >= 'a' && ref_0(c) <= 'z' }
+IdentCont :: int ← IdentStart / d:Char &{ ref_0(d) >= '0' && ref_0(d) <= '9' }
+Char :: ref_t ← . { ref() }
