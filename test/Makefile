@@ -17,4 +17,4 @@ harness.o: parse.h harness.c
 parse.o: parse.h parse.c
 
 parse.c: parse.pacc
-	../pacc1 $^
+	../pacc2 $^
