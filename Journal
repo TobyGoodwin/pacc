@@ -1,3 +1,14 @@
+2010-02-12
+----------
+
+Just fixed pacc.pacc to support C style comments in .pacc files. (That's
+"/* */" and "// to eol", as well as "# to eol" sh style, so there are
+*three* comment styles, which seems a touch excessive.) It took only
+moments, which is why I'm such a big fan of PEGs.
+
+Hmm... so pappy is a functional pearl? I guess that makes pacc a
+procedural swine. :-)
+
 2010-02-11
 ----------
 

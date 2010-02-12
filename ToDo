@@ -5,7 +5,9 @@ Error handling
     line numbers. One possibility is to count newlines after an error
     has been encountered; another is to maintain a line counter as we
     currently maintain col, incrementing it if "any" matches a newline
-    and by the newline count in every matched literal.
+    and by the newline count in every matched literal. Yet another
+    problem is that the names of constructed rules sometimes appear in
+    errors: 'expected x.55 or "*/" at column 462' is not very helpful!
 
 Complete the command-line interface
 
@@ -49,8 +51,6 @@ Make the test scaffold better
 Many many cleanups (XXX)
 
 Recognise comments in raw code
-
-Use C style comments in .pacc files
 
 Generate #line directives
 
