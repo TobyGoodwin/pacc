@@ -1,9 +1,11 @@
-# chars
-# parse a a
-# parse q q
-# parse z z
-# noparse A A 1
-# noparse '%' A 1
+/*
+chars
+parse a a
+parse q q
+parse z z
+noparse A A 1
+noparse '%' A 1
+*/
 
 # Semantic predicate and any matcher:
 

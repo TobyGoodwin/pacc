@@ -1,7 +1,9 @@
-# chars
-# parse foo foo
-# parse bar bar
-# noparse qux P 0
+/*
+chars
+parse foo foo
+parse bar bar
+noparse qux P 0
+*/
 
 # A simple alternative
 

@@ -1,14 +1,16 @@
-# int
-# parse 5 5
-# parse 2+3 5
-# parse '2*3' 6
-# parse '2+3+4' 9
-# parse '2*3+4' 10
-# parse '2+3*4' 14
-# parse '2*3*4' 24
-# parse 456 456
-# parse '53*(13+75)' 4664
-# noparse x Additive 0
+/*
+int
+parse 5 5
+parse 2+3 5
+parse '2*3' 6
+parse '2+3+4' 9
+parse '2*3+4' 10
+parse '2+3*4' 14
+parse '2*3*4' 24
+parse 456 456
+parse '53*(13+75)' 4664
+noparse x Additive 0
+*/
 
 # Bryan Ford"s trivial grammar with integers:
 

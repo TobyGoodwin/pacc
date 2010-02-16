@@ -1,3 +1,0 @@
-# A semantic predicate, with no binding
-
-A <- "5" &{ printf("hello, world!\n") } { 5 }

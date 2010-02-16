@@ -1,0 +1,11 @@
+/*
+chars
+parse ab ab
+parse cd cd
+noparse acd '"b"' 1
+*/
+
+# Together with nest3, this test checks that nested alts behave
+# differently than nested sequences.
+
+P :: char * ← "a" "b" { match() } / "c" "d" { match() }

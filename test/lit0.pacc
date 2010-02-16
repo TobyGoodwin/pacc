@@ -1,3 +1,0 @@
-# A multi-character literal:
-
-A :: char * ← "foo" { match() }

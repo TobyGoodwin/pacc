@@ -1,0 +1,14 @@
+/*
+int
+parse 5.5 25
+parse 5.6 30
+parse 6.5 30
+parse 6.6 36
+noparse 5.x A 2
+*/
+
+# Nested calls with values:
+
+P <- a:A "." b:A { a * b }
+A <- "5" { 5 } / b:B -> b
+B <- "6" { 6 }

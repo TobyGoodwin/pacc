@@ -1,0 +1,10 @@
+/*
+int
+check 5 'hello, world!
+parsed with value 5'
+noparse x A 0
+*/
+
+# A semantic predicate, with no binding
+
+A <- "5" &{ printf("hello, world!\n") } { 5 }

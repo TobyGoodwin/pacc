@@ -1,3 +1,0 @@
-# End of input:
-
-S :: char * ← "foo" !. { "yes" }

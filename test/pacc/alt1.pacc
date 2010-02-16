@@ -1,7 +1,9 @@
-# chars
-# parse 'foo bar' 'foo bar'
-# parse 'foo qux' 'foo qux'
-# noparse 'foo foo' A 4
+/*
+chars
+parse 'foo bar' 'foo bar'
+parse 'foo qux' 'foo qux'
+noparse 'foo foo' A 4
+*/
 
 # An alternative in column > 0
 

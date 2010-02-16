@@ -1,4 +1,0 @@
-# Together with nest1, this test checks that nested sequences are
-# equivalent to flat sequences.
-
-P :: char * ← "a" "b" "c" "d" { "yes" }

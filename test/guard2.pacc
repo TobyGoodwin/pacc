@@ -1,4 +1,0 @@
-# Semantic predicate with binding in guard and expression:
-
-P <- a:A &{ a == 5 } { a }
-A <- "5" { 5 } / "6" { 6 }

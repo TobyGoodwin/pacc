@@ -1,0 +1,8 @@
+/*
+chars
+parse abcd yes
+*/
+
+# See nest0.
+
+P :: char * ← "a" ("b" "c") "d" { "yes" }

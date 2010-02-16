@@ -1,0 +1,8 @@
+/*
+chars
+parse 5 five
+*/
+
+# Type char *:
+
+A :: char * <- "5" { "five" }

@@ -1,5 +1,0 @@
-# Nested calls with alternatives & values:
-
-P <- a:A "." b:A { a * b } / e:A "+" f:A { e + f }
-A <- "5" { 5 } / b:B -> b
-B <- "6" { 6 }

@@ -62,6 +62,7 @@ CodeNames
     ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
     / StringLit ns:CodeNames → ns
     / CharLit ns:CodeNames → ns
+    / C_Comment ns:CodeNames → ns 
     / c:Char &{ ref_0(c) != '}' } ns:CodeNames → ns
     / ε { 0 }
 
@@ -108,7 +109,10 @@ TypeElement
 
 Comment
     ← "#" (!"\n" .)* "\n"
-    / "//" (!"\n" .)* "\n"
+    / C_Comment
+
+C_Comment
+    ← "//" (!"\n" .)* "\n"
     / "/*" (!"*/" .)* "*/"
 
 _

@@ -1,0 +1,9 @@
+/*
+chars
+parse foo foo
+noparse bar A 0
+*/
+
+# A multi-character literal:
+
+A :: char * ← "foo" { match() }

@@ -1,0 +1,12 @@
+/*
+chars
+parse ab a
+noparse ac B 1
+*/
+
+# Nothing unexpected here: different names are independent.
+
+P :: char * ← a:A b:B &{ *b == 'b' } → a
+
+A ← "a" { match() }
+B ← "b" { match() }

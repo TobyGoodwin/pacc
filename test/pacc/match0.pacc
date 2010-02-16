@@ -1,0 +1,7 @@
+/*
+chars
+*/
+
+# Calls to match() can occur anywhere:
+
+A :: char * <- "5" "6" { match() } "7"

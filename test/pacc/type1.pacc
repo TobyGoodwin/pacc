@@ -1,0 +1,8 @@
+/*
+chars
+parse 5 5
+*/
+
+# Type char * with match macro:
+
+A :: char * <- "5" { match() }

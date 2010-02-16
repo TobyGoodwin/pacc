@@ -1,0 +1,10 @@
+/*
+int
+parse 5 5
+parse 6 6
+noparse x A 0
+*/
+
+# Alternation with value:
+
+A <- "5" { 5 } / "6" { 6 }

@@ -1,6 +1,8 @@
-# chars
-# parse ab a
-# noparse ac '"b"' 1
+/*
+chars
+parse ab a
+noparse ac '"b"' 1
+*/
 
 # A single character with value:
 

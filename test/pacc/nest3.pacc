@@ -1,0 +1,11 @@
+/*
+chars
+noparse ab '"d"' 2
+noparse cd P 0
+parse abd abd
+parse acd acd
+*/
+
+# See nest2.
+
+P :: char * ← "a" ("b" / "c") "d" { match() }

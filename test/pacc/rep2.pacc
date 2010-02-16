@@ -1,0 +1,13 @@
+/*
+chars
+noparse xx Y 1
+parse xyx xyx
+parse xyyx xyyx
+parse xyyyx xyyyx
+parse xyyyyyyyyyyx xyyyyyyyyyyx
+*/
+
+# The + operator:
+
+S :: char * <- "x" Y "x" → { match() }
+Y ← "y" +

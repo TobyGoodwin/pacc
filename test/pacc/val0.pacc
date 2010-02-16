@@ -1,0 +1,7 @@
+/*
+int
+parse 5 5
+noparse x A 0
+*/
+
+A :: int <- "5" { 5 }

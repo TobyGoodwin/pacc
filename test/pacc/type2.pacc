@@ -1,0 +1,12 @@
+/*
+chars
+parse a a
+parse aa aa
+parse aaaaa aaaaa
+parse aabaa aa
+*/
+
+# Type char * with call and match macro:
+
+P :: char * <- A P { match() } / ε
+A <- "a"

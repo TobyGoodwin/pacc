@@ -1,9 +1,0 @@
-# Regression. Eventually, some day, pacc should notice that rule A
-# never produces a value, and so it is an error to bind a name to
-# it. However, we're not that clever yet. It is important, though,
-# that the parser terminates! Till 2009-10-13 it didn't, because
-# "evaluating" a rule with no exprs left that rule in the state
-# "parsed", and never shifted it to "evaluated".
-
-P ← a:A { 5 }
-A ← "5"

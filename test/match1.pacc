@@ -1,3 +1,0 @@
-# Calls to rmatch() can occur anywhere:
-
-A :: char * <- "5" "6" { rmatch() } "7"

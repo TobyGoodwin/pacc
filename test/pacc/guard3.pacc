@@ -1,0 +1,13 @@
+/*
+int
+parse 55 5
+parse 66 6
+noparse 56 A 2
+noparse 65 A 2
+noparse xy P 0
+*/
+
+# Semantic predicate with two bindings:
+
+P ← a:A b:A &{ a == b } { a }
+A ← "5" { 5 } / "6" { 6 }

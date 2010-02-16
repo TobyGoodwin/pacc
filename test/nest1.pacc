@@ -1,3 +1,0 @@
-# See nest0.
-
-P :: char * ← "a" ("b" "c") "d" { "yes" }
