@@ -1,0 +1,12 @@
+/*
+chars
+parse ab ab
+noparse ax S 0
+*/
+
+/* The point of this test is that pacc needs to strip comments in order
+ * to interpret quoted strings correctly. Till 2010-02-16, this was not
+ * the case.
+ */
+
+S <- "ab" { /* don't push me */ ref_str() }

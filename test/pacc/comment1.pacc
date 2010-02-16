@@ -1,0 +1,23 @@
+/*
+chars
+parse ab ab
+noparse ax A 1
+*/
+
+/* The point of this test is that the semantic predicate contains the
+ * identifier "a", but only in a comment. Therefore, the binding of "a"
+ * should not cause A to be evaluated, and the word "wrong" should not
+ * be output.
+ */
+ 
+/* Till 2010-02-16, this was not the case: pacc didn't recognise
+comments in C code, and therefore would bind a anyway.  */
+
+# (In some alternate universe, pacc would notice that the bound "a" is
+# unused and issue a warning, but that is not the case at present.)
+
+/* Another issue with this test is that it causes an st_stack overflow
+if all these comments are made into one long comment. */
+
+S :: char * <- a:A &{ 0 /* a */ } { "foo" } / "ab" { ref_str() }
+A <- "a" { printf("wrong") }

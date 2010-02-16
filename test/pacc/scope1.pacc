@@ -1,12 +1,13 @@
 /*
 chars
-# Currently, scope1 won't even compile
-#parse ab a
-#parse ac a
+parse ab a
+parse ac a
 */
 
 # But since we're saying that names are lexically scoped over sequences,
 # the following should work, with the two "a" separately bound.
+
+# Currently, scope1 won't even compile
 
 P :: char * ← a:A (a:B &{ *a == 'b' } / "c") → a
 

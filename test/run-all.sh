@@ -63,49 +63,9 @@ run() {
 
 rm -f pacc/parse.pacc
 
-#for t in emit/mk-*.c pacc/*.pacc; do
-for t in pacc/*.pacc; do
+for t in emit/mk-*.c pacc/*.pacc; do
+#for t in pacc/*.pacc; do
     run $t
-done
-
-while false; do
-#for target in emit/mk-regress0.c; do
-#for target in emit/mk-*.c; do
-    echo $target
-    rm -f emitter emitter.o parse.c parse.o harness harness.o
-    cp $target emitter.c
-    make emitter
-    ./emitter -o parse.c Makefile
-    cp parse.h-`sed -n 2p $target` parse.h
-    make harness
-    # If we use a pipe here, the entire while loop runs in a subshell
-    # and $passes and $fails don't get set.
-    t=`mktemp`
-    egrep '^check|^parse|^noparse' $target > $t
-    # Turn off globbing for the duration, so 2*3 works as expected.
-    set -f
-    . $t
-    set +f
-    rm $t
-done
-
-while false; do
-#for target in pacc/*.pacc; do
-#for target in pacc/comment?.pacc; do
-    echo $target
-    cp $target parse.pacc
-    cp parse.h-`sed -n 1s/..//p $target` parse.h
-    rm -f emitter emitter.o parse.c parse.o harness harness.o
-    make harness
-    # If we use a pipe here, the entire while loop runs in a subshell
-    # and $passes and $fails don't get set.
-    t=`mktemp`
-    egrep '^# (check|parse|noparse)' $target | sed 's/..//' > $t
-    # Turn off globbing for the duration, so 2*3 works as expected.
-    set -f
-    . $t
-    set +f
-    rm $t
 done
 
 echo
