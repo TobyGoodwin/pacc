@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -g -W -Wall
+LDFLAGS = -g
 
 all: pacc
 

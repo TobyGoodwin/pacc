@@ -22,7 +22,13 @@ not...
     output is parse.c
     expected Char at column 1
 
-No, it doesn't. Definitely not. WTF is going on here, then?
+No, it doesn't. Definitely not.
+
+But wait! I think perhaps it is my understanding that is faulty. Let me
+see: pacc0 doesn't contain a parser, so pacc1.c is *not* built from
+pacc.pacc, it is built from whatever tree is hardwired into pacc0.c.
+This is interesting: it means that "make check" is a bit more fragile
+than I suspected. (It may be a Good Thing for a test to be fragile.)
 
 2010-02-12
 ----------
