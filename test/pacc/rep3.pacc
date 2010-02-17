@@ -9,5 +9,5 @@ noparse xyyyyyyyyyyx '"x"' 2
 
 # The ? operator:
 
-S :: char * <- "x" Y "x" → { match() }
+S :: char * <- "x" Y "x" → { ref_str() }
 Y ← "y" ?

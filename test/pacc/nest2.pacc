@@ -8,4 +8,4 @@ noparse acd '"b"' 1
 # Together with nest3, this test checks that nested alts behave
 # differently than nested sequences.
 
-P :: char * ← "a" "b" { match() } / "c" "d" { match() }
+P :: char * ← "a" "b" { ref_str() } / "c" "d" { ref_str() }

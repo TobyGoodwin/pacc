@@ -6,7 +6,7 @@ parse aaaaa aaaaa
 parse aabaa aa
 */
 
-# Type char * with call and match macro:
+# Type char * with call and ref_str macro:
 
-P :: char * <- A P { match() } / ε
+P :: char * <- A P { ref_str() } / ε
 A <- "a"

@@ -8,5 +8,5 @@ noparse ac B 1
 
 P :: char * ← a:A b:B &{ *b == 'b' } → a
 
-A ← "a" { match() }
-B ← "b" { match() }
+A ← "a" { ref_str() }
+B ← "b" { ref_str() }

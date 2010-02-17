@@ -7,4 +7,4 @@ noparse ab A 1
 
 # A single character with value:
 
-A :: char * ← "a" !( "b" ) { match() }
+A :: char * ← "a" !( "b" ) { ref_str() }

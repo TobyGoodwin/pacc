@@ -11,12 +11,11 @@ noparse 'fred barney' End 5
 #include <ctype.h>
 }
 
-Start :: char * <- n:Name End -> n
-Name ← NameStart NameCont* { match() } _
-Char ← . { match() }
+Start :: char * <- n:Name End { ref_dup(n) }
+Name ← n:(NameStart NameCont*) _ -> n
 
 # rest should be void
-NameStart :: int ← c:Char &{ isalpha(*c) || *c == '_' }
-NameCont ← c:Char &{ isalnum(*c) || *c == '_' }
+NameStart :: int ← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
+NameCont ← c:. &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
 _ ← " " *
 End ← !.

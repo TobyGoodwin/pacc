@@ -63,7 +63,9 @@ run() {
 
 rm -f pacc/parse.pacc
 
-for t in emit/mk-*.c pacc/*.pacc; do
+ts=${*:-emit/mk-*.c pacc/*.pacc}
+
+for t in $ts; do
 #for t in pacc/*.pacc; do
     run $t
 done

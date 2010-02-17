@@ -6,4 +6,4 @@ noparse bar A 0
 
 # A multi-character literal:
 
-A :: char * ← "foo" { match() }
+A :: char * ← "foo" { ref_str() }

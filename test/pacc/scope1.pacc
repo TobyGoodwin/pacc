@@ -11,5 +11,5 @@ parse ac a
 
 P :: char * ← a:A (a:B &{ *a == 'b' } / "c") → a
 
-A ← "a" { match() }
-B ← "b" { match() }
+A ← "a" { ref_str() }
+B ← "b" { ref_str() }

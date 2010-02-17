@@ -8,4 +8,4 @@ parse acd acd
 
 # See nest2.
 
-P :: char * ← "a" ("b" / "c") "d" { match() }
+P :: char * ← "a" ("b" / "c") "d" { ref_str() }

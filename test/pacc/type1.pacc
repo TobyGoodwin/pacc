@@ -3,6 +3,6 @@ chars
 parse 5 5
 */
 
-# Type char * with match macro:
+# Type char * with ref_str() macro:
 
-A :: char * <- "5" { match() }
+A :: char * <- "5" { ref_str() }

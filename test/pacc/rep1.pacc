@@ -8,4 +8,4 @@ parse xyyx yy
 # The * operator with binding:
 
 S :: char * <- "x" y:Y "x" → y
-Y ← "y" * { match() }
+Y ← "y" * { ref_str() }

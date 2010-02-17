@@ -1,3 +1,29 @@
+2010-02-17
+----------
+
+I'm just about ready to strip out the col_expr code, the match() macro,
+etc. since ref() and friends are now used in all test cases. However...
+
+The "make check" command currently fails, because pacc2.c is compiled
+from a tree that includes "identifiers" from a comment in some C code
+and pacc3.c is compiled from a tree that doesn't. Now, pacc0 definitely
+doesn't understand C comments, and pacc2 definitely does. But it seems
+to me that pacc1 *should* (since it is compiled from pacc.pacc), but
+*doesn't* (since when it builds the tree from which pacc2.c will be
+compiled, it includes those identifiers).
+
+Just a sec, we can easily prove whether pacc1 understand comments or
+not...
+
+    ; sh run-all.sh pacc/comment1.pacc 
+    ...
+    ; ../pacc1 parse.pacc 
+    input is parse.pacc
+    output is parse.c
+    expected Char at column 1
+
+No, it doesn't. Definitely not. WTF is going on here, then?
+
 2010-02-12
 ----------
 
