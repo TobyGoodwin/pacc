@@ -173,6 +173,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
     p = s_new(rule); p->text = "_"; p->first = q; p->next = r; r = p;
 
+#if 0
     /* Comment ← "#" (c:Char &{ *c != '\n' })* "\n" */
     p = s_new(lit); p->text = "\\n"; s = p;
     p = s_new(ident); p->text = "c"; i = p;
@@ -185,6 +186,41 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
     p = s_new(rule); p->text = "Comment"; p->first = q; p->next = r; r = p;
+#endif
+
+    /*
+	C_Comment
+	    ← "//" (!"\n" .)* "\n"
+	    / "/_*" (!"*_/" .)* "*_/"
+    */
+
+    p = s_kid(not, s_text(lit, "*/"));
+    p = s_kid(seq, cons(p, s_new(any)));
+    p = s_both(rep, 0, p);
+    t = s_kid(seq, cons(s_text(lit, "/*"), cons(p, s_text(lit, "*/"))));
+    p = s_kid(not, s_text(lit, "\\n"));
+    p = s_kid(seq, cons(p, s_new(any)));
+    p = s_both(rep, 0, p);
+    p = s_kid(seq, cons(s_text(lit, "//"), cons(p, s_text(lit, "\\n"))));
+    p = s_kid(alt, cons(p, t));
+    p = cons(s_text(type, "int" /* XXX void */), p);
+    p = s_both(rule, "C_Comment", p);
+    r = cons(p, r);
+
+    /*
+	Comment
+	    ← "#" (!"\n" .)* "\n"
+	    / C_Comment
+    */
+    t = s_text(call, "C_Comment");
+    p = s_kid(not, s_text(lit, "\\n"));
+    p = s_kid(seq, cons(p, s_new(any)));
+    p = s_both(rep, 0, p);
+    p = s_kid(seq, cons(s_text(lit, "#"), cons(p, s_text(lit, "\\n"))));
+    p = s_kid(alt, cons(p, t));
+    p = cons(s_text(type, "int" /* XXX void */), p);
+    p = s_both(rule, "Comment", p);
+    r = cons(p, r);
 
     /*
 	TypeElement
@@ -409,6 +445,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 	    ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
 	    / StringLit ns:CodeNames → ns
 	    / CharLit ns:CodeNames → ns
+	    / C_Comment ns:CodeNames → ns 
 	    / c:Char &{ *c != '}' } ns:CodeNames → ns
 	    / ε { 0 }
      */
@@ -421,6 +458,12 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
     p = cons(s_both(guard, "*c != '}'", s_text(ident, "c")), p);
     p = cons(s_both(bind, "c", s_text(call, "Char")), p);
+    p = s_kid(seq, p);
+    t = cons(p, t);
+
+    p = s_both(expr, "ns", s_text(ident, "ns"));
+    p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
+    p = cons(s_text(call, "C_Comment"), p);
     p = s_kid(seq, p);
     t = cons(p, t);
 

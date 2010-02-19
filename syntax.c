@@ -49,11 +49,6 @@ struct s_node *s_grammar(char *preamble, struct s_node *defns) {
     return r;
 }
 
-struct s_node *s_rule_cons(struct s_node *car, struct s_node *cdr) {
-    car->next = cdr;
-    return car;
-}
-
 struct s_node *s_alt(struct s_node *s, struct s_node *r) {
     if (r->type == alt) {
 	assert(!r->next);
@@ -129,6 +124,7 @@ struct s_node *mkseq(struct s_node *l) {
     return r;
 }
 
+/* destructive cons! */
 struct s_node *cons(struct s_node *a, struct s_node *d) {
     a->next = d;
     return a;
@@ -198,6 +194,10 @@ static void dump(struct s_node *p, int indent) {
     if (s_has_children(p->type))
 	for (p = p->first; p; p = p->next)
 	    dump(p, indent + 1);
+    else
+	/* Nodes of type call have children after name resolution */
+	/* XXX preamble contains ident kids: this is wrong */
+	assert(p->type == call || p->type == preamble || !p->first);
 
     return;
 }

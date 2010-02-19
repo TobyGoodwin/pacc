@@ -1,3 +1,27 @@
+2010-02-19
+----------
+
+Just to finish off what I was saying about "make check"... No, it is not
+particularly fragile: under all normal circumstances a failure of "make
+check" would mean that something has gone very wrong. In general, the
+hand-crafted tree in pacc0.c must be able to parse all pacc syntax that
+is *used* by pacc.pacc, although pacc.pacc may itself *implement*
+further syntax.
+
+Normally, provided this is the case (and everything else is working OK!)
+pacc2 will be correctly built, and "make check" will succeed. If it is
+not the case, pacc1 will be unable to parse pacc.pacc.
+
+But comments and identifiers in embedded C code are a special case,
+since it is not *really* pacc that has to parse them -- it just does a
+rough job, and leaves the details up to the C compiler. Provided we pull
+out at least enough identifiers, pacc1 can build pacc2 correctly. But if
+pacc2 then comes up with a tighter list of identifiers, pacc3 will be
+different. Phew!
+
+So, better make pacc0 strip C comments... OK, done that. And now "make
+check" works again.
+
 2010-02-17
 ----------
 
