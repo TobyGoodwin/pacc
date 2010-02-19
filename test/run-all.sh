@@ -38,6 +38,7 @@ run() {
     rm -f emitter emitter.o parse.c parse.o harness harness.o
     case $target in
 	emit/*)
+	    > parse.pacc # Makefile has parse.c depends on parse.pacc
 	    cp $target emitter.c
 	    make emitter
 	    ./emitter -o parse.c Makefile
@@ -61,12 +62,9 @@ run() {
     fi
 }
 
-rm -f pacc/parse.pacc
-
 ts=${*:-emit/mk-*.c pacc/*.pacc}
 
 for t in $ts; do
-#for t in pacc/*.pacc; do
     run $t
 done
 
