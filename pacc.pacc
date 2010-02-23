@@ -89,6 +89,7 @@ StringLit ← "\"" q:QuotedChars "\"" _ → q
 
 QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
 
+# XXX probably not necessary any more
 Char :: ref_t
     ← . { ref() }
 

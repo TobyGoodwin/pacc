@@ -30,10 +30,21 @@ Optimize
     First for space - this is ongoing with hashing, and eval list stuff.
     Then (and we will need some more test cases) for time.
 
-Revisit match() versus bra/ket versus auto-typing
+ref() stuff
 
-    This can be independent of the eval stack stuff, 'cos we need two
-    lists (for long call_or_expr and off_t column) anyway.
+    A very beautiful piece of work. Still need to remove col_expr.
+    Anything else?
+
+Multiple expressions
+
+    Clarify or eliminate what it means for a sequence to contain more
+    than one expression.
+
+Scoping
+
+    Names in pacc grammars are supposed to scope statically over
+    sequences, but that clearly isn't the case at the moment, otherwise
+    test/pacc/scope1.pacc would compile!
 
 Parser optimization / manipulation (including partialization hack)
 
@@ -42,19 +53,17 @@ Value inheritance
     In your rule "SeqRule ← s:Sequence → s / u:UnaryRule → u" would not
     "SeqRule ← Sequence / UnaryRule" do as well, if not better?
 
-Make the test scaffold better
-
-    It's still several button presses to run both sets of tests. This is
-    nearly done, but the two harnesses still need to be completely
-    pushed together.
-
 Many many cleanups (XXX)
-
-Recognise comments in raw code
 
 Generate #line directives
 
 Review of the parsing engine - do we really need so many stacks?
+
+Review of pacc.pacc
+
+    I was shocked (but not surprised) to discover that pacc *already*
+    understood arbitrary bindings. Need to ensure that anything we can
+    parse really has a meaning that works.
 
 Autoconfiscation
 

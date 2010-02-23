@@ -163,8 +163,19 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 	_
 	    ← (" " / "\t" / "\n" / Comment) *
     */
+
+    p = s_text(call, "Comment");
+    p = cons(s_kid(seq, s_text(lit, "\\n")), p);
+    p = cons(s_kid(seq, s_text(lit, "\\t")), p);
+    p = cons(s_kid(seq, s_text(lit, " ")), p);
+    p = s_both(rep, 0, s_kid(alt, p));
+    p = cons(s_text(type, "int" /* XXX: void */), p);
+    p = s_both(rule, "_", p);
+    r = cons(p, r);
+
+#if 0
     p = s_new(call); p->text = "Comment"; q = p;
-    p = s_new(lit); p->text = "\\n"; p->next = q; q = p;
+    p = s_text(lit,p->text = "\\n"; p->next = q; q = p;
     p = s_new(lit); p->text = "\\t"; p->next = q; q = p;
     p = s_new(lit); p->text = " "; p->next = q; q = p;
     p = s_new(alt); p->first = q; q = p;
@@ -172,6 +183,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
     p = s_new(rule); p->text = "_"; p->first = q; p->next = r; r = p;
+#endif
 
 #if 0
     /* Comment ← "#" (c:Char &{ *c != '\n' })* "\n" */
@@ -212,7 +224,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 	    ← "#" (!"\n" .)* "\n"
 	    / C_Comment
     */
-    t = s_text(call, "C_Comment");
+    t = s_kid(seq, s_text(call, "C_Comment"));
     p = s_kid(not, s_text(lit, "\\n"));
     p = s_kid(seq, cons(p, s_new(any)));
     p = s_both(rep, 0, p);
@@ -241,11 +253,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	NameCont
-	    ← c:Char &{ isalnum(*c) || *c == '_' }
+	    ← c:Char &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
     */
 
     p = s_new(ident); p->text = "c"; s = p;
-    p = s_new(guard); p->text = "isalnum(*c) || *c == '_'"; p->first = s; q = p;
+    p = s_text(guard, "isalnum(ref_0(c)) || ref_0(c) == '_'"); p->first = s; q = p;
     p = s_new(call); p->text = "Char"; s = p;
     p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
@@ -254,11 +266,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	NameStart :: void
-	    ← c:Char &{ isalpha(*c) || *c == '_' }
+	    ← c:Char &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
     */
 
     p = s_new(ident); p->text = "c"; s = p;
-    p = s_new(guard); p->text = "isalpha(*c) || *c == '_'"; p->first = s; q = p;
+    p = s_text(guard, "isalpha(ref_0(c)) || ref_0(c) == '_'"); p->first = s; q = p;
     p = s_new(call); p->text = "Char"; s = p;
     p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
@@ -306,10 +318,10 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     r = cons(p, r);
 
     /*
-	QuotedChars ← (!"\"" QuotedChar)* { match() }
+	QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
     */
 
-    p = s_new(expr); p->text = "match()"; t = p;
+    p = s_new(expr); p->text = "ref_str()"; t = p;
     p = s_new(call); p->text = "QuotedChar"; q = p;
     p = s_new(lit); p->text = "\\\""; s = p;
     p = s_new(not); p->first = s; p->next = q; q = p;
@@ -334,23 +346,27 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "StringLit"; p->first = q; p->next = r; r = p;
 
-    /* Char ← . { match() } */
+    /*
+        XXX probably not necessary any more
+	Char :: ref_t
+	    ← . { ref() }
+    */
 
-    p = s_new(expr); p->text = "match()"; q = p;
+    p = s_new(expr); p->text = "ref()"; q = p;
     p = s_new(any); p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "char *"; p->next = q; q = p;
+    p = s_new(type); p->text = "ref_t"; p->next = q; q = p;
     p = s_new(rule); p->text = "Char"; p->first = q; p->next = r; r = p;
 
     /*
 	TypeOptional
-	    ← ColCol TypeElement+ { s_stash_type(match()) }
+	    ← ColCol TypeElement+ { s_stash_type(ref_str()) }
 	    / ε { s_stashed_type() }
     */
     p = s_new(expr); p->text = "s_stashed_type()"; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(expr); p->text = "s_stash_type(match())"; q = p;
+    p = s_new(expr); p->text = "s_stash_type(ref_str())"; q = p;
     p = s_new(call); p->text = "TypeElement"; s = p;
     p = s_text(rep, "1,"); p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "ColCol"; p->next = q; q = p;
@@ -360,27 +376,22 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "TypeOptional"; p->first = q; p->next = r; r = p;
 
-#if 0
     /*
-	RawCode
-	    ← "{" c:Char &{ *c != 0x7d } "}" { s_text(bind, match()) } _
+	Name :: char *
+	    ← n:(NameStart NameCont*) _ { ref_dup(n) }
     */
+    p = s_both(expr, "ref_dup(n)", s_text(ident, "n"));
+    p = cons(s_text(call, "_"), p);
+    q = s_both(rep, 0, s_text(call, "NameCont"));
+    q = cons(s_text(call, "NameStart"), q);
+    q = s_kid(seq, q);
+    q = s_both(bind, "n", q);
+    p = s_kid(seq, cons(q, p));
+    p = cons(s_text(type, "char *"), p);
+    p = s_both(rule, "Name", p);
+    r = cons(p, r);
 
-    p = s_new(call); p->text = "_"; q = p;
-    p = s_new(expr); p->text = "s_text(bind, match())"; p->next = q; q = p;
-    p = s_new(lit); p->text = "}"; p->next = q; t = p;
-    p = s_new(ident); p->text = "c"; s = p;
-    p = s_new(guard); p->text = "*c != 0x7d"; p->first = s; q = p;
-    p = s_new(call); p->text = "Char"; s = p;
-    p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(rep); p->first = q; p->next = t; q = p;
-    p = s_new(lit); p->text = "{"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "RawCode"; p->first = q; p->next = r; r = p;
-#endif
-
+#if 0
     /*
 	Name :: char *
 	    ← NameStart NameCont* { match() } _
@@ -394,6 +405,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Name"; p->first = q; p->next = r; r = p;
+#endif
 
     /*
 	Preamble
@@ -431,10 +443,10 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	CodeAndNames
-	    ← n:CodeNames { s_both(expr, match(), n) }
+	    ← n:CodeNames { s_both(expr, ref_str(), n) }
      */
 
-    p = s_both(expr, "s_both(expr, match(), n)", s_text(ident, "n"));
+    p = s_both(expr, "s_both(expr, ref_str(), n)", s_text(ident, "n"));
     p = cons(s_both(bind, "n", s_text(call, "CodeNames")), p);
     p = s_kid(seq, p);
     p = cons(s_text(type, "struct s_node *"), p);
@@ -446,7 +458,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 	    / StringLit ns:CodeNames → ns
 	    / CharLit ns:CodeNames → ns
 	    / C_Comment ns:CodeNames → ns 
-	    / c:Char &{ *c != '}' } ns:CodeNames → ns
+	    / c:Char &{ ref_0(c) != '}' } ns:CodeNames → ns
 	    / ε { 0 }
      */
 
@@ -456,7 +468,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     p = s_both(expr, "ns", s_text(ident, "ns"));
     p = cons(s_both(bind, "ns", s_text(call, "CodeNames")), p);
-    p = cons(s_both(guard, "*c != '}'", s_text(ident, "c")), p);
+    p = cons(s_both(guard, "ref_0(c) != '}'", s_text(ident, "c")), p);
     p = cons(s_both(bind, "c", s_text(call, "Char")), p);
     p = s_kid(seq, p);
     t = cons(p, t);

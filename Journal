@@ -1,3 +1,35 @@
+2010-02-23
+----------
+
+What I'm intending to do just now is remove support for col_expr,
+match(), copy(), etc. That throws up a few ideas...
+
+Before we had ref(), it was essential that expressions could appear
+anywhere in a sequence, as that (the correct binding of col_expr,
+basically) was how match() and rmatch() worked. This also meant that we
+had to at least countenance the possibility of multiple expressions in a
+sequence, although what this actually meant was rather unexplored.
+
+However, we can now revert to the more usual idea that a sequence should
+hold only one expression. (Indeed, it would seem to be the case that only
+a top-level sequence - a child of a rule or a child of an alt that is a
+child of a rule - should be permitted to contain expressions. But this
+seems a bit arbitrary too.) Obviously I need to think about all this
+some more, but it would be nice not to have to worry about what multiple
+expressions mean. It might also mean that we have a better way to tell
+where a rule ends (although then we might have to support "{}" or ";" to
+indicate the end of void rule).
+
+And another thought sparking off that: the current typing syntax is
+basically: "same as a cast". But in fact we use the type for a
+declaration, and for sufficiently complex types we may run into trouble.
+If we could have "same as a declaration" life might be simpler.
+
+But back to the main plot. Ah: pacc0.c still uses match(). Darn. OK, now
+it doesn't. For good measure I also fixed a few missing seqs in the
+definition of _ which meant that pacc1 couldn't parse everything that
+pacc2 can; I'm not really much into the idea of sPEG any more.
+
 2010-02-19
 ----------
 
