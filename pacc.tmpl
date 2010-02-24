@@ -35,21 +35,6 @@ static void nomem(void) {
     panic("out of memory");
 }
 
-static char *copy(char *s, int from, int to) {
-    char *r;
-    int l;
-    Trace fprintf(stderr, "copy(%d, %d)\n", from, to);
-    l = to - from;
-    r = realloc(0, l + 1);
-    if (r) {
-	memcpy(r, s + from, l); 
-	r[l] = '\0';
-    }
-    return r;
-}
-#define match() copy(_pacc->string, col, col_expr)
-#define rmatch() copy(_pacc->string, col_expr, cur->remainder)
-
 #define COL_STACK_BODGE 25
 static int col_stack[COL_STACK_BODGE];
 static int col_ptr = 0;

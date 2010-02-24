@@ -1,3 +1,19 @@
+2010-02-24
+----------
+
+So where are we at? It should now be possible to remove copy() and
+match()... No, while it now compiles, it fails 69 tests (we "should"
+currently be failing 4, although I think I have to do something about
+that quite soon - it's really annoying to have "expected" unexpected
+failures). So why's that? Oh. Some of the emit tests still use match().
+Darn, I thought I'd fixed them all up. OK, here goes... done.
+
+Next step will be to remove support for col_expr. This will save some,
+possibly quite a bit, of space. So here are the interesting statistics
+before we do that...
+
+
+
 2010-02-23
 ----------
 

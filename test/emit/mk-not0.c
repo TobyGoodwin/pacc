@@ -14,11 +14,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /* A single character with value:
      *
-     * char *A ← 'a' !( 'b' ) { match() }
+     * char *A ← 'a' !( 'b' ) { ref_str() }
      *
      */
 
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(lit); p->text = "b"; s = p;
     p = new_node(seq); p->first = s; s = p;
     p = new_node(not); p->first = s; p->next = q; q = p;

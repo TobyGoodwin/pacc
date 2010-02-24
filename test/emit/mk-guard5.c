@@ -15,11 +15,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     /* Semantic predicates, calls, and any matchers:
      *
      * int P <- a:A &{ *a>='a' && *a<='z' } b:A &{ *b>='0' && *b<='9' } { *b - '0' }
-     * char *A <- . { match() }
+     * char *A <- . { ref_str() }
      *
      */
 
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(any); p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;

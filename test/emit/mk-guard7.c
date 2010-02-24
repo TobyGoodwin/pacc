@@ -21,9 +21,9 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
     p = s_new(rule); p->text = "End"; p->first = q; r = p;
 
-    /* Char ← . { match() } */
+    /* Char ← . { ref_str() } */
 
-    p = s_new(expr); p->text = "match()"; q = p;
+    p = s_new(expr); p->text = "ref_str()"; q = p;
     p = s_new(any); p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
@@ -40,11 +40,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	RawCode
-	    ← "{" ( c:Char &{ *c != 0x7d } )* "}" { match() } _
+	    ← "{" ( c:Char &{ *c != 0x7d } )* "}" { ref_str() } _
     */
 
     p = s_new(call); p->text = "_"; q = p;
-    p = s_new(expr); p->text = "match()"; p->next = q; q = p;
+    p = s_new(expr); p->text = "ref_str()"; p->next = q; q = p;
     p = s_new(lit); p->text = "}"; p->next = q; t = p;
     p = s_new(ident); p->text = "c"; s = p;
     p = s_new(guard); p->text = "*c != 0x7d"; p->first = s; q = p;
@@ -59,9 +59,9 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /*
 	Start
-	    ← RawCode End { match() }
+	    ← RawCode End { ref_str() }
     */
-    p = s_new(expr); p->text = "match()"; q = p;
+    p = s_new(expr); p->text = "ref_str()"; q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "RawCode"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;

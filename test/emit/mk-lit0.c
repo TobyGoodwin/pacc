@@ -13,12 +13,12 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /* A multi-character literal:
      *
-     * A :: char * ← "foo" { match() }
+     * A :: char * ← "foo" { ref_str() }
      *
      */
 
     /* A :: char * ← "foo" */
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(lit); p->text = "foo"; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;

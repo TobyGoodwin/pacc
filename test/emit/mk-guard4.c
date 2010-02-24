@@ -17,7 +17,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     /* Semantic predicate and any matcher:
      *
      * char *P ← b:A &{ *b >= 'a' && *b <= 'z' } { b }
-     * char *A <- . { match() }
+     * char *A <- . { ref_str() }
      *
      * This is not right, of course. We need better types!
      *
@@ -30,9 +30,13 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
      * supply the "match()" expression, but beyond that I don't see
      * what's wrong with the example. I wish this didn't happen. :-(
      *
+     * 2010-02-24: match() has now become ref_str(). Perhaps the "better
+     * types" comment was a call for ref_t, which now exists, but I
+     * haven't yet rewritten this test to use it.
+     *
      */
 
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(any); p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;

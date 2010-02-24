@@ -13,17 +13,17 @@ noparse 37 Char 1
 #include "syntax.h"
 
 /*
- * char *Identifier ← IdentStart IdentCont* { match() } 
+ * char *Identifier ← IdentStart IdentCont* { ref_str() } 
  * void IdentStart ← c:Char &{ *c >= 'a' && *c <= 'z' }
  * void IdentCont ← IdentStart / d:Char &{ *d >= '0' && *d <= '9' }
- * char *Char ← . { match() }
+ * char *Char ← . { ref_str() }
  */
 
 int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
-    /* char *Char ← . { match() } */
-    p = new_node(expr); p->text = "match()"; q = p;
+    /* char *Char ← . { ref_str() } */
+    p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(any); p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
@@ -50,7 +50,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "IdentStart"; p->first = q; p->next = r; r = p;
 
-    /* char *Identifier	← IdentStart IdentCont* { match() } */
+    /* char *Identifier	← IdentStart IdentCont* { ref_str() } */
     p = new_node(seq); s = p;
     p = new_node(call); p->text = "IdentConts0"; q = p;
     p = new_node(call); p->text = "IdentCont"; p->next = q; q = p;
@@ -59,7 +59,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "IdentConts0"; p->first = q; p->next = r; r = p;
 
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(call); p->text = "IdentConts0"; p->next = q; q = p;
     p = new_node(call); p->text = "IdentStart"; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;

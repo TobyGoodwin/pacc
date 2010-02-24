@@ -10,14 +10,14 @@ parse 5 5
 int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
-    /* Type char * with match macro:
+    /* Type char * with ref_str():
      *
-     * char *A <- '5' { match() }
+     * char *A <- '5' { ref_str() }
      *
      */
 
     /* A <- 'a' */
-    p = new_node(expr); p->text = "match()"; q = p;
+    p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(lit); p->text = "5"; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;

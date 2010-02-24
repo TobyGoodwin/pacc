@@ -23,7 +23,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
      * int Additive <- m:Multitive '+' a:Additive { m + a } / Multitive
      * int Multitive <- p:Primary '*' m:Multitive { p * m } / Primary
      * int Primary <- '(' a:Additive ')' -> a / Decimal
-     * int Decimal ← Digits1 { atoi(match()) }
+     * int Decimal ← Digits1 { atoi(ref_str()) }
      * int Digits1 ← Digit Digits1 / Digit
      * int Digit <- '0' / '1' / ... / '9'
      */
@@ -63,8 +63,8 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(type); p->text = "int"; p->next = q; q = p;
     p = s_new(rule); p->text = "Digits1"; p->first = q; p->next = r; r = p;
 
-    /* int Decimal ← Digits1 { atoi(match()) } */
-    p = s_new(expr); p->text = "atoi(match())"; q = p;
+    /* int Decimal ← Digits1 { atoi(ref_str()) } */
+    p = s_new(expr); p->text = "atoi(ref_str())"; q = p;
     p = s_new(call); p->text = "Digits1"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int"; p->next = q; q = p;

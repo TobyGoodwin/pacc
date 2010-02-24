@@ -16,7 +16,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     /* The * operator:
      *
-     * char *S <- "x" Y "x" → { match() }
+     * char *S <- "x" Y "x" → { ref_str() }
      * Y ← "y" *
      *
      */
@@ -27,7 +27,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = cons(s_text(type, "char *"), p);
     r = s_both(rule, "Y", p);
 
-    p = s_text(expr, "match()");
+    p = s_text(expr, "ref_str()");
     p = cons(s_text(lit, "x"), p);
     p = cons(s_text(call, "Y"), p);
     p = cons(s_text(lit, "x"), p);

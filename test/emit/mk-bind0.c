@@ -17,11 +17,11 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     /* Binding to a call is not sugar...
      *
      * char *S <- "x" y:Y "x" → y
-     * Y ← "y" * { match() }
+     * Y ← "y" * { ref_str() }
      *
      */
 
-    p = s_text(expr, "match()");
+    p = s_text(expr, "ref_str()");
     p = cons(s_both(rep, 0, s_text(lit, "y")), p);
     p = s_kid(seq, p);
     p = cons(s_text(type, "char *"), p);
