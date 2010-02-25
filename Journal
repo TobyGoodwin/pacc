@@ -1,3 +1,24 @@
+2010-02-25
+----------
+
+Next step will be to remove support for col_expr. This will save some,
+possibly quite a bit, of space. So here are the interesting statistics
+before we do that...
+
+    ; sh run-all.sh 
+    315 passes
+    4 fails
+    ; wc pacc.pacc
+     137  488 2852 pacc.pacc
+    ; valgrind ./pacc2 pacc.pacc -o pacc3.c
+    ==5986== malloc/free: in use at exit: 971,991 bytes in 16,553 blocks.
+    ==5986== malloc/free: 38,253 allocs, 21,700 frees, 1,739,467 bytes alloc'ed.
+    ; echo 1739467 / 2852 | bc
+    609
+
+Outta time. The variable col_expr has gone; need to tidy up the
+encoding, and refactor.
+
 2010-02-24
 ----------
 
@@ -7,12 +28,6 @@ currently be failing 4, although I think I have to do something about
 that quite soon - it's really annoying to have "expected" unexpected
 failures). So why's that? Oh. Some of the emit tests still use match().
 Darn, I thought I'd fixed them all up. OK, here goes... done.
-
-Next step will be to remove support for col_expr. This will save some,
-possibly quite a bit, of space. So here are the interesting statistics
-before we do that...
-
-
 
 2010-02-23
 ----------

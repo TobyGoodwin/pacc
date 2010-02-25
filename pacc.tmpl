@@ -238,7 +238,7 @@ static struct intermed *popm(void) { return m_stack[--m_ptr]; }
 static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
     int cont, st;
-    int col, rule_col, col_expr;
+    off_t col, rule_col;
     int _pacc_i;
     int evaluating;
     struct intermed *last;
@@ -279,7 +279,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 		 * which always goes into col_expr. */
 		if (cur->evlis[_pacc_ev_i - 2].core & 3) {
 		    assert(_pacc_ev_i < cur->ev_valid);
-		    col_expr = cur->evlis[_pacc_ev_i].col; ++_pacc_ev_i;
+		    /* col_expr = cur->evlis[_pacc_ev_i].col; */
+		    ++_pacc_ev_i;
 		}
 		goto top;
 	    }
