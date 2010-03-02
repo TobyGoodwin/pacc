@@ -1,3 +1,36 @@
+2010-03-02
+----------
+
+In haste: I have less than 5 minutes today. There is nothing arbitrary
+about "only one expression". We require each possible path through a
+rule to yield exactly one expression (or none for a void rule). We
+should allow them to appear anywhere, so you can say something like
+this.
+
+  Term <- "(" ( n:Number -> n / v:Name { lookup_var(v) } ) ")"
+
+But here's the main curiosity I wanted to get down. We can easily check
+"exactly one expression" at run time: set p->expr to 0 when it is
+initialized; when we know the id of the expression that we will want,
+check that p->expr is 0 before setting it to that id.
+
+We can, and will, also check statically that the parse tree obeys the
+"exactly one expression" rule; but that's a somewhat hairier check, so
+we will use assert() to do the run-time check. The check itself is
+simple:
+
+    assert(p->expr == 0);
+    p->expr = eid; /* actually, eid is a compile-time constant */
+
+And when we initialize a p, we say
+
+    assert((p->expr = 0) == 0);
+
+That assertion can never fail, but it is a *correct* use of a
+side-effect in an assertion!
+
+That's all folks...
+
 2010-02-25
 ----------
 
