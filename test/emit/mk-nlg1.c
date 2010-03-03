@@ -1,6 +1,12 @@
 /*
-int
+chars
 parse a a
+parse aac aac
+parse aaaac aaaac
+parse aaaaaac aaaaaac
+parse aaaaaaaac aaaaaaaac
+parse aaaaaaaaaac aaaaaaaaaac
+parse aaaaaaaaaaaac aaaaaaaaaaaac
 */
 
 #include <sys/types.h>
@@ -14,7 +20,7 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
      * non-linear if * is implemented without memoization. Thanks to
      * Bryan Ford (communication on PEG mailing list 2009-03-20).
      *
-     * S ← (a S b / a S c / a) *
+     * S ← (a S b / a S c / a)* { ref_str() }
      *
      */
 
@@ -33,8 +39,10 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
 
     p = new_node(alt); p->first = s; q = p;
     p = s_text(rep, 0); p->first = q; q = p;
+    p = cons(p, s_text(expr, "ref_str()"));
+
     p = new_node(seq); p->first = q; q = p;
-    p = new_node(type); p->text = "int"; p->next = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "S"; p->first = q; p->next = r; r = p;
 
     r = cons(s_text(preamble, 0), r);

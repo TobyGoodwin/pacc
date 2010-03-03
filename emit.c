@@ -177,6 +177,7 @@ static void rule_pre(struct s_node *n) {
     printf("rule_col = col;\n");
     printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
     printf("if ((cur->rule & 3) == uncomputed) {\n");
+    //printf("if (1 || (cur->rule & 3) == uncomputed) {\n"); /* memoization OFF? */
 }
 
 static void rule_post(struct s_node *n) {
