@@ -1,7 +1,12 @@
 2010-03-03
 ----------
 
-Fixed the emit/mk-nlg[01] tests.
+Fixed the emit/mk-nlg[01] tests. If you turn memoization off in emit.c,
+these tests now consume enormous amounts of memory before failing. Some
+of the versions of the baf calculator also become useless, as does
+pacc.pacc itself. (In fact, they're *so* hopeless -- even an input like
+"aaaaaac" completely fails -- that I wonder if something else is going
+wrong? Better take another look when I get the chance...)
 
 2010-03-02
 ----------
