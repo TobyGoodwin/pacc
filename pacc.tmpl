@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define Trace if (0)
+#define Tracing 0
+#define Trace if (Tracing)
 #define Instr if (0)
 
 #define ST_STACK_BODGE 2000
@@ -102,23 +103,20 @@ static void _pacc_save_col(off_t c) {
     ++cur->ev_valid;
 }
 
-static void _pacc_save_core(long c, int type, int cols) {
-    Trace fprintf(stderr, "_pacc_save_core(%ld, %d, %d)\n", c, type, cols);
+static void _pacc_save_core(long c, int type) {
+    Trace fprintf(stderr, "_pacc_save_core(%ld, %d)\n", c, type);
     if (cur->ev_valid == cur->ev_alloc) {
 	cur->ev_alloc = cur->ev_alloc * 2 + 1;
 	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
 	if (!cur->evlis) nomem();
     }
-    assert(cols < 4); /* property of the encoding */
-    assert(cols < 2); /* property of the current use of cols */
     assert(type - thr_thunk < 4);
     /* XXX is this really an assertion? In principle, an enormous input
      * could blow it away. */
-    assert(c << 4 > c);
-    cur->evlis[cur->ev_valid].core = c << 4 | (type - thr_thunk) << 2 | cols;
-    assert(c == cur->evlis[cur->ev_valid].core >> 4);
-    assert(type == (cur->evlis[cur->ev_valid].core >> 2 & 3) + thr_thunk);
-    assert(cols == (cur->evlis[cur->ev_valid].core & 3));
+    assert(c << 2 > c);
+    cur->evlis[cur->ev_valid].core = c << 2 | (type - thr_thunk);
+    assert(c == cur->evlis[cur->ev_valid].core >> 2);
+    assert(type == (cur->evlis[cur->ev_valid].core & 3) + thr_thunk);
     ++cur->ev_valid;
 }
 
@@ -257,10 +255,10 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_ev_i == %d\n", _pacc_ev_i);
 	if (_pacc_ev_i < cur->ev_valid) {
-	    enum thr discrim = thr_thunk + (cur->evlis[_pacc_ev_i].core >> 2 & 3);
+	    enum thr discrim = thr_thunk + (cur->evlis[_pacc_ev_i].core & 3);
 	    if (discrim == thr_rule || discrim == thr_bound) {
 		int col, rule;
-		rule = cur->evlis[_pacc_ev_i].core >> 4;
+		rule = cur->evlis[_pacc_ev_i].core >> 2;
 		++_pacc_ev_i;
 		assert(_pacc_ev_i < cur->ev_valid);
 		col = cur->evlis[_pacc_ev_i].col;
@@ -271,17 +269,11 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 		_pacc_ev_i = 0;
 		goto eval_loop;
 	    } else {
-		st = cur->evlis[_pacc_ev_i].core >> 4;
+		st = cur->evlis[_pacc_ev_i].core >> 2;
 		++_pacc_ev_i;
 		assert(_pacc_ev_i < cur->ev_valid);
-		col = cur->evlis[_pacc_ev_i].col; ++_pacc_ev_i;
-		/* XXX currently, we only permit one additional column,
-		 * which always goes into col_expr. */
-		if (cur->evlis[_pacc_ev_i - 2].core & 3) {
-		    assert(_pacc_ev_i < cur->ev_valid);
-		    /* col_expr = cur->evlis[_pacc_ev_i].col; */
-		    ++_pacc_ev_i;
-		}
+		col = cur->evlis[_pacc_ev_i].col;
+		++_pacc_ev_i;
 		goto top;
 	    }
 	    goto eval_loop;

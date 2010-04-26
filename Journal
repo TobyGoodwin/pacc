@@ -1,3 +1,9 @@
+2010-04-24
+----------
+
+Long gap. Sigh. To recap: next stage is to remove support for col_expr,
+and tidy up around that.
+
 2010-03-02
 ----------
 

@@ -325,12 +325,10 @@ static void bindings(struct s_node *n) {
 	//printf("pushcont(_pacc_ev_i); _pacc_ev_i = 0;\n");
 	printf("pos = 0;\n");
 	printf("while (pos < _pacc_p->ev_valid) {\n");
-	printf("    enum thr discrim = thr_thunk + (_pacc_p->evlis[pos].core >> 2 & 3);\n");
-	printf("    int step = _pacc_p->evlis[pos].core & 3;\n");
-	printf("    assert(step < 2);\n");
+	printf("    enum thr discrim = thr_thunk + (_pacc_p->evlis[pos].core & 3);\n");
 	printf("    if (discrim == thr_bound) --_pacc_i;\n");
 	printf("    if (_pacc_i == 0) break;\n");
-	printf("    pos += 2 + step;\n");
+	printf("    pos += 2;\n");
 	printf("}\n");
 	printf("++pos;\n");
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);
@@ -352,10 +350,9 @@ static void emit_expr(struct s_node *n) {
     printf("Trace fprintf(stderr, \"%d: emit_expr()\\n\");\n", n->id);
     /* When we encounter an expression whilst parsing, simply record the
      * fact on the eval list. We record the expression's id (which will
-     * become the new state when we evaluate) the start column of this
-     * rule (so we can find its intermediate result) and the current
-     * column for this expression (which is used by match() and
-     * rmatch()). */
+     * become the new state when we evaluate), and the start column of this
+     * rule (so we can find its intermediate result).
+     */
     /* XXX old style */
     //printf("pusheval(%d, rule_col, thr_thunk);\n", n->id);
     //printf("pusheval(0, col, thr_col);\n");
@@ -363,7 +360,7 @@ static void emit_expr(struct s_node *n) {
     //printf("_pacc_save_core(%d, thr_thunk, 1);\n", n->id);
     //printf("_pacc_save_col(rule_col); _pacc_save_col(col);\n");
     /* XXX without col_expr */
-    printf("_pacc_save_core(%d, thr_thunk, 0);\n", n->id);
+    printf("_pacc_save_core(%d, thr_thunk);\n", n->id);
     printf("_pacc_save_col(rule_col);\n");
 
     /* When evaluating, we need to evaluate the expression! */
@@ -403,7 +400,7 @@ static void emit_call(struct s_node *n) {
     //printf("pusheval(%d, col, thr_%s);\n", n->first->id,
 	    //binding ? "bound" : "rule");
     /* XXX new style */
-    printf("_pacc_save_core(%d, thr_%s, 0);\n", n->first->id, binding ? "bound" : "rule");
+    printf("_pacc_save_core(%d, thr_%s);\n", n->first->id, binding ? "bound" : "rule");
     printf("_pacc_save_col(col);\n");
     //if (binding)
 //	printf("pusheval(%d, thr_bound);\n", lookup_rule[n->first->id]);
