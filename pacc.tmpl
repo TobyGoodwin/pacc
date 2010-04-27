@@ -82,6 +82,7 @@ struct intermed {
      * also encode a status. */
     long rule; off_t col;
     off_t remainder; /* unparsed string */
+    long thunk; /* thunk to evaluate */
     union yy_union value; /* semantic value XXX needs to use g_name */
     union {
 	off_t col; /* a column */
@@ -220,6 +221,8 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rul
     r->col = col; r->rule = rule << 4 | uncomputed;
     r->evlis = 0;
     r->ev_alloc = r->ev_valid = 0;
+    /* Correct use of a side effect in an (unfailing) assert. */
+    assert((r->thunk = 0) == 0);
     ++(p->m_valid[h * 2]);
     return r;
 }
