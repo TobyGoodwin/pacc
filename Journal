@@ -2,7 +2,21 @@
 ----------
 
 Long gap. Sigh. To recap: next stage is to remove support for col_expr,
-and tidy up around that.
+and tidy up around that. So far, the step stuff has gone, and
+save_core() no longer takes a "cols" argument; it never saves any
+columns.
+
+Now I want to move thunks into struct intermed. Hmm... this is a bit
+more complicated than I thought. For a start, the current evlis allows
+any mingling of thunk calls and rule calls that may be needed. In the
+new regime, we need to... call all the subrules first, and then the
+thunk. I think.
+
+Also, when we push a thunk onto evlis, we also push the current
+rule_col. So if thunks move into struct intermed, it looks like we need
+another column stored too. Surely this is wrong? Yes, indeed. The pushed
+rule_col is always the same as the current col! So we can eliminate
+that; I just did.
 
 2010-03-02
 ----------

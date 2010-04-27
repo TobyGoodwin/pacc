@@ -353,15 +353,8 @@ static void emit_expr(struct s_node *n) {
      * become the new state when we evaluate), and the start column of this
      * rule (so we can find its intermediate result).
      */
-    /* XXX old style */
-    //printf("pusheval(%d, rule_col, thr_thunk);\n", n->id);
-    //printf("pusheval(0, col, thr_col);\n");
-    /* XXX new style */
-    //printf("_pacc_save_core(%d, thr_thunk, 1);\n", n->id);
-    //printf("_pacc_save_col(rule_col); _pacc_save_col(col);\n");
-    /* XXX without col_expr */
     printf("_pacc_save_core(%d, thr_thunk);\n", n->id);
-    printf("_pacc_save_col(rule_col);\n");
+    //printf("_pacc_save_col(rule_col);\n");
 
     /* When evaluating, we need to evaluate the expression! */
     printf("case %d:\n", n->id);
@@ -396,17 +389,8 @@ static void guard_post(struct s_node *n) {
 }
 
 static void emit_call(struct s_node *n) {
-    /* XXX old style */
-    //printf("pusheval(%d, col, thr_%s);\n", n->first->id,
-	    //binding ? "bound" : "rule");
-    /* XXX new style */
     printf("_pacc_save_core(%d, thr_%s);\n", n->first->id, binding ? "bound" : "rule");
     printf("_pacc_save_col(col);\n");
-    //if (binding)
-//	printf("pusheval(%d, thr_bound);\n", lookup_rule[n->first->id]);
- //   else
-//	printf("pusheval(%d, thr_rule);\n", lookup_rule[n->first->id]);
- //   printf("pusheval(col, thr_col);\n");
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont);\n");
     printf("cont = %d;\n", n->id);

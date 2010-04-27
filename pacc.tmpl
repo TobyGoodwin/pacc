@@ -247,7 +247,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 
 #EMIT_ENGINE
 
-    cur = _pacc_result(_pacc, 0, start_rule_id);
+    col = 0;
+    cur = _pacc_result(_pacc, col, start_rule_id);
     if (parsed && !evaluating && (cur->rule & 3) == parsed) {
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	evaluating = 1;
@@ -271,9 +272,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    } else {
 		st = cur->evlis[_pacc_ev_i].core >> 2;
 		++_pacc_ev_i;
-		assert(_pacc_ev_i < cur->ev_valid);
-		col = cur->evlis[_pacc_ev_i].col;
-		++_pacc_ev_i;
+		col = cur->col;
 		goto top;
 	    }
 	    goto eval_loop;
