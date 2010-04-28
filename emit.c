@@ -134,6 +134,15 @@ void error (char *t, int quote) {
     printf("}\n");
 }
 
+static void debug_pre(char *type, struct s_node *n) {
+    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld?\\n\", col);\n", type, n->id);
+}
+
+static void debug_post(char *type, struct s_node *n) {
+    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld => %%s\\n\", col, status != no_parse ? \"yes\" : \"no\");\n",
+	    type, n->id);
+}
+
 /* We recognise a properly-escaped C string in the grammar, and copy
  * that verbatim into the generated parser. That means we have to be a
  * bit careful in calculating the string's length. */
@@ -149,17 +158,17 @@ static void literal(struct s_node *n) {
 	}
 	++l;
     }
+    debug_pre("lit", n);
     printf("Trace fprintf(stderr, \"lit %d @ col %%ld => \", col);\n", n->id);
     printf("if (col + %d <= _pacc->input_length &&\n", l);
     printf("        memcmp(\"%s\", _pacc->string + col, %d) == 0) {\n", n->text, l);
     printf("    status = parsed;\n");
     printf("    col += %d;\n", l);
-    printf("    Trace fprintf(stderr, \"yes (col=%%ld)\\n\", col);\n");
     printf("} else {\n");
     error(n->text, 1);
     printf("    status = no_parse;\n");
-    printf("    Trace fprintf(stderr, \"no (col=%%ld)\\n\", col);\n");
     printf("}\n");
+    debug_post("lit", n);
 }
 
 /* currently assumes 1 char == 1 byte (i.e. ASCII encoding) */
@@ -229,15 +238,6 @@ static void seq_post(struct s_node *n) {
     printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
 }
 
-static void debug_pre(char *type, struct s_node *n) {
-    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld?\\n\", col);\n", type, n->id);
-}
-
-static void debug_post(char *type, struct s_node *n) {
-    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld => %%s\\n\", col, status != no_parse ? \"yes\" : \"no\");\n",
-	    type, n->id);
-}
-
 static void and_pre(struct s_node *n) {
     debug_pre("and", n);
     savecol();
@@ -265,7 +265,7 @@ static void bind_pre(struct s_node *n) {
     /* ... which itself must refer to a rule. */
     assert(n->first->first->type == rule);
     printf("/* bind: %s */\n", n->text);
-    printf("Trace fprintf(stderr, \"%%d: bind_pre()\\n\", %d);\n", n->id);
+    debug_pre("bind", n);
     /* Save the name bound, and the rule to which it is bound. */
     pushn(n->text);
     pushs(n->first->first);
@@ -294,7 +294,7 @@ static void declarations(struct s_node *n) {
 	 * current sequence. XXX Should we not search from the back?
 	 */
 	for (i = 0; i < n_ptr; ++i)
-	    if (strcmp(n_stack[i], p->text) == 0) break;
+	    if (n_stack[i] && strcmp(n_stack[i], p->text) == 0) break;
 	/* It is not an error if we have a name without a binding: the
 	 * parser will pick out names like "printf" from the code. */
 	if (i == n_ptr) continue;
@@ -318,48 +318,33 @@ static void bindings(struct s_node *n) {
 	    fprintf(stderr, "var %s @ pos %d\n", n_stack[i], i);
 #endif
 	for (i = 0; i < n_ptr; ++i)
-	    if (strcmp(n_stack[i], p->text) == 0) break;
+	    if (n_stack[i] && strcmp(n_stack[i], p->text) == 0) break;
 	if (i == n_ptr) continue;
-	printf("pushcont(_pacc_i);\n"); /* XXX do we need to save? */
-	printf("_pacc_i = %d + 1;\n", i);
-	//printf("pushcont(_pacc_ev_i); _pacc_ev_i = 0;\n");
-	printf("pos = 0;\n");
-	printf("while (pos < _pacc_p->ev_valid) {\n");
-	printf("    enum thr discrim = thr_thunk + (_pacc_p->evlis[pos].core & 3);\n");
-	printf("    if (discrim == thr_bound) --_pacc_i;\n");
-	printf("    if (_pacc_i == 0) break;\n");
-	printf("    pos += 2;\n");
-	printf("}\n");
-	printf("++pos;\n");
+	printf("pos = %d;\n", i);
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);
-	printf("_pacc_i = popcont();\n");
 
 	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, s_stack[i]->id);
 	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %d);\n", s_stack[i]->id);
 	printf("    if ((cur->rule & 3) != evaluated) {\n");
-	printf("        pushcol(col); pushcont(cont); cont = %d;\n", p->id);
+	printf("        pushcol(col); pushcont(cont); cont = %ld;\n", p->id);
 	printf("	_pacc_ev_i = 0; goto eval_loop;\n");
 	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u%d;\n", p->text, s_stack[i]->id);
-	printf("    Trace fprintf(stderr, \"bound %s to r%d @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bound %s to r%ld @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);
     }
 }
 
 static void emit_expr(struct s_node *n) {
-    printf("Trace fprintf(stderr, \"%d: emit_expr()\\n\");\n", n->id);
+    debug_pre("expr", n);
     /* When we encounter an expression whilst parsing, simply record the
-     * fact on the eval list. We record the expression's id (which will
-     * become the new state when we evaluate), and the start column of this
-     * rule (so we can find its intermediate result).
+     * expression's id. This will become the new state when we evaluate.
      */
     printf("assert(cur->expr_id == 0);\n");
     printf("cur->expr_id = %ld;\n", n->id);
-    //printf("_pacc_save_core(%d, thr_thunk);\n", n->id);
-    //printf("_pacc_save_col(rule_col);\n");
 
     /* When evaluating, we need to evaluate the expression! */
-    printf("case %d:\n", n->id);
+    printf("case %ld:\n", n->id);
     printf("if (evaluating) {\n");
     printf("    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
@@ -374,8 +359,8 @@ static void emit_expr(struct s_node *n) {
 }
 
 static void guard_pre(struct s_node *n) {
-    printf("Trace fprintf(stderr, \"r%d @ c%%ld: guard %d?\\n\", col);\n", cur_rule, n->id);
-    printf("/* %d: guard_pre() */\n", n->id);
+    debug_pre("guard", n);
+    printf("/* %ld: guard_pre() */\n", n->id);
     printf("{\n    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
     printf("    _pacc_p = cur; evaluating = 1;\n");
@@ -386,17 +371,21 @@ static void guard_pre(struct s_node *n) {
 /* obviously, the tricky part of a guard is the bindings! */
 static void guard_post(struct s_node *n) {
     printf("    status = (%s) ? parsed : no_parse;\n", n->text);
-    printf("Trace fprintf(stderr, \"r%d @ c%%ld: guard %d => %%s\\n\", col, status == parsed ? \"yes\" : \"no\");\n", cur_rule, n->id);
+    debug_post("guard", n);
     printf("}\n");
 }
 
 static void emit_call(struct s_node *n) {
-    printf("_pacc_save_core(%d, thr_%s);\n", n->first->id, binding ? "bound" : "rule");
-    printf("_pacc_save_col(col);\n");
+    if (!binding) {
+	pushn(0); pushs(0); /* Save dummy "binding" if we're not binding */
+    }
+    //printf("_pacc_save_core(%ld, thr_%s, col);\n", n->first->id, binding ? "bound" : "rule");
+    printf("_pacc_save_core(%ld, col);\n", n->first->id);
+    //printf("_pacc_save_col(col);\n");
     printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
     printf("pushcont(cont);\n");
-    printf("cont = %d;\n", n->id);
-    printf("st = %d; /* call %s */\n", n->first->id, n->text);
+    printf("cont = %ld;\n", n->id);
+    printf("st = %ld; /* call %s */\n", n->first->id, n->text);
     printf("goto top;\n");
     printf("case %ld: /* return from %s */\n", n->id, n->text);
     printf("last = cur;\n");

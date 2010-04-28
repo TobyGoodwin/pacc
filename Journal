@@ -1,3 +1,34 @@
+2010-04-28
+----------
+
+OK, so expr_id is out of evlis, and into struct intermed. This seems to
+open up huge possibilities for further cleanup. For example, since we
+now always push a call/col pair onto evlis, the union can turn into a
+struct, and things like "pos += 2" can become "++pos". Done.
+
+And if I can eliminate the need to distinguish calls and binds, then all
+the bit twiddling for enum thr can go too. Let's see: we'd need to
+pushn() and pushs() dummy values when we compile a call the value of
+which is *not* bound. Yes, that works. There's still the messy "binding"
+global variable in the compiler, but the main point is that we can now
+totally eliminate enum thr. Yup, done.
+
+So, I think that really is just about everything sorted, with plenty
+tidy up still to be done, of course. And what are the vital stats now?
+
+    ; sh run-all.sh 
+    315 passes
+    4 fails
+    ; wc pacc.pacc
+     137  488 2852 pacc.pacc
+    ; valgrind ./pacc2 pacc.pacc -o pacc3.c
+    ==2641==     in use at exit: 989,559 bytes in 14,592 blocks
+    ==2641==   total heap usage: 21,404 allocs, 6,812 frees, 1,769,503 bytes allocated
+
+Oh darn, the total memory allocated has gone *up* slightly, to 620 bytes
+per byte of input. That's annoying. The changes are still good, as they
+are huge simplifications, but still...
+
 2010-04-27
 ----------
 

@@ -52,14 +52,6 @@ static int popcol(void) {
     return col_stack[--col_ptr];
 }
 
-/* a "thr" is a thunk or a rule/column pair */
-enum thr { thr_thunk = 71, thr_bound, thr_rule, thr_col };
-struct thunkrule {
-    enum thr discrim;
-    int x;
-    int col;
-};
-
 enum status {
     no_parse, parsed, evaluated, uncomputed
 };
@@ -82,11 +74,11 @@ struct intermed {
      * also encode a status. */
     long rule; off_t col;
     off_t remainder; /* unparsed string */
-    long expr_id; /* id of the expression to evaluate */
-    union yy_union value; /* semantic value XXX needs to use g_name */
-    union {
+    long expr_id; /* id of the expression to evaluate, yielding... */
+    union yy_union value; /* ... the semantic value XXX needs to use g_name */
+    struct {
+	long call_id; /* a call */
 	off_t col; /* a column */
-	long core; /* a call or expr */
     } *evlis;
     size_t ev_alloc;
     size_t ev_valid;
@@ -94,30 +86,15 @@ struct intermed {
 
 static struct intermed *cur;
 
-static void _pacc_save_col(off_t c) {
+static void _pacc_save_core(long c, off_t col) {
+    Trace fprintf(stderr, "_pacc_save_core(%ld, %ld)\n", c, col);
     if (cur->ev_valid == cur->ev_alloc) {
 	cur->ev_alloc = cur->ev_alloc * 2 + 1;
 	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
 	if (!cur->evlis) nomem();
     }
-    cur->evlis[cur->ev_valid].col = c;
-    ++cur->ev_valid;
-}
-
-static void _pacc_save_core(long c, int type) {
-    Trace fprintf(stderr, "_pacc_save_core(%ld, %d)\n", c, type);
-    if (cur->ev_valid == cur->ev_alloc) {
-	cur->ev_alloc = cur->ev_alloc * 2 + 1;
-	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
-	if (!cur->evlis) nomem();
-    }
-    assert(type - thr_thunk < 4);
-    /* XXX is this really an assertion? In principle, an enormous input
-     * could blow it away. */
-    assert(c << 2 > c);
-    cur->evlis[cur->ev_valid].core = c << 2 | (type - thr_thunk);
-    assert(c == cur->evlis[cur->ev_valid].core >> 2);
-    assert(type == (cur->evlis[cur->ev_valid].core & 3) + thr_thunk);
+    cur->evlis[cur->ev_valid].call_id = c;
+    cur->evlis[cur->ev_valid].col = col;
     ++cur->ev_valid;
 }
 
@@ -240,7 +217,6 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
     int cont, st;
     off_t col, rule_col;
-    int _pacc_i;
     int evaluating;
     struct intermed *last;
     col = 0;
@@ -259,19 +235,14 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_ev_i == %d\n", _pacc_ev_i);
 	while (_pacc_ev_i < cur->ev_valid) {
-	    enum thr discrim = thr_thunk + (cur->evlis[_pacc_ev_i].core & 3);
-	    if (discrim == thr_rule || discrim == thr_bound) {
-		int col, rule;
-		rule = cur->evlis[_pacc_ev_i].core >> 2;
-		++_pacc_ev_i;
-		assert(_pacc_ev_i < cur->ev_valid);
-		col = cur->evlis[_pacc_ev_i].col;
-		++_pacc_ev_i;
-		Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-		pushm(cur); pushcont(_pacc_ev_i);
-		cur = _pacc_result(_pacc, col, rule);
-		_pacc_ev_i = 0;
-	    }
+	    int col, rule;
+	    rule = cur->evlis[_pacc_ev_i].call_id;
+	    col = cur->evlis[_pacc_ev_i].col;
+	    ++_pacc_ev_i;
+	    Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
+	    pushm(cur); pushcont(_pacc_ev_i);
+	    cur = _pacc_result(_pacc, col, rule);
+	    _pacc_ev_i = 0;
 	}
 	if ((cur->rule & 3) != evaluated && cur->expr_id) {
 	    st = cur->expr_id;
