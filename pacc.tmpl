@@ -82,7 +82,7 @@ struct intermed {
      * also encode a status. */
     long rule; off_t col;
     off_t remainder; /* unparsed string */
-    long thunk; /* thunk to evaluate */
+    long expr_id; /* id of the expression to evaluate */
     union yy_union value; /* semantic value XXX needs to use g_name */
     union {
 	off_t col; /* a column */
@@ -222,7 +222,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rul
     r->evlis = 0;
     r->ev_alloc = r->ev_valid = 0;
     /* Correct use of a side effect in an (unfailing) assert. */
-    assert((r->thunk = 0) == 0);
+    assert((r->expr_id = 0) == 0);
     ++(p->m_valid[h * 2]);
     return r;
 }
@@ -258,7 +258,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	_pacc_ev_i = 0;
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_ev_i == %d\n", _pacc_ev_i);
-	if (_pacc_ev_i < cur->ev_valid) {
+	while (_pacc_ev_i < cur->ev_valid) {
 	    enum thr discrim = thr_thunk + (cur->evlis[_pacc_ev_i].core & 3);
 	    if (discrim == thr_rule || discrim == thr_bound) {
 		int col, rule;
@@ -271,15 +271,14 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 		pushm(cur); pushcont(_pacc_ev_i);
 		cur = _pacc_result(_pacc, col, rule);
 		_pacc_ev_i = 0;
-		goto eval_loop;
-	    } else {
-		st = cur->evlis[_pacc_ev_i].core >> 2;
-		++_pacc_ev_i;
-		col = cur->col;
-		goto top;
 	    }
-	    goto eval_loop;
 	}
+	if ((cur->rule & 3) != evaluated && cur->expr_id) {
+	    st = cur->expr_id;
+	    col = cur->col;
+	    goto top;
+	}
+    _pacc_expr_done:
 	cur->rule = (cur->rule & ~3) | evaluated;
 	if (m_ptr) {
 	    _pacc_ev_i = popcont(); cur = popm();

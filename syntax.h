@@ -14,7 +14,7 @@ enum s_type {
 
 struct s_node {
     enum s_type type;
-    int id;
+    long id;
     struct s_node *first, *last; /* children */
     struct s_node *next; /* sibling */
     char *text;

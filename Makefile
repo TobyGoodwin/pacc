@@ -18,7 +18,7 @@ OBJS1 = $(OBJS) pacc1.o
 pacc1: $(OBJS1)
 	$(CC) $(LDFLAGS) -o $@ $^
 
-pacc1.c: pacc0
+pacc1.c: pacc0 syntax.h
 	./pacc0 pacc.pacc -o $@
 
 OBJS2 = $(OBJS) pacc2.o
@@ -26,7 +26,7 @@ OBJS2 = $(OBJS) pacc2.o
 pacc2: $(OBJS2)
 	$(CC) $(LDFLAGS) -o $@ $^
 
-pacc2.c: pacc1 pacc.pacc
+pacc2.c: pacc1 pacc.pacc syntax.h
 	./pacc1 pacc.pacc -o $@
 
 OBJS3 = $(OBJS) pacc3.o
@@ -34,7 +34,7 @@ OBJS3 = $(OBJS) pacc3.o
 pacc3: $(OBJS3)
 	$(CC) $(LDFLAGS) -o $@ $^
 
-pacc3.c: pacc2 pacc.pacc
+pacc3.c: pacc2 pacc.pacc syntax.h
 	./pacc2 pacc.pacc -o $@
 
 pacc: pacc2
@@ -51,9 +51,9 @@ error.o: error.c error.h
 
 load.o: load.c load.h
 
-resolve.o: resolve.c resolve.h
+resolve.o: resolve.c resolve.h syntax.h
 
-sugar.o: sugar.c sugar.h
+sugar.o: sugar.c sugar.h syntax.h
 
 syntax.o: syntax.c syntax.h
 

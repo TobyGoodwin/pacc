@@ -57,7 +57,7 @@ static void grammar_pre(struct s_node *n) {
 	++r;
     }
     printf("const int n_rules = %d;\n", r);
-    printf("const int start_rule_id = %d;\n", n->first->next->id);
+    printf("const int start_rule_id = %ld;\n", n->first->next->id);
     g_name = n->text;
     printf("union %s_union {\n", g_name);
     /* XXX we still need u0! */
@@ -65,7 +65,7 @@ static void grammar_pre(struct s_node *n) {
     for (p = n->first, i = 0; p; p = p->next) {
 	if (p->type != rule) continue;
 	/* XXX obviously, we need to weed out duplicates, "void", etc. */
-	printf("    %s u%d;\n", p->first->text, p->id);
+	printf("    %s u%ld;\n", p->first->text, p->id);
 	++i;
     }
     printf("};\n");
@@ -83,7 +83,7 @@ static void grammar_pre(struct s_node *n) {
  
     pre_engine();
 
-    printf("st = %d;\ntop:\n",
+    printf("st = %ld;\ntop:\n",
 	    n->first->type == preamble ? n->first->next->id : n->first->id);
     printf("Trace fprintf(stderr, \"switch to state %%d\\n\", st);\n");
     printf("switch(st) {\n");
@@ -230,11 +230,11 @@ static void seq_post(struct s_node *n) {
 }
 
 static void debug_pre(char *type, struct s_node *n) {
-    printf("Trace fprintf(stderr, \"%s %d @ col %%ld?\\n\", col);\n", type, n->id);
+    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld?\\n\", col);\n", type, n->id);
 }
 
 static void debug_post(char *type, struct s_node *n) {
-    printf("Trace fprintf(stderr, \"%s %d @ col %%ld => %%s\\n\", col, status != no_parse ? \"yes\" : \"no\");\n",
+    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld => %%s\\n\", col, status != no_parse ? \"yes\" : \"no\");\n",
 	    type, n->id);
 }
 
@@ -353,7 +353,9 @@ static void emit_expr(struct s_node *n) {
      * become the new state when we evaluate), and the start column of this
      * rule (so we can find its intermediate result).
      */
-    printf("_pacc_save_core(%d, thr_thunk);\n", n->id);
+    printf("assert(cur->expr_id == 0);\n");
+    printf("cur->expr_id = %ld;\n", n->id);
+    //printf("_pacc_save_core(%d, thr_thunk);\n", n->id);
     //printf("_pacc_save_col(rule_col);\n");
 
     /* When evaluating, we need to evaluate the expression! */
@@ -367,7 +369,7 @@ static void emit_expr(struct s_node *n) {
     printf("    cur = _pacc_p;\n");
     printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
     printf("    Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%%ld, %d)\\n\", cur->value.u0, col);\n", cur_rule);
-    printf("    goto eval_loop;\n");
+    printf("    goto _pacc_expr_done;\n");
     printf("}\n");
 }
 
@@ -396,7 +398,7 @@ static void emit_call(struct s_node *n) {
     printf("cont = %d;\n", n->id);
     printf("st = %d; /* call %s */\n", n->first->id, n->text);
     printf("goto top;\n");
-    printf("case %d: /* return from %s */\n", n->id, n->text);
+    printf("case %ld: /* return from %s */\n", n->id, n->text);
     printf("last = cur;\n");
     printf("cont = popcont();\n");
     printf("status = last->rule & 3;\n");
@@ -406,15 +408,15 @@ static void emit_call(struct s_node *n) {
 }
 
 static void alt_pre(struct s_node *n) {
-    printf("Trace fprintf(stderr, \"alt %d @ col %%ld?\\n\", col);\n", n->id);
+    debug_pre("alt", n);
     printf("pushcont(cont);\n");
-    printf("cont = %d;\n", n->id);
+    printf("cont = %ld;\n", n->id);
     savecol();
     s_ptr = n_ptr = 0;
 }
 
 static void alt_mid(struct s_node *n) {
-    printf("Trace fprintf(stderr, \"alt %d @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
+    printf("Trace fprintf(stderr, \"alt %ld @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("if (status != no_parse) {\n");
     accept_col();
     printf("goto contin;\n");
@@ -422,7 +424,7 @@ static void alt_mid(struct s_node *n) {
     restcol();
     savecol();
     printf("Trace fprintf(stderr, \"col restored to %%ld\\n\", col);\n");
-    printf("Trace fprintf(stderr, \"alt %d @ col %%ld? (next alternative)\\n\", col);\n", n->id);
+    printf("Trace fprintf(stderr, \"alt %ld @ col %%ld? (next alternative)\\n\", col);\n", n->id);
     s_ptr = n_ptr = 0;
 }
 
@@ -432,9 +434,9 @@ static void alt_post(struct s_node *n) {
     printf("} else {\n");
     accept_col();
     printf("}\n");
-    printf("case %d:\n", n->id);
+    printf("case %ld:\n", n->id);
     printf("cont = popcont();\n");
-    printf("Trace fprintf(stderr, \"alt %d @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
+    printf("Trace fprintf(stderr, \"alt %ld @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
     s_ptr = n_ptr = 0;
 }

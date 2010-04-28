@@ -186,7 +186,7 @@ static void dump(struct s_node *p, int indent) {
 
     if (!p) return;
     for (i = 0; i < indent; ++i) fprintf(stderr, "  ");
-    fprintf(stderr, "%s %d: ", decode_type(p->type), p->id);
+    fprintf(stderr, "%s %ld: ", decode_type(p->type), p->id);
     if (s_has_text(p->type))
 	fprintf(stderr, "%s ", p->text);
     fprintf(stderr, "\n");
