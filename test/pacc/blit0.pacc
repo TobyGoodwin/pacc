@@ -1,0 +1,24 @@
+/*
+int
+parse 'five five' 25
+parse 'five six' 30
+parse 'six five' 30
+parse 'six six' 36
+noparse 'five seven' x.129 10
+*/
+
+# Bound literals
+
+# XXX obviously "expected x.129 at column 10" is nonsense!
+
+{
+#include <ctype.h>
+}
+
+P ← a:Number b:Number { a * b }
+
+Number ← "five":Word { 5 } / "six":Word { 6 }
+
+Word :: ref_t ← w:Letter+ " "* -> w
+
+Letter ← c:. &{ isalpha(ref_0(c)) }

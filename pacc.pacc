@@ -35,6 +35,7 @@ UnaryRule
 PrimRule
     ← n:Name { s_text(call, n) } !lArrow !ColCol
     / Dot { s_new(any) }
+    / l:StringLit Colon u:UnaryRule { s_both(lit, l, u) }
     / l:StringLit { s_text(lit, l) }
     / lParen r:Rule rParen → r
 

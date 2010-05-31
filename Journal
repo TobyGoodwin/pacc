@@ -1,3 +1,128 @@
+2010-05-31
+----------
+
+Next steps:
+
+1. implement bound literals;
+
+2. use them to port baf's Java parser;
+
+3. with a decent-sized parser, and an enormous range of possible inputs,
+go back to optimizing...
+
+First part of step 1, write a test case. Current stats are 315 passes, 4
+fails. Added test/pacc/blit0.pacc... and made it work!
+
+Hmm... I think that pacc.pacc is not as clean as it could be. What,
+really, is the difference between a Matcher and a PrimRule?
+
+2010-05-15
+----------
+
+Thinking about "bound literals", which are heavily used in baf's Java
+grammar to model reserved words:
+
+PrimExpr :: Expression =
+    ...
+    / "this":Word		-> {ExpThis}
+    / "super":Word		-> {ExpSuper}
+    / ...
+
+Incidentally, I claimed on 2010-01-15 that Java.pappy includes no
+semantic expressions. I'm not sure what I was smoking, but this is
+completely wrong: in fact baf builds a complete AST. My apologies.
+
+In principle, and for orthogonality, we allow anything to the right of
+the colon, although at present I can't think of a non-contrived use for
+this.
+
+    Trip <- Letter Letter Letter
+    Foobar <- "foobar":(Trip Trip)
+
+Anycase, the existing desugaring should handle this just fine, so we can
+just consider "lit":Rule without loss of generality. And this is just
+sugar for
+
+    n:Rule &{ ref_strcmp(n, "lit") == 0 }
+
+except that pacc will create a new name in its own _pacc namespace.
+
+In the (unde)sugared tree, we need to add an optional child to lit,
+which is the binding.
+
+    lit: "if"
+      call: "Word"
+
+which becomes
+
+    seq:
+      bind: "_pacc_bl273"
+	call: "Word"
+      guard: "ref_strcmp(_pacc_bl273, \"if\") == 0"
+	ident: "_pacc_bl273"
+
+Hmm... we must insist that Word :: ref_t (we might be prepared also to
+allow Word :: char * and select strcmp() when this is so).
+
+What about this idea of analysing the tree to find out the maximum
+possible evlis for each rule? I had imagined walking the tree at the
+optimization stage, and couldn't see how to communicate the information
+to emit(). But actually we could do it in rule_pre() as we are about to
+emit each rule.
+
+Insight! If we make this a little more abstract, so it can count the
+maximum of any type of node, then we can raise an error if pathmax(expr)
+is > 1 (or rule type is void and pathmax(expr) > 0).
+
+int pathmax(struct node *n, enum s_type t) {
+    int r = 0;
+    struct s_node *p;
+    assert(!s_has_children(t));
+    if (n->type == alt)
+	for (p = n->first; p; p = p->next) {
+	    int m = pathmax(p, t);
+	    if (m > r) r = m;
+	}
+    else if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    r += pathmax(p, t);
+    else if (n->type == t)
+	r = 1;
+    return r;
+}
+
+There's no *guarantee* that this will save space, since a rule could
+have a very large max which is very rarely reached. In this case we will
+allocate many evlis entries that are unused. But it seems like it should
+be a win almost all the time.
+
+2010-04-30
+----------
+
+So here are some ideas for tightening up struct intermed further.
+
+1. Move the status somewhere else. There isn't really room in col or
+rem, but maybe expr_id?
+
+2. It is inconceivable that ev_valid and ev_alloc would ever need to be
+longer than a short. This saves 4 bytes on a 32 bit architecture. (I
+wondered about having an "inconceivable(ev_valid == 0xffff)" macro, on
+reflection I think is should just be assert().)
+
+3. Insight! Instead of storing rule/col pairs on evlis, resolve them to
+struct intermed * pointers. This saves 4 bytes, or 8 bytes if off_t is
+64 bits. (OK, it's rather eager evaluation, but is surely worth it?
+Would need to profile.)
+
+4. Only rules which are parsed need an evlis. Only rules which are
+parsed and not void need an expr_id. Only rules which are parsed, not
+void, and evaluated need a value union. Is it possible to exploit this
+to save some space, but without having to chase pointers everywhere?
+
+5. Static analysis of the tree would allow us to calculate the longest
+evlis that each rule could possibly need, allocate that up front, and do
+away with ev_alloc altogether.
+
 2010-04-28
 ----------
 

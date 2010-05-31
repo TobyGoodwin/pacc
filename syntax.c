@@ -171,8 +171,9 @@ char *decode_type(enum s_type t) {
 }
 
 int s_has_children(enum s_type t) {
-    return t == alt || t == and || t == bind || t == rule || t == grammar ||
-	t == expr || t == guard || t == not || t == rep || t == seq;
+    return t == alt || t == and || t == bind || t == rule ||
+	t == grammar || t == expr || t == guard || t == lit ||
+	t == not || t == rep || t == seq;
 }
 
 int s_has_text(enum s_type t) {
