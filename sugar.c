@@ -24,10 +24,10 @@ static void deblit1(struct s_node *g, struct s_node *n) {
     snprintf(id, l, "_pacc_bl%ld", n->id);
 
     /* ... and a guard string. */
-    l = snprintf(0, 0, "ref_strcmp(%s,\"%s\")==0", id, n->text) + 1;
+    l = snprintf(0, 0, "ref_streq(%s,\"%s\")", id, n->text) + 1;
     gd = malloc(l);
     if (!gd) nomem();
-    snprintf(gd, l, "ref_strcmp(%s,\"%s\")==0", id, n->text);
+    snprintf(gd, l, "ref_streq(%s,\"%s\")", id, n->text);
     fprintf(stderr, "in deblit1, id is %s\n", id);
     fprintf(stderr, "in deblit1, gd is %s\n", gd);
 

@@ -1,3 +1,32 @@
+2010-07-07
+----------
+
+Reworked bound literals to fix a bug in the strncmp implementation.
+
+Now, we really really need a serious test case parser. Porting baf's
+Java parser still has to be the best option. Here goes...
+
+We will have a test/java directory, containing java.pacc and any Java
+source file we want to check. The test harness will be extended to
+include "parse_file" and "noparse_file" commands; these correspond to
+"parse" and "noparse", except the argument is the name of a file
+containing the test input, not the entire test input itself!
+
+First snag... feeding a very broken java.pacc to pacc produces "st_stack
+overflow". So let's fix st_stack bodge. OK, done, and the error is now
+the only slightly more useful "expected Char at column 3600", but there
+you go.
+
+Blimey! Java.pappy uses "=" to introduce a rule's definition. So let's
+add that to pacc's idea of what an "lArrow" is. By the way, if pacc
+says "expected Char at column 4212", then you can see where that is:
+
+    dd 'bs=1' 'count=4212' <java/java.pacc
+
+OK, now, with a bit of hackery, we're up to "out of m stack space",
+and I'm out of time. So removing the m_stack_bodge is where to start
+next.
+
 2010-05-31
 ----------
 

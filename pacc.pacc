@@ -121,7 +121,7 @@ _
     ← (" " / "\t" / "\n" / Comment) *
 
 And ← "&" _
-lArrow  ← ("←" / "<-") _
+lArrow  ← ("←" / "<-" / "=") _
 rArrow  ← ("→" / "->") _
 Colon ← ":" _
 ColCol ← "::" _

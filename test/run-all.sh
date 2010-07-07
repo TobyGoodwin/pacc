@@ -18,8 +18,16 @@ parse() {
     check "$1" "parsed with value $2"
 }
 
+parse_file() {
+    check "`cat $1`" "parsed with value $2"
+}
+
 noparse() {
     check "$1" "expected $2 at column $3"
+}
+
+noparse_file() {
+    check "`cat $1`" "expected $2 at column $3"
 }
 
 run() {
@@ -62,7 +70,7 @@ run() {
     fi
 }
 
-ts=${*:-emit/mk-*.c pacc/*.pacc}
+ts=${*:-emit/mk-*.c pacc/*.pacc java/java.pacc}
 
 for t in $ts; do
     run $t
