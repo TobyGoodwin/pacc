@@ -171,8 +171,9 @@ char *decode_type(enum s_type t) {
 }
 
 int s_has_children(enum s_type t) {
-    return t == alt || t == and || t == bind || t == rule || t == grammar ||
-	t == expr || t == guard || t == not || t == rep || t == seq;
+    return t == alt || t == and || t == bind || t == rule ||
+	t == grammar || t == expr || t == guard || t == lit ||
+	t == not || t == rep || t == seq;
 }
 
 int s_has_text(enum s_type t) {
@@ -186,7 +187,7 @@ static void dump(struct s_node *p, int indent) {
 
     if (!p) return;
     for (i = 0; i < indent; ++i) fprintf(stderr, "  ");
-    fprintf(stderr, "%s %d: ", decode_type(p->type), p->id);
+    fprintf(stderr, "%s %ld: ", decode_type(p->type), p->id);
     if (s_has_text(p->type))
 	fprintf(stderr, "%s ", p->text);
     fprintf(stderr, "\n");

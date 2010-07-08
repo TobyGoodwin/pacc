@@ -1,0 +1,28 @@
+/*
+chars
+parse qux a
+noparse fool Letter 4
+parse foobar c
+noparse baz Trip 3
+*/
+
+# Bound literals: the RHS of a bound literal may be a rule, or anything.
+
+{
+#include <ctype.h>
+}
+
+P :: char * ← Qux { "a" } / Fool { "b" } / Foobar { "c" }
+
+Qux ← "qux":Trip
+
+# Note that this rule can never match, but the first implementation of
+# bound literals would match any time the RHS was a prefix of the
+# literal.
+Fool ← "fool":Trip
+
+Foobar ← "foobar":(Trip Trip)
+
+Trip :: ref_t ← Letter Letter Letter { ref() }
+
+Letter ← c:. &{ isalpha(ref_0(c)) }

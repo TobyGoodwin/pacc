@@ -1,3 +1,208 @@
+2010-07-07
+----------
+
+Reworked bound literals to fix a bug in the strncmp implementation.
+
+Now, we really really need a serious test case parser. Porting baf's
+Java parser still has to be the best option. Here goes...
+
+We will have a test/java directory, containing java.pacc and any Java
+source file we want to check. The test harness will be extended to
+include "parse_file" and "noparse_file" commands; these correspond to
+"parse" and "noparse", except the argument is the name of a file
+containing the test input, not the entire test input itself!
+
+First snag... feeding a very broken java.pacc to pacc produces "st_stack
+overflow". So let's fix st_stack bodge. OK, done, and the error is now
+the only slightly more useful "expected Char at column 3600", but there
+you go.
+
+Blimey! Java.pappy uses "=" to introduce a rule's definition. So let's
+add that to pacc's idea of what an "lArrow" is. By the way, if pacc
+says "expected Char at column 4212", then you can see where that is:
+
+    dd 'bs=1' 'count=4212' <java/java.pacc
+
+OK, now, with a bit of hackery, we're up to "out of m stack space",
+and I'm out of time. So removing the m_stack_bodge is where to start
+next.
+
+2010-05-31
+----------
+
+Next steps:
+
+1. implement bound literals;
+
+2. use them to port baf's Java parser;
+
+3. with a decent-sized parser, and an enormous range of possible inputs,
+go back to optimizing...
+
+First part of step 1, write a test case. Current stats are 315 passes, 4
+fails. Added test/pacc/blit0.pacc... and made it work!
+
+Hmm... I think that pacc.pacc is not as clean as it could be. What,
+really, is the difference between a Matcher and a PrimRule?
+
+2010-05-15
+----------
+
+Thinking about "bound literals", which are heavily used in baf's Java
+grammar to model reserved words:
+
+PrimExpr :: Expression =
+    ...
+    / "this":Word		-> {ExpThis}
+    / "super":Word		-> {ExpSuper}
+    / ...
+
+Incidentally, I claimed on 2010-01-15 that Java.pappy includes no
+semantic expressions. I'm not sure what I was smoking, but this is
+completely wrong: in fact baf builds a complete AST. My apologies.
+
+In principle, and for orthogonality, we allow anything to the right of
+the colon, although at present I can't think of a non-contrived use for
+this.
+
+    Trip <- Letter Letter Letter
+    Foobar <- "foobar":(Trip Trip)
+
+Anycase, the existing desugaring should handle this just fine, so we can
+just consider "lit":Rule without loss of generality. And this is just
+sugar for
+
+    n:Rule &{ ref_strcmp(n, "lit") == 0 }
+
+except that pacc will create a new name in its own _pacc namespace.
+
+In the (unde)sugared tree, we need to add an optional child to lit,
+which is the binding.
+
+    lit: "if"
+      call: "Word"
+
+which becomes
+
+    seq:
+      bind: "_pacc_bl273"
+	call: "Word"
+      guard: "ref_strcmp(_pacc_bl273, \"if\") == 0"
+	ident: "_pacc_bl273"
+
+Hmm... we must insist that Word :: ref_t (we might be prepared also to
+allow Word :: char * and select strcmp() when this is so).
+
+What about this idea of analysing the tree to find out the maximum
+possible evlis for each rule? I had imagined walking the tree at the
+optimization stage, and couldn't see how to communicate the information
+to emit(). But actually we could do it in rule_pre() as we are about to
+emit each rule.
+
+Insight! If we make this a little more abstract, so it can count the
+maximum of any type of node, then we can raise an error if pathmax(expr)
+is > 1 (or rule type is void and pathmax(expr) > 0).
+
+int pathmax(struct node *n, enum s_type t) {
+    int r = 0;
+    struct s_node *p;
+    assert(!s_has_children(t));
+    if (n->type == alt)
+	for (p = n->first; p; p = p->next) {
+	    int m = pathmax(p, t);
+	    if (m > r) r = m;
+	}
+    else if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    r += pathmax(p, t);
+    else if (n->type == t)
+	r = 1;
+    return r;
+}
+
+There's no *guarantee* that this will save space, since a rule could
+have a very large max which is very rarely reached. In this case we will
+allocate many evlis entries that are unused. But it seems like it should
+be a win almost all the time.
+
+2010-04-30
+----------
+
+So here are some ideas for tightening up struct intermed further.
+
+1. Move the status somewhere else. There isn't really room in col or
+rem, but maybe expr_id?
+
+2. It is inconceivable that ev_valid and ev_alloc would ever need to be
+longer than a short. This saves 4 bytes on a 32 bit architecture. (I
+wondered about having an "inconceivable(ev_valid == 0xffff)" macro, on
+reflection I think is should just be assert().)
+
+3. Insight! Instead of storing rule/col pairs on evlis, resolve them to
+struct intermed * pointers. This saves 4 bytes, or 8 bytes if off_t is
+64 bits. (OK, it's rather eager evaluation, but is surely worth it?
+Would need to profile.)
+
+4. Only rules which are parsed need an evlis. Only rules which are
+parsed and not void need an expr_id. Only rules which are parsed, not
+void, and evaluated need a value union. Is it possible to exploit this
+to save some space, but without having to chase pointers everywhere?
+
+5. Static analysis of the tree would allow us to calculate the longest
+evlis that each rule could possibly need, allocate that up front, and do
+away with ev_alloc altogether.
+
+2010-04-28
+----------
+
+OK, so expr_id is out of evlis, and into struct intermed. This seems to
+open up huge possibilities for further cleanup. For example, since we
+now always push a call/col pair onto evlis, the union can turn into a
+struct, and things like "pos += 2" can become "++pos". Done.
+
+And if I can eliminate the need to distinguish calls and binds, then all
+the bit twiddling for enum thr can go too. Let's see: we'd need to
+pushn() and pushs() dummy values when we compile a call the value of
+which is *not* bound. Yes, that works. There's still the messy "binding"
+global variable in the compiler, but the main point is that we can now
+totally eliminate enum thr. Yup, done.
+
+So, I think that really is just about everything sorted, with plenty
+tidy up still to be done, of course. And what are the vital stats now?
+
+    ; sh run-all.sh 
+    315 passes
+    4 fails
+    ; wc pacc.pacc
+     137  488 2852 pacc.pacc
+    ; valgrind ./pacc2 pacc.pacc -o pacc3.c
+    ==2641==     in use at exit: 989,559 bytes in 14,592 blocks
+    ==2641==   total heap usage: 21,404 allocs, 6,812 frees, 1,769,503 bytes allocated
+
+Oh darn, the total memory allocated has gone *up* slightly, to 620 bytes
+per byte of input. That's annoying. The changes are still good, as they
+are huge simplifications, but still...
+
+2010-04-27
+----------
+
+Long gap. Sigh. To recap: next stage is to remove support for col_expr,
+and tidy up around that. So far, the step stuff has gone, and
+save_core() no longer takes a "cols" argument; it never saves any
+columns.
+
+Now I want to move thunks into struct intermed. Hmm... this is a bit
+more complicated than I thought. For a start, the current evlis allows
+any mingling of thunk calls and rule calls that may be needed. In the
+new regime, we need to... call all the subrules first, and then the
+thunk. I think.
+
+Also, when we push a thunk onto evlis, we also push the current
+rule_col. So if thunks move into struct intermed, it looks like we need
+another column stored too. Surely this is wrong? Yes, indeed. The pushed
+rule_col is always the same as the current col! So we can eliminate
+that; I just did.
+
 2010-03-03
 ----------
 
