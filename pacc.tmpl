@@ -100,6 +100,11 @@ static void _pacc_save_core(long c, off_t col) {
     ++cur->ev_valid;
 }
 
+union _pacc_stackable {
+    int i;
+    struct intermed *m;
+};
+
 /* a pacc parser */
 struct _pacc_parser {
     char *string;
@@ -108,16 +113,17 @@ struct _pacc_parser {
     unsigned int m_bkt_cnt;
     unsigned char *m_valid;
     unsigned char m_chain_max;
-    int *cont_st; /* the continuation stack */
+    union stackable *cont_st; /* the continuation stack */
     int cont_p; /* next slot in cont_st */
     int cont_alloc; /* last slot in cont_st */
+
 };
 
 #define pushcont(c) (_pacc_push_cont((c), _pacc))
 #define popcont() (_pacc_pop_cont(_pacc))
 
-static void _pacc_push_cont(int c, struct _pacc_parser *p) {
-    Trace fprintf(stderr, "pushcont(%d) -> stack[%d]\n", c, p->cont_p);
+static void _pacc_push(union _pacc_stackable c, struct _pacc_parser *p) {
+    Trace fprintf(stderr, "pushcont(%d) -> stack[%d]\n", c.i, p->cont_p);
     if (p->cont_p == p->cont_alloc) {
 	int s = 2 * p->cont_alloc + 1;
 	int *n = realloc(p->cont_st, s * sizeof(int));
@@ -129,11 +135,21 @@ static void _pacc_push_cont(int c, struct _pacc_parser *p) {
     p->cont_st[p->cont_p++] = c;
 }
 
+static void _pacc_push_cont(int c, struct _pacc_parser *p) {
+    union _pacc_stackable u;
+    u.i = c;
+    _pacc_push(u, p);
+}
+
 static int _pacc_pop_cont(struct _pacc_parser *p) {
     Trace fprintf(stderr, "popcont() stack[%d] -> %d\n",
 	    p->cont_p - 1, p->cont_st[p->cont_p - 1]);
     assert(p->cont_p > 0);
     return p->cont_st[--p->cont_p];
+}
+
+static int _pacc_pop_cont(struct _pacc_parser *p) {
+    return _pacc_pop(p).i;
 }
 
 #define ref() (&cur->col)
