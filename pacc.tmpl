@@ -293,6 +293,7 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    ++_pacc_ev_i;
 	    Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
 	    pushm(cur);
+	    //_pacc_push((char *)cur, sizeof *cur, _pacc);
 	    pushcont(_pacc_ev_i);
 	    cur = _pacc_result(_pacc, col, rule);
 	    _pacc_ev_i = 0;

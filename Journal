@@ -9,8 +9,11 @@ at all on a typical 32 bit architecture, but I don't want to assume
 that.
 
 The right way to do it, of course, is to maintain the stack pointer as a
-char *, and simply use sizeof to advance it the right amount. Here
-goes...
+char *, and simply use sizeof to advance it the right amount. So that
+now works for pushcont, but there's a problem with pushm; we use the m
+stack pointer to know when we're done. Hmm... I guess we could just grab
+the current stack pointer at that point; we're done when we get back to
+there.
 
 2010-07-07
 ----------
