@@ -100,11 +100,6 @@ static void _pacc_save_core(long c, off_t col) {
     ++cur->ev_valid;
 }
 
-union _pacc_stackable {
-    int i;
-    struct intermed *m;
-};
-
 /* a pacc parser */
 struct _pacc_parser {
     char *string;
@@ -113,43 +108,47 @@ struct _pacc_parser {
     unsigned int m_bkt_cnt;
     unsigned char *m_valid;
     unsigned char m_chain_max;
-    union stackable *cont_st; /* the continuation stack */
-    int cont_p; /* next slot in cont_st */
-    int cont_alloc; /* last slot in cont_st */
+    // this is not needed!
+    //union _pacc_stackable *cont_st; /* the stack */
+    char *cont_st;
+    char *cont_p; /* next slot in cont_st */
+    char *cont_alloc; /* last slot in cont_st */
 
 };
 
 #define pushcont(c) (_pacc_push_cont((c), _pacc))
 #define popcont() (_pacc_pop_cont(_pacc))
 
-static void _pacc_push(union _pacc_stackable c, struct _pacc_parser *p) {
-    Trace fprintf(stderr, "pushcont(%d) -> stack[%d]\n", c.i, p->cont_p);
-    if (p->cont_p == p->cont_alloc) {
-	int s = 2 * p->cont_alloc + 1;
-	int *n = realloc(p->cont_st, s * sizeof(int));
+static void _pacc_push(char *x, size_t s, struct _pacc_parser *p) {
+    //Trace fprintf(stderr, "pushcont(%d) -> stack[%d]\n", c.i, p->cont_p);
+    if (p->cont_p + s >= p->cont_alloc) {
+	int l = 2 * (p->cont_alloc - p->cont_st) + s;
+	char *n = realloc(p->cont_st, l);
 	if (!n) nomem();
+	p->cont_p = n + (p->cont_p - p->cont_st);
 	p->cont_st = n;
-	p->cont_alloc = s;
+	p->cont_alloc = n + l + 1;
     }
-    assert(p->cont_p >= 0 && p->cont_p < p->cont_alloc);
-    p->cont_st[p->cont_p++] = c;
+    assert(p->cont_p >= p->cont_st && p->cont_p + s < p->cont_alloc);
+    memcpy(p->cont_p, x, s);
+    p->cont_p += s;
 }
 
 static void _pacc_push_cont(int c, struct _pacc_parser *p) {
-    union _pacc_stackable u;
-    u.i = c;
-    _pacc_push(u, p);
+    _pacc_push((char *)&c, sizeof c, p);
+}
+
+static char * _pacc_pop(size_t s, struct _pacc_parser *p) {
+    //Trace fprintf(stderr, "popcont() stack[%d] -> %d\n",
+//	    p->cont_p - 1, p->cont_st[p->cont_p - 1].i);
+    assert(p->cont_p - s >= p->cont_st);
+    p->cont_p -= s;
+    return p->cont_p;
 }
 
 static int _pacc_pop_cont(struct _pacc_parser *p) {
-    Trace fprintf(stderr, "popcont() stack[%d] -> %d\n",
-	    p->cont_p - 1, p->cont_st[p->cont_p - 1]);
-    assert(p->cont_p > 0);
-    return p->cont_st[--p->cont_p];
-}
-
-static int _pacc_pop_cont(struct _pacc_parser *p) {
-    return _pacc_pop(p).i;
+    int *r = (int *)_pacc_pop(sizeof(int), p);
+    return *r;
 }
 
 #define ref() (&cur->col)
@@ -293,7 +292,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    col = cur->evlis[_pacc_ev_i].col;
 	    ++_pacc_ev_i;
 	    Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-	    pushm(cur); pushcont(_pacc_ev_i);
+	    pushm(cur);
+	    pushcont(_pacc_ev_i);
 	    cur = _pacc_result(_pacc, col, rule);
 	    _pacc_ev_i = 0;
 	}

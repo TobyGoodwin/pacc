@@ -1,3 +1,17 @@
+2010-08-26
+----------
+
+So I was just about to deal with removing the m stack bodge, when it
+struck me that we really could quite easily have a single stack. My
+first effort involved a union type, but the snag with doing it that way
+is that each stack slot is as large as the largest possible. No problem
+at all on a typical 32 bit architecture, but I don't want to assume
+that.
+
+The right way to do it, of course, is to maintain the stack pointer as a
+char *, and simply use sizeof to advance it the right amount. Here
+goes...
+
 2010-07-07
 ----------
 
