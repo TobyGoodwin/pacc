@@ -281,19 +281,23 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     col = 0;
     cur = _pacc_result(_pacc, col, start_rule_id);
     if (parsed && !evaluating && (cur->rule & 3) == parsed) {
+	char *stack_save;
+
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	evaluating = 1;
 	_pacc_ev_i = 0;
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_ev_i == %d\n", _pacc_ev_i);
+	stack_save = _pacc->cont_p;
+    eval1:
 	while (_pacc_ev_i < cur->ev_valid) {
 	    int col, rule;
 	    rule = cur->evlis[_pacc_ev_i].call_id;
 	    col = cur->evlis[_pacc_ev_i].col;
 	    ++_pacc_ev_i;
 	    Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-	    pushm(cur);
-	    //_pacc_push((char *)cur, sizeof *cur, _pacc);
+	    //pushm(cur);
+	    _pacc_push((char *)&cur, sizeof cur, _pacc);
 	    pushcont(_pacc_ev_i);
 	    cur = _pacc_result(_pacc, col, rule);
 	    _pacc_ev_i = 0;
@@ -305,9 +309,11 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	}
     _pacc_expr_done:
 	cur->rule = (cur->rule & ~3) | evaluated;
-	if (m_ptr) {
-	    _pacc_ev_i = popcont(); cur = popm();
-	    goto eval_loop;
+	if (_pacc->cont_p != stack_save) {
+	    _pacc_ev_i = popcont();
+	    //cur = (struct intermed *)_pacc_pop(sizeof cur, _pacc);
+	    memcpy(&cur, _pacc_pop(sizeof cur, _pacc), sizeof cur);
+	    goto eval1;
 	}
 	Trace fprintf(stderr, "eval finished\n");
 	goto contin;
