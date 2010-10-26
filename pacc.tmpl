@@ -1,3 +1,10 @@
+/*
+vim: syntax=c
+This file is processed by template.sh to produce template.c. Therefore,
+it has the syntax of a C program, but is not to be so handled by, for
+instance, "make".
+*/
+
 #undef NDEBUG
 
 #include <assert.h>
@@ -116,10 +123,7 @@ struct _pacc_parser {
 
 };
 
-#define pushcont(c) (_pacc_push_cont((c), _pacc))
-#define popcont() (_pacc_pop_cont(_pacc))
-
-static void _pacc_push(char *x, size_t s, struct _pacc_parser *p) {
+static void _pacc_push(void *x, size_t s, struct _pacc_parser *p) {
     //Trace fprintf(stderr, "pushcont(%d) -> stack[%d]\n", c.i, p->cont_p);
     if (p->cont_p + s >= p->cont_alloc) {
 	int l = 2 * (p->cont_alloc - p->cont_st) + s;
@@ -134,11 +138,9 @@ static void _pacc_push(char *x, size_t s, struct _pacc_parser *p) {
     p->cont_p += s;
 }
 
-static void _pacc_push_cont(int c, struct _pacc_parser *p) {
-    _pacc_push((char *)&c, sizeof c, p);
-}
+#define _pacc_Push(v) _pacc_push(&(v), sizeof (v), _pacc)
 
-static char * _pacc_pop(size_t s, struct _pacc_parser *p) {
+static void *_pacc_pop(size_t s, struct _pacc_parser *p) {
     //Trace fprintf(stderr, "popcont() stack[%d] -> %d\n",
 //	    p->cont_p - 1, p->cont_st[p->cont_p - 1].i);
     assert(p->cont_p - s >= p->cont_st);
@@ -146,10 +148,8 @@ static char * _pacc_pop(size_t s, struct _pacc_parser *p) {
     return p->cont_p;
 }
 
-static int _pacc_pop_cont(struct _pacc_parser *p) {
-    int *r = (int *)_pacc_pop(sizeof(int), p);
-    return *r;
-}
+#define _pacc_Pop(v) memcpy(&(v), _pacc_pop(sizeof (v), _pacc), sizeof (v))
+#define _pacc_Discard(v) ((void)_pacc_pop(sizeof (v), _pacc))
 
 #define ref() (&cur->col)
 #define ref_0(a) (_pacc->string[*a])
@@ -256,6 +256,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rul
     return r;
 }
 
+#if 0
 #define M_STACK_BODGE 500
 static struct intermed *m_stack[M_STACK_BODGE];
 static int m_ptr = 0;
@@ -264,6 +265,7 @@ static void pushm(struct intermed *i) {
     m_stack[m_ptr++] = i;
 }
 static struct intermed *popm(void) { return m_stack[--m_ptr]; }
+#endif
 
 static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
@@ -296,9 +298,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	    col = cur->evlis[_pacc_ev_i].col;
 	    ++_pacc_ev_i;
 	    Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-	    //pushm(cur);
-	    _pacc_push((char *)&cur, sizeof cur, _pacc);
-	    pushcont(_pacc_ev_i);
+	    _pacc_Push(cur);
+	    _pacc_Push(_pacc_ev_i);
 	    cur = _pacc_result(_pacc, col, rule);
 	    _pacc_ev_i = 0;
 	}
@@ -310,9 +311,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     _pacc_expr_done:
 	cur->rule = (cur->rule & ~3) | evaluated;
 	if (_pacc->cont_p != stack_save) {
-	    _pacc_ev_i = popcont();
-	    //cur = (struct intermed *)_pacc_pop(sizeof cur, _pacc);
-	    memcpy(&cur, _pacc_pop(sizeof cur, _pacc), sizeof cur);
+	    _pacc_Pop(_pacc_ev_i);
+	    _pacc_Pop(cur);
 	    goto eval1;
 	}
 	Trace fprintf(stderr, "eval finished\n");

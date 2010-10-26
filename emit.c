@@ -159,7 +159,7 @@ static void literal(struct s_node *n) {
 	++l;
     }
     debug_pre("lit", n);
-    printf("Trace fprintf(stderr, \"lit %d @ col %%ld => \", col);\n", n->id);
+    printf("Trace fprintf(stderr, \"lit %ld @ col %%ld => \", col);\n", n->id);
     printf("if (col + %d <= _pacc->input_length &&\n", l);
     printf("        memcmp(\"%s\", _pacc->string + col, %d) == 0) {\n", n->text, l);
     printf("    status = parsed;\n");
@@ -181,8 +181,8 @@ static void any_emit(struct s_node *n) {
 
 static void rule_pre(struct s_node *n) {
     cur_rule = n->id;
-    printf("case %d: /* %s */\n", n->id, n->text); 
-    printf("Trace fprintf(stderr, \"rule %d (%s) col %%ld\\n\", col);\n", n->id, n->text);
+    printf("case %ld: /* %s */\n", n->id, n->text); 
+    printf("Trace fprintf(stderr, \"rule %ld (%s) col %%ld\\n\", col);\n", n->id, n->text);
     printf("rule_col = col;\n");
     printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
     printf("if ((cur->rule & 3) == uncomputed) {\n");
@@ -202,26 +202,26 @@ static void rule_post(struct s_node *n) {
 
 static void savecol(void) {
     printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
-    printf("pushcont(col); pushcont(col_ptr);\n");
-    printf("pushcont(cur->ev_valid);\n");
+    printf("_pacc_Push(col); _pacc_Push(col_ptr);\n");
+    printf("_pacc_Push(cur->ev_valid);\n");
 }
 
 static void restcol(void) {
     printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
-    printf("cur->ev_valid = popcont();\n");
-    printf("col_ptr = popcont(); col = popcont();\n");
+    printf("_pacc_Pop(cur->ev_valid);\n");
+    printf("_pacc_Pop(col_ptr); _pacc_Pop(col);\n");
 }
 
 static void accept_col(void) {
     printf("Trace fprintf(stderr, \"accept column registers\\n\");\n");
-    printf("popcont();\n");
-    printf("popcont(); popcont();\n");
+    printf("_pacc_Discard(cur->ev_valid);\n");
+    printf("_pacc_Discard(col_ptr); _pacc_Discard(col);\n");
 }
 
 static void seq_pre(struct s_node *n) {
-    printf("Trace fprintf(stderr, \"seq %d @ col %%ld?\\n\", col);\n", n->id);
-    printf("pushcont(cont);\n");
-    printf("cont = %d;\n", n->id);
+    printf("Trace fprintf(stderr, \"seq %ld @ col %%ld?\\n\", col);\n", n->id);
+    printf("_pacc_Push(cont);\n");
+    printf("cont = %ld;\n", n->id);
     printf("status = parsed;\n"); /* empty sequence */
     s_ptr = n_ptr = 0;
 }
@@ -233,9 +233,9 @@ static void seq_mid(struct s_node *n) {
 }
 
 static void seq_post(struct s_node *n) {
-    printf("case %d:\n", n->id);
-    printf("cont = popcont();\n");
-    printf("Trace fprintf(stderr, \"seq %d @ col %%ld => %%s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");\n", n->id);
+    printf("case %ld:\n", n->id);
+    printf("_pacc_Pop(cont);\n");
+    printf("Trace fprintf(stderr, \"seq %ld @ col %%ld => %%s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
 }
 
@@ -271,7 +271,7 @@ static void bind_pre(struct s_node *n) {
     pushn(n->text);
     pushs(n->first->first);
     binding = 1;
-    printf("Trace fprintf(stderr, \"will bind %s @ rule %d, col %%ld\\n\", col);\n", n->text, n->first->first->id);
+    printf("Trace fprintf(stderr, \"will bind %s @ rule %ld, col %%ld\\n\", col);\n", n->text, n->first->first->id);
 }
 
 static void bind_post(struct s_node *n) {
@@ -324,14 +324,14 @@ static void bindings(struct s_node *n) {
 	printf("pos = %d;\n", i);
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);
 
-	printf("    Trace fprintf(stderr, \"bind %s to r%d @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, s_stack[i]->id);
-	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %d);\n", s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bind %s to r%ld @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, s_stack[i]->id);
+	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %ld);\n", s_stack[i]->id);
 	printf("    if ((cur->rule & 3) != evaluated) {\n");
-	printf("        pushcol(col); pushcont(cont); cont = %ld;\n", p->id);
+	printf("        pushcol(col); _pacc_Push(cont); cont = %ld;\n", p->id);
 	printf("	_pacc_ev_i = 0; goto eval_loop;\n");
-	printf("case %d:     cont = popcont(); col = popcol();\n", p->id);
+	printf("case %ld:     _pacc_Pop(cont); col = popcol();\n", p->id);
 	printf("    }\n");
-	printf("    %s = cur->value.u%d;\n", p->text, s_stack[i]->id);
+	printf("    %s = cur->value.u%ld;\n", p->text, s_stack[i]->id);
 	printf("    Trace fprintf(stderr, \"bound %s to r%ld @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);
     }
 }
@@ -349,7 +349,7 @@ static void emit_expr(struct s_node *n) {
     printf("if (evaluating) {\n");
     printf("    struct intermed *_pacc_p;\n"); /* parent */
     declarations(n);
-    printf("    Trace fprintf(stderr, \"%d: evaluating\\n\");\n", n->id);
+    printf("    Trace fprintf(stderr, \"%ld: evaluating\\n\");\n", n->id);
     printf("    _pacc_p = cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
     bindings(n);
     printf("    cur = _pacc_p;\n");
@@ -383,23 +383,23 @@ static void emit_call(struct s_node *n) {
     //printf("_pacc_save_core(%ld, thr_%s, col);\n", n->first->id, binding ? "bound" : "rule");
     printf("_pacc_save_core(%ld, col);\n", n->first->id);
     //printf("_pacc_save_col(col);\n");
-    printf("pushcont(rule_col);\n"); /* XXX this is not callee saves */
-    printf("pushcont(cont);\n");
+    printf("_pacc_Push(rule_col);\n"); /* XXX this is not callee saves */
+    printf("_pacc_Push(cont);\n");
     printf("cont = %ld;\n", n->id);
     printf("st = %ld; /* call %s */\n", n->first->id, n->text);
     printf("goto top;\n");
     printf("case %ld: /* return from %s */\n", n->id, n->text);
     printf("last = cur;\n");
-    printf("cont = popcont();\n");
+    printf("_pacc_Pop(cont);\n");
     printf("status = last->rule & 3;\n");
     printf("col = last->remainder;\n");
-    printf("rule_col = popcont();\n");
+    printf("_pacc_Pop(rule_col);\n");
     printf("cur = _pacc_result(_pacc, rule_col, %d);\n", cur_rule);
 }
 
 static void alt_pre(struct s_node *n) {
     debug_pre("alt", n);
-    printf("pushcont(cont);\n");
+    printf("_pacc_Push(cont);\n");
     printf("cont = %ld;\n", n->id);
     savecol();
     s_ptr = n_ptr = 0;
@@ -425,7 +425,7 @@ static void alt_post(struct s_node *n) {
     accept_col();
     printf("}\n");
     printf("case %ld:\n", n->id);
-    printf("cont = popcont();\n");
+    printf("_pacc_Pop(cont);\n");
     printf("Trace fprintf(stderr, \"alt %ld @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
     s_ptr = n_ptr = 0;
