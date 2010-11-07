@@ -202,20 +202,20 @@ static void rule_post(struct s_node *n) {
 
 static void savecol(void) {
     printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
-    printf("_pacc_Push(col); _pacc_Push(col_ptr);\n");
+    printf("_pacc_Push(col); /*_pacc_Push(col_ptr);*/\n");
     printf("_pacc_Push(cur->ev_valid);\n");
 }
 
 static void restcol(void) {
     printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
     printf("_pacc_Pop(cur->ev_valid);\n");
-    printf("_pacc_Pop(col_ptr); _pacc_Pop(col);\n");
+    printf("/*_pacc_Pop(col_ptr);*/ _pacc_Pop(col);\n");
 }
 
 static void accept_col(void) {
     printf("Trace fprintf(stderr, \"accept column registers\\n\");\n");
     printf("_pacc_Discard(cur->ev_valid);\n");
-    printf("_pacc_Discard(col_ptr); _pacc_Discard(col);\n");
+    printf("/*_pacc_Discard(col_ptr);*/ _pacc_Discard(col);\n");
 }
 
 static void seq_pre(struct s_node *n) {
@@ -327,9 +327,10 @@ static void bindings(struct s_node *n) {
 	printf("    Trace fprintf(stderr, \"bind %s to r%ld @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, s_stack[i]->id);
 	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %ld);\n", s_stack[i]->id);
 	printf("    if ((cur->rule & 3) != evaluated) {\n");
-	printf("        pushcol(col); _pacc_Push(cont); cont = %ld;\n", p->id);
+	printf("        _pacc_Push(col); _pacc_Push(cont);\n");
+	printf("        cont = %ld;\n", p->id);
 	printf("	_pacc_ev_i = 0; goto eval_loop;\n");
-	printf("case %ld:     _pacc_Pop(cont); col = popcol();\n", p->id);
+	printf("case %ld:     _pacc_Pop(cont); _pacc_Pop(col);\n", p->id);
 	printf("    }\n");
 	printf("    %s = cur->value.u%ld;\n", p->text, s_stack[i]->id);
 	printf("    Trace fprintf(stderr, \"bound %s to r%ld @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);

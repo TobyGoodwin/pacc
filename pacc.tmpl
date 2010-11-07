@@ -45,6 +45,7 @@ static void nomem(void) {
     panic("out of memory");
 }
 
+#if 0
 #define COL_STACK_BODGE 25
 static int col_stack[COL_STACK_BODGE];
 static int col_ptr = 0;
@@ -60,6 +61,7 @@ static int popcol(void) {
     Trace fprintf(stderr, "pop() col_stack[%d] -> %d\n", col_ptr - 1, col_stack[col_ptr - 1]);
     return col_stack[--col_ptr];
 }
+#endif
 
 enum status {
     no_parse, parsed, evaluated, uncomputed
