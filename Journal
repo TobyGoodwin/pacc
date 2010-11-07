@@ -1,3 +1,15 @@
+2010-11-07
+----------
+
+Work on the stack is nearly complete. I thought I'd hit a real snag:
+the savecol() / acceptcol() stuff saves and restores the "column
+registers", which included the pointer into the column stack. Obviously
+this seemed like a good idea at the time, but in fact simply removing
+the pushes of col_ptr has no observable effect. Phew! I thought I was
+going to have to work out what the hell that was all about, but since it
+was about nothing, it won't use up too much brain power. Clean up time
+now.
+
 2010-10-23
 ----------
 

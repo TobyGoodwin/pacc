@@ -202,20 +202,17 @@ static void rule_post(struct s_node *n) {
 
 static void savecol(void) {
     printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
-    printf("_pacc_Push(col); /*_pacc_Push(col_ptr);*/\n");
-    printf("_pacc_Push(cur->ev_valid);\n");
+    printf("_pacc_Push(col); _pacc_Push(cur->ev_valid);\n");
 }
 
 static void restcol(void) {
     printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
-    printf("_pacc_Pop(cur->ev_valid);\n");
-    printf("/*_pacc_Pop(col_ptr);*/ _pacc_Pop(col);\n");
+    printf("_pacc_Pop(cur->ev_valid); _pacc_Pop(col);\n");
 }
 
 static void accept_col(void) {
     printf("Trace fprintf(stderr, \"accept column registers\\n\");\n");
-    printf("_pacc_Discard(cur->ev_valid);\n");
-    printf("/*_pacc_Discard(col_ptr);*/ _pacc_Discard(col);\n");
+    printf("_pacc_Discard(cur->ev_valid); _pacc_Discard(col);\n");
 }
 
 static void seq_pre(struct s_node *n) {
