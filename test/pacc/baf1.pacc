@@ -7,7 +7,7 @@ parse '2+3+4' 9
 parse '2*3+4' 10
 parse '2+3*4' 14
 parse '2*3*4' 24
-noparse x Additive 0
+noparse x Additive 1
 */
 
 # Bryan Ford's trivial grammar with ref_ptr():

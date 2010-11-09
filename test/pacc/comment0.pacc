@@ -1,7 +1,7 @@
 /*
 chars
 parse ab ab
-noparse ax B 1
+noparse ax B 2
 */
 
 // Not really much going on here

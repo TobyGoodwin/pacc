@@ -1,7 +1,7 @@
 /*
 chars
 parse ab a
-noparse ac '"b"' 1
+noparse ac '"b"' 2
 */
 
 # A single character with value:

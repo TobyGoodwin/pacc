@@ -1,7 +1,7 @@
 /*
 chars
 parse foo foo
-noparse bar A 0
+noparse bar A 1
 */
 
 # A multi-character literal:

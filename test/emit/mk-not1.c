@@ -1,16 +1,16 @@
 /*
-chars
-noparse f '"o"' 1
-noparse fo '"o"' 2
+type: chars
+noparse f '"o"' 2
+noparse fo '"o"' 3
 parse foo yes
-noparse food S 3
+noparse food S 4
 */
 
 #include <sys/types.h>
 
 #include "syntax.h"
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* End of input:

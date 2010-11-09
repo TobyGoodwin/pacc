@@ -4,7 +4,7 @@ parse 5.5 25
 parse 5.6 30
 parse 6.5 30
 parse 6.6 36
-noparse 5.x A 2
+noparse 5.x A 3
 */
 
 # Nested calls with values:

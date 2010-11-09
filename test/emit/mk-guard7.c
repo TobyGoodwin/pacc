@@ -1,15 +1,15 @@
 /*
-chars
+type: chars
 parse {} {}
 parse {_any_chars_here_} {_any_chars_here_}
-noparse {_no '"}"' 4
+noparse {_no '"}"' 5
 */
 
 #include <sys/types.h>
 
 #include "syntax.h"
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
     /*

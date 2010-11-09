@@ -2,7 +2,7 @@
 chars
 parse ab ab
 parse cd cd
-noparse acd '"b"' 1
+noparse acd '"b"' 2
 */
 
 # Together with nest3, this test checks that nested alts behave

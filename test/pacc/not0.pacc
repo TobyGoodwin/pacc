@@ -2,7 +2,7 @@
 chars
 parse a a
 parse ac a
-noparse ab A 1
+noparse ab A 2
 */
 
 # A single character with value:

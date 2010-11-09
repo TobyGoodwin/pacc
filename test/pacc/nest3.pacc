@@ -1,7 +1,7 @@
 /*
 chars
-noparse ab '"d"' 2
-noparse cd P 0
+noparse ab '"d"' 3
+noparse cd P 1
 parse abd abd
 parse acd acd
 */

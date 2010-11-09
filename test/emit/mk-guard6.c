@@ -1,11 +1,11 @@
 /*
-chars
+type: chars
 parse q q
 parse qux qux
 parse q39a q39a
 parse q. q
 parse q3. q3
-noparse 37 Char 1
+noparse 37 Char 2
 */
 
 #include <sys/types.h>
@@ -19,7 +19,7 @@ noparse 37 Char 1
  * char *Char ← . { ref_str() }
  */
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
     /* char *Char ← . { ref_str() } */

@@ -5,6 +5,18 @@ So viewing the java work as an opportunity to smarten up usability, I
 find I must change all the emit scripts, as the interface to parse has
 acquired a new argument (darn).
 
+OK, done. We're still a little way off handling file inputs in the test
+suite, mind you. And there's one genuine new failure: my changes to
+comment handling seem to have introduced a problem which is picked up by
+pacc/comment0.pacc. Good! This is the point of the test suite, after
+all.
+
+Also, it occurs to me that error output should be handled by a separate
+function that takes a struct _pacc_parser argument; parse() will be a
+simple to use wrapper, that handles common cases, but if you want finer
+control you can create a parser object directly. More thought needed
+here.
+
 2010-11-07
 ----------
 

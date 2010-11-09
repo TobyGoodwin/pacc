@@ -5,7 +5,7 @@ parse qux qux
 parse q39a q39a
 parse q. q
 parse q3. q3
-noparse 37 Char 1
+noparse 37 Char 2
 */
 
 Identifier :: char * ← IdentStart IdentCont* { ref_str() } 

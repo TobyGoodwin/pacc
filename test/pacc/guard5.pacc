@@ -2,7 +2,7 @@
 int
 parse a9 9
 parse z3 3
-noparse zx A 2
+noparse zx A 3
 */
 
 # Semantic predicates, calls, and any matchers:

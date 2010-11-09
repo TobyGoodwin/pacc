@@ -1,9 +1,9 @@
 /*
 chars
-noparse f S 0
-noparse fo S 0
+noparse f S 1
+noparse fo S 1
 parse foo yes
-noparse food S 3
+noparse food S 4
 */
 
 # End of input:

@@ -1,7 +1,7 @@
 /*
 chars
 parse ab ab
-noparse ax S 0
+noparse ax S 1
 */
 
 /* The point of this test is that pacc needs to strip comments in order

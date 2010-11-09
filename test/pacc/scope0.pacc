@@ -1,7 +1,7 @@
 /*
 chars
 parse ab a
-noparse ac B 1
+noparse ac B 2
 */
 
 # Nothing unexpected here: different names are independent.

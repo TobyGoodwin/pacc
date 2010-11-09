@@ -10,7 +10,7 @@ parse '2*3*4' 24
 parse 456 456
 parse '53*(13+75)' 4664
 parse ' 456 + 123 * ( 543 + 7 * (987 + 2) + 6) ' 919512
-noparse x Sum 0
+noparse x Sum 1
 */
 
 # Bryan Ford"s trivial grammar with integers and spacing:

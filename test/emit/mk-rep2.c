@@ -1,6 +1,6 @@
 /*
-chars
-noparse xx Y 1
+type: chars
+noparse xx Y 2
 parse xyx xyx
 parse xyyx xyyx
 parse xyyyx xyyyx
@@ -11,7 +11,7 @@ parse xyyyyyyyyyyx xyyyyyyyyyyx
 
 #include "syntax.h"
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* The + operator:

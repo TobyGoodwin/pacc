@@ -3,8 +3,8 @@ chars
 parse a a
 parse q q
 parse z z
-noparse A A 1
-noparse '%' A 1
+noparse A A 2
+noparse '%' A 2
 */
 
 # Semantic predicate and any matcher:
