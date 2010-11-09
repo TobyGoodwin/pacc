@@ -6,7 +6,7 @@
 int main(int argc, char **argv) {
     PACC_TYPE r;
 
-    if (parse(argv[1], strlen(argv[1]), &r))
+    if (parse("arg", argv[1], strlen(argv[1]), &r))
 	printf("parsed with value " PACC_TYPE_FORMAT "\n", r);
 
     return 0;

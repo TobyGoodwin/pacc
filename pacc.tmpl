@@ -29,6 +29,7 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
+/* XXX doesn't this have to go into _pacc? */
 /* A dynamic array of error strings */
 char **_pacc_err = 0;
 size_t _pacc_err_alloc = 0;
@@ -71,6 +72,7 @@ static void _pacc_save_core(long c, off_t col) {
 
 /* a pacc parser */
 struct _pacc_parser {
+    char *name;
     char *string;
     off_t input_length;
     struct intermed **m_bkt;
@@ -82,7 +84,6 @@ struct _pacc_parser {
     char *cont_st;
     char *cont_p; /* next slot in cont_st */
     char *cont_alloc; /* last slot in cont_st */
-
 };
 
 static void _pacc_push(void *x, size_t s, struct _pacc_parser *p) {
@@ -159,12 +160,13 @@ static void _pacc_set_bkt_cnt(struct _pacc_parser *p) {
     p->m_bkt_cnt = primes[i - 1];
 }
 
-static struct _pacc_parser *_pacc_parser_new(char *s, off_t l) {
+static struct _pacc_parser *_pacc_parser_new(char *n, char *s, off_t l) {
     unsigned int i;
     struct _pacc_parser *r;
 
     r = realloc(0, sizeof *r);
     if (!r) nomem();
+    r->name = n;
     r->string = s;
     r->input_length = l;
     _pacc_set_bkt_cnt(r);
@@ -270,6 +272,19 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     //assert(cur == _pacc->m);
     if ((cur->rule & 3) == no_parse) {
        size_t i;
+       off_t line_pos, p;
+       long nl;
+
+       nl = 1; /* line numbering is 1-based, natch */
+       line_pos = 0;
+       for (p = 0; p < _pacc_err_col; ++p) {
+	    if (_pacc->string[p] == '\n') {
+		++nl;
+		line_pos = p;
+	    }
+       }
+       /* as is column numbering */
+       printf("%s:%ld:%ld ", _pacc->name, nl, 1 + _pacc_err_col - line_pos);
        printf("expected ");
        for (i = 0; i < _pacc_err_valid; ++i) {
            printf("%s", _pacc_err[i]);
@@ -278,7 +293,8 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
                if (i + 2 == _pacc_err_valid) printf("or ");
            }
        }
-       printf(" at column %ld\n", _pacc_err_col);
+       printf("\n");
+       //printf("(column %ld)\n", _pacc_err_col);
     }
 
     Instr {
@@ -315,9 +331,9 @@ contin:
     goto top;
 }
 
-int parse(char *addr, off_t l, PACC_TYPE *result) {
+int parse(char *name, char *addr, off_t l, PACC_TYPE *result) {
     struct _pacc_parser *p;
     /* XXX the result should live in the _pacc_parser */
-    p = _pacc_parser_new(addr, l);
+    p = _pacc_parser_new(name, addr, l);
     return engine(p, result);
 }

@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
     in = load(arg_input(), &size);
 
-    if (parse(in, size, &p)) {
+    if (parse(arg_input(), in, size, &p)) {
 	//s_dump(p);
 	desugar(p);
 	resolve(p);

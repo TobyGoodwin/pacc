@@ -3,7 +3,7 @@
 
 char *prefix = 0; /* XXX */
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
     /*
@@ -278,30 +278,43 @@ int parse(char *ignore0, off_t ignore1, struct s_node **result) {
     p = s_new(rule); p->text = "NameStart"; p->first = q; p->next = r; r = p;
 
     /*
-	QuotedChar :: void
-	    ← "\\n" / "\\t" / "\\\\" / "\\\"" / !"\\" Char
+	QuotedChar
+	    ← SimpleCharEscape
+	    / !"\\" Char
     */
 
-    p = s_new(call); p->text = "Char"; q = p;
-    p = s_new(lit); p->text = "\\\\"; s = p;
-    p = s_new(not); p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; t = p;
+    p = s_kid(not, s_text(lit, "\\\\"));
+    q = s_text(call, "Char");
+    p = s_kid(seq, cons(p, q));
+    p = cons(s_text(call, "SimpleCharEscape"), p);
+    p = s_kid(alt, p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "char *"), p);
+    p = s_both(rule, "QuotedChar", p);
+    r = cons(p, r);
 
-    p = s_new(lit); p->text = "\\\\\\\""; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
+    /*
+	SimpleCharEscape
+	    ← "\\\'" / "\\\"" / "\\\?" / "\\\\"
+	    / "\\a" / "\\b" / "\\f" / "\\n" / "\\r" / "\\t" / "\\v"
+    */
 
-    p = s_new(lit); p->text = "\\\\\\\\"; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_text(lit, "\\\\t");
-    t = cons(s_kid(seq, p), t);
-
-    p = s_new(lit); p->text = "\\\\n"; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_new(alt); p->first = t; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
-    p = s_new(rule); p->text = "QuotedChar"; p->first = q; p->next = r; r = p;
+    p = s_text(lit, "\\\\v");
+    p = cons(s_text(lit, "\\\\t"), p);
+    p = cons(s_text(lit, "\\\\r"), p);
+    p = cons(s_text(lit, "\\\\n"), p);
+    p = cons(s_text(lit, "\\\\f"), p);
+    p = cons(s_text(lit, "\\\\b"), p);
+    p = cons(s_text(lit, "\\\\a"), p);
+    p = cons(s_text(lit, "\\\\\\\\"), p);
+    p = cons(s_text(lit, "\\\\\\\?"), p);
+    p = cons(s_text(lit, "\\\\\\\""), p);
+    p = cons(s_text(lit, "\\\\\\\'"), p);
+    p = s_kid(alt, p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "char *"), p);
+    p = s_both(rule, "SimpleCharEscape", p);
+    r = cons(p, r);
 
     /*
 	CharLit :: void

@@ -6,6 +6,9 @@ all: harness
 check:
 	sh run.sh
 
+clean:
+	rm -f harness harness.o parse.c
+
 emitter: emitter.o
 	$(CC) $(CFLAGS) -o $@ $^ ../arg.o ../emit.o ../error.o ../load.o ../main.o ../resolve.o ../sugar.o ../syntax.o ../template.o
 

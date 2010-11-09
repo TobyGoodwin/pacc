@@ -1,7 +1,8 @@
 /*
-chars
+type: chars
+source: arg
 parse ab a
-noparse ac '"b"' 1
+noparse ac '"b"' 2
 */
 
 #include <sys/types.h>
@@ -10,7 +11,7 @@ noparse ac '"b"' 1
 
 char *prefix = 0;
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* A single character with value:

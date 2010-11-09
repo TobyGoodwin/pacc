@@ -1,6 +1,6 @@
 /*
 int
-parse_file simple.java 123
+parse_file java/simple.java 123
 */
 
 {
@@ -10,7 +10,7 @@ import System
 import Numeric
 
 
--- Abstract syntax tree data types
+// Abstract syntax tree data types
 type Identifier = String
 type Name = [Identifier]
 
@@ -80,7 +80,7 @@ data Declaration =
 				[Declaration]
 		| DeclBlock Bool [Statement]
 
--- formal parameter: "final" flag, type, parameter name, array dimension
+// formal parameter: "final" flag, type, parameter name, array dimension
 type FormalParam = (Bool, DeclType, Identifier, Int)
 
 data Initializer =
@@ -114,17 +114,17 @@ data Statement =  StLabel Identifier Statement
 		| StThrow Expression
 		| StNull
 
--- catch clause: 
+// catch clause: 
 type CatchClause = (FormalParam, [Statement])
 
--- import declaration: qualified name, ".*" flag
+// import declaration: qualified name, ".*" flag
 type ImportDecl = (Name, Bool)
 
--- compilation unit: package name, import declarations, type declarations
+// compilation unit: package name, import declarations, type declarations
 type CompUnit = (Maybe Name, [ImportDecl], [Declaration])
 
 
--- List of Java's reserved words, used in Keyword below
+// List of Java's reserved words, used in Keyword below
 keywords = [
 	"abstract",
 	"boolean", "break", "byte",
@@ -146,39 +146,72 @@ keywords = [
 */
 }
 
-//------------------ Lexical Structure --------------------
+# As usual, the lexical rules eat whitespace *after* each lexical
+# element, so the start rule needs to permit whitespace at the beginning
+# of the input. And we anchor the parse, so that the whole input must be
+# consumed.
+Start :: void =
+    Spacing
+    CompilationUnit
+    !.
+
+CompilationUnit :: void =
+    pkg:Spacing
+    imps:Spacing
+    decls:Declaration*
+
+	  /*
+	  pkg:("package":Word n:QualifiedName ";":Sym -> {Just n}
+		/ -> {Nothing})
+	  imps:ImportDecl*
+	  decls:Declaration*
+	  !Char			// make sure we consume all input text
+				-> {(pkg, imps, decls)}
+				*/
+	
+////---------------- Lexical Structure --------------------
 
 
 // Whitespace and comments
 
-LineTerminator :: char * =
-	"\n"		// \r's have been canonicalized by javaPrep
+LineTerminator :: void =
+	"\n" # / "\r\n"
 
-/*
+Spacing :: void =
+	  Space*
+
+Space :: void =
+	  WhiteSpace
+	/ Comment
+
+WhiteSpace :: void =
+	  " " / "\t" / "\f" / LineTerminator
+
+Comment :: void =
+	  TraditionalComment
+	/ EndOfLineComment
+
+TraditionalComment :: void =
+	"/*" (!"*/" .)* "*/"
+
+EndOfLineComment :: void =
+	"//" (!LineTerminator .)* LineTerminator
+
 InputCharacter :: Char =
 	!LineTerminator c:Char					-> c
 
-Spacing :: {()} =
-	  Space*						-> {()}
-
-Space :: {()} =
+Space :: void =
 	  WhiteSpace						-> {()}
 	/ Comment						-> {()}
 
 WhiteSpace :: Char =
-	  ' ' / '\t' / '\f' / LineTerminator
+	  " " / "\t" / "\f" / LineTerminator
 
-Comment :: {()} =
+Comment :: void =
 	  TraditionalComment
 	/ EndOfLineComment
 
-TraditionalComment :: {()} =
-	"/*" (!"*_XXXdelme_/" c:Char -> c)* "*_XXXdelme_/"				-> {()}
-EndOfLineComment :: {()} =
-	"//" (!LineTerminator c:Char -> c)* '\n'		-> {()}
-
-
--- Keywords and identifiers
+// Keywords and identifiers
 
 Identifier :: Identifier =
 	!Keyword !BooleanLiteral !NullLiteral s:Word		-> s
@@ -191,16 +224,16 @@ Word :: String =
 
 JavaLetter :: Char =
 	  c:Char		&{isAlpha c}			-> c
-	/ '_'
-	/ '$'
+	/ "_"
+	/ "$"
 
 JavaLetterOrDigit :: Char =
 	  c:Char		&{isAlphaNum c}			-> c
-	/ '_'
-	/ '$'
+	/ "_"
+	/ "$"
 
 
--- Symbols (operators and punctuation)
+// Symbols (operators and punctuation)
 Sym :: String =
 	  s:SymChars Spacing					-> s
 
@@ -209,13 +242,13 @@ SymChars :: String =
 	/ ">>=" / "<<=" / ">>>"
 	/ ">>" / "<<"
 	/ "+=" / "-=" / "*=" / "/=" / "%=" / "&=" / "^=" / "|="
-	/ "++" / "--" / "&&" / "||" / "<=" / ">=" / "==" / "!="
+	/ "++" / "//" / "&&" / "||" / "<=" / ">=" / "==" / "!="
 	/ ";" / ":" / "," / "." / "{" / "}" / "(" / ")"
 	/ "[" / "]" / "!" / "~" / "+" / "-" / "*" / "/"
 	/ "%" / "<" / ">" / "=" / "&" / "^" / "|" / "?"
 
 
--- Literals
+// Literals
 Literal :: Literal =
 	  FloatingPointLiteral
 	/ IntegerLiteral
@@ -225,13 +258,14 @@ Literal :: Literal =
 	/ NullLiteral
 
 
--- Integer literals
+// Integer literals
 IntegerLiteral :: Literal =
 	  v:HexNumeral t:IntegerTypeSuffixOpt Spacing	->	{t v}
 	/ v:OctalNumeral t:IntegerTypeSuffixOpt Spacing ->	{t v}
 	/ v:DecimalNumeral t:IntegerTypeSuffixOpt Spacing ->	{t v}
 
-IntegerTypeSuffixOpt :: {Integer -> Literal} =
+#IntegerTypeSuffixOpt :: {Integer -> Literal} =
+IntegerTypeSuffixOpt :: void =
 	  ('l' / 'L')				-> {LitLong}
 	/ 					-> {LitInt}
 
@@ -266,7 +300,7 @@ Digit :: Int =
 	  c:Char	&{isDigit c}		-> {digitToInt c}
 
 
--- Floating point
+// Floating point
 FloatingPointLiteral :: Literal =
 	  m:Digits '.' f:FractionPartOpt e:ExponentPartOpt t:FloatTypeSuffixOpt
 	  Spacing
@@ -306,13 +340,13 @@ FloatTypeSuffix :: {Rational -> Literal} =
 	/ ('d' / 'D')			-> {\r -> LitDouble (fromRational r)}
 
 
--- Boolean literals
+// Boolean literals
 BooleanLiteral :: Literal =
 	  "true":Word			-> { LitBool True }
 	/ "false":Word			-> { LitBool False }
 
 
--- Character and string literals
+// Character and string literals
 CharacterLiteral :: Literal =
 	  "'" c:SingleCharacter "'" Spacing	-> { LitChar c }
 	/ "'" c:EscapeSequence "'" Spacing	-> { LitChar c }
@@ -351,12 +385,12 @@ ZeroToThree :: Int =
 	/ '3'					-> {3}
 
 
--- Null literals
+// Null literals
 NullLiteral :: Literal =
 	  "null":Word				-> { LitNull }
 
 
--------------------- Types --------------------
+//------------------ Types --------------------
 
 TypeSpec :: DeclType =
 	  t:TypeName d:Dims			-> {DtArray t d}
@@ -388,7 +422,7 @@ Dims :: Int =
 	/ "[":Sym "]":Sym			-> {1}
 
 
--------------------- Expressions --------------------
+//------------------ Expressions --------------------
 
 Expression :: Expression =
 	  l:CondExpr op:AssignmentOperator r:Expression
@@ -466,7 +500,7 @@ MultExpr :: Expression =
 
 UnaryExpr :: Expression =
 	  "++":Sym e:UnaryExpr			-> {ExpPrefix "++" e}
-	/ "--":Sym e:UnaryExpr			-> {ExpPrefix "--" e}
+	/ "//":Sym e:UnaryExpr			-> {ExpPrefix "--" e}
 	/ "+":Sym e:UnaryExpr			-> {ExpPrefix "+" e}
 	/ "-":Sym e:UnaryExpr			-> {ExpPrefix "-" e}
 	/ UnaryExprNotPlusMinus
@@ -489,7 +523,7 @@ PostfixExpr :: Expression =
 	/ l:PostfixExpr ".":Sym r:PrimExpr	-> {ExpSelect l r}
 	/ l:PostfixExpr ".":Sym "class":Word	-> {ExpDotClass l}
 	/ l:PostfixExpr "++":Sym		-> {ExpPostfix "++" l}
-	/ l:PostfixExpr "--":Sym		-> {ExpPostfix "--" l}
+	/ l:PostfixExpr "//":Sym		-> {ExpPostfix "--" l}
 	/ PrimExpr
 
 PrimExpr :: Expression =
@@ -525,7 +559,7 @@ Initializer :: Initializer =
 	/ e:Expression				-> {IniExpr e}
 
 
--------------------- Statements --------------------
+//------------------ Statements --------------------
 
 Block :: {[Statement]} =
 	  "{":Sym ss:BlockStatement* "}":Sym	-> ss
@@ -599,7 +633,7 @@ SwitchGroup :: SwitchGroup =
 						-> {SwDefault ss}
 
 
--------------------- Declarations --------------------
+//------------------ Declarations --------------------
 
 Modifier :: Modifier =
 	  "public":Word				-> {ModPublic}
@@ -636,35 +670,35 @@ ClassBody :: {[Declaration]} =
 
 Declaration :: Declaration =
 
-	  -- Variable declaration
+	  // Variable declaration
 	  ms:Modifier* t:TypeSpec ds:Declarators ";":Sym
 				-> {DeclSimple ms t ds}
 
-	  -- Method declaration
+	  // Method declaration
 	/ mods:Modifier*
 	  typ:(t:TypeSpec -> {Just t} / "void":Word -> {Nothing})
 	  id:Identifier ps:FormalParams dim:DimsOpt th:ThrowsOpt
 	  body:(b:Block -> {Just b} / ";":Sym -> {Nothing})
 				-> {DeclMethod mods typ id ps dim th body}
 
-	  -- Constructor declaration
+	  // Constructor declaration
 	/ mods:Modifier* id:Identifier ps:FormalParams th:ThrowsOpt body:Block
 				-> {DeclConstructor mods id ps th body}
 
-	  -- Class declaration
+	  // Class declaration
 	/ mods:Modifier* "class":Word id:Identifier
 	  ext:("extends":Word t:TypeSpec -> t)?
 	  imp:("implements":Word t:TypeSpec ts:(",":Sym t:TypeSpec -> t)*
 		-> {t:ts} / -> {[]})
 	  body:ClassBody	-> {DeclClass mods id ext imp body}
 
-	  -- Interface declaration
+	  // Interface declaration
 	/ mods:Modifier* "interface":Word id:Identifier
 	  ext:("extends":Word t:TypeSpec ts:(",":Sym t:TypeSpec -> t)* -> {t:ts}
 		/ -> {[]})
 	  body:ClassBody	-> {DeclInterface mods id ext body}
 
-	  -- Initialization block
+	  // Initialization block
 	/ st:("static":Word -> {True} / -> {False})
 	  b:Block
 				-> {DeclBlock st b}
@@ -675,15 +709,15 @@ ThrowsOpt :: {[Name]} =
 	/					-> {[]}
 
 
--------------------- Top Level --------------------
+//------------------ Top Level --------------------
 
 CompilationUnit :: CompUnit =
-	  Spacing		-- eat whitespace at beginning
+	  Spacing		// eat whitespace at beginning
 	  pkg:("package":Word n:QualifiedName ";":Sym -> {Just n}
 		/ -> {Nothing})
 	  imps:ImportDecl*
 	  decls:Declaration*
-	  !Char			-- make sure we consume all input text
+	  !Char			// make sure we consume all input text
 				-> {(pkg, imps, decls)}
 	
 
@@ -693,10 +727,10 @@ ImportDecl :: ImportDecl =
 	  ";":Sym
 				-> {(name, allflag)}
 
-
+/*
 {
 
--- Preprocess unicode escapes and newlines before parsing
+// Preprocess unicode escapes and newlines before parsing
 javaPrep :: String -> String
 javaPrep [] = []
 javaPrep ('\r':'\n':s) = '\n':javaPrep s

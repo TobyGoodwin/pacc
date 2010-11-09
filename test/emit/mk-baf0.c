@@ -7,14 +7,14 @@ parse 2+3+4 9
 parse 2*3+4 10
 parse 2+3*4 14
 parse 2*3*4 24
-noparse x Additive 0
+noparse x Additive 1
 */
 
 #include <sys/types.h>
 
 #include "syntax.h"
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
     /* Bryan Ford's trivial grammar with actions:

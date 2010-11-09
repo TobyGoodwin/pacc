@@ -4,4 +4,4 @@
 
 #include "syntax.h"
 
-extern int parse(char *, off_t, struct s_node **);
+extern int parse(const char *, char *, off_t, struct s_node **);

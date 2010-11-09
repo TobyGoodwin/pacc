@@ -1,3 +1,10 @@
+2010-11-09
+----------
+
+So viewing the java work as an opportunity to smarten up usability, I
+find I must change all the emit scripts, as the interface to parse has
+acquired a new argument (darn).
+
 2010-11-07
 ----------
 
@@ -9,6 +16,23 @@ the pushes of col_ptr has no observable effect. Phew! I thought I was
 going to have to work out what the hell that was all about, but since it
 was about nothing, it won't use up too much brain power. Clean up time
 now.
+
+Back to looking at java.pacc. First thing it reveals is that we don't
+handle "\r", or indeed most other C escapes.  The complete definition of
+an escaped character is quite hairy, since it includes a 1-3 octal digit
+sequence, as well as various hex sequences and unicode values. Currently
+we don't support them all; this impacts pacc.pacc and more unpleasantly
+emit.c, where we need to calculate the length of the named string (for
+example, "\n\13x\177" names a string of 4 characters).
+
+So what I'm currently doing is throwing baf's Java parser at pacc, and
+fixing each failure as it occurs. It strikes me that this is a very good
+way to get a user handle on pacc, and I could use this as an opportunity
+to polish up error handling.
+
+The two obvious problems at the moment are: invented rule names
+("expected x.159") and the lack of line number resolution ("at column
+6080"). So let's fix them, eh?
 
 2010-10-23
 ----------
@@ -176,7 +200,8 @@ reflection I think is should just be assert().)
 3. Insight! Instead of storing rule/col pairs on evlis, resolve them to
 struct intermed * pointers. This saves 4 bytes, or 8 bytes if off_t is
 64 bits. (OK, it's rather eager evaluation, but is surely worth it?
-Would need to profile.)
+Would need to profile.) [ 2010-11-07: no, we *can't* do this, even if we
+wanted to, because the struct intermed array can shift under our feet. ]
 
 4. Only rules which are parsed need an evlis. Only rules which are
 parsed and not void need an expr_id. Only rules which are parsed, not

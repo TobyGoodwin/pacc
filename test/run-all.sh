@@ -19,11 +19,15 @@ parse() {
 }
 
 parse_file() {
+    # It would be nicer to have a different harness that can read a
+    # file. One problem with doing it here is that even with the "``"
+    # syntax, Bourne *still* messes with the value, stripping trailing
+    # newlines, whatever IFS is set to.
     check "`cat $1`" "parsed with value $2"
 }
 
 noparse() {
-    check "$1" "expected $2 at column $3"
+    check "$1" "arg:1:$3 expected $2"
 }
 
 noparse_file() {
@@ -33,7 +37,9 @@ noparse_file() {
 run() {
     target="$1"
     echo $target
-    type=`sed -n 2p $target`
+    type=`sed -n '/^type: /s///p' $target`
+    # An historical default
+    case $type in '') type=`sed -n 2p $target` ;; esac
     case $type in
 	chars|int) cp parse.h-$type parse.h ;;
 	*)
@@ -42,14 +48,25 @@ run() {
 	    return 1
 	    ;;
     esac
+    src=`sed -n '/^source: /s///p' $target`
+    # Another historical default
+    case $src in '') src=arg ;; esac
+    case $src in
+	arg|file) cp harness-$src.c harness.c ;;
+	*)
+	    echo "FAIL $target: bad source $src"
+	    fails=`expr $fails + 1`
+	    return 1
+	    ;;
+    esac
     # Need better Makefiles?
     rm -f emitter emitter.o parse.c parse.o harness harness.o
     case $target in
 	emit/*)
-	    > parse.pacc # Makefile has parse.c depends on parse.pacc
+	    echo x > parse.pacc # Makefile has parse.c depends on parse.pacc
 	    cp $target emitter.c
 	    make emitter
-	    ./emitter -o parse.c Makefile
+	    ./emitter -o parse.c parse.pacc
 	    ;;
 	*)
 	    cp $target parse.pacc

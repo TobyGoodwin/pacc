@@ -10,6 +10,10 @@ static char *g_name; /* grammar name */
 static struct s_node *g_node; /* grammar root */
 static int cur_rule;
 
+/* XXX obviously this needs cleanup! I'm almost sure that n_stack and
+ * s_stack move in lockstep, so we only need one version of push, and
+ * one pointer.
+ */
 #define N_STACK_BODGE 30
 static char *n_stack[N_STACK_BODGE];
 static int n_ptr = 0;
@@ -146,15 +150,27 @@ static void debug_post(char *type, struct s_node *n) {
 /* We recognise a properly-escaped C string in the grammar, and copy
  * that verbatim into the generated parser. That means we have to be a
  * bit careful in calculating the string's length. */
+/* XXX no, not a *bit* careful but *very* careful, as we need to support
+ * the full C:1999 syntax, including octal, hex, and universal escapes.
+ * Furthermore, we will need test cases for it all.
+ */
 static void literal(struct s_node *n) {
     char *p;
-    int l;
+    int l; /* length of named string */
 
     l = 0;
     for (p = n->text; *p; ++p) {
 	if (*p == '\\') {
 	    ++p;
 	    assert(*p);
+	    switch (*p) {
+		case '\'': case '\"': case '\?': case '\\':
+		case 'a': case 'b': case 'f': case 'n':
+		case 'r': case 't': case 'v':
+		    break;
+		default:
+		    assert(0);
+	    }
 	}
 	++l;
     }

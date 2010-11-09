@@ -1,5 +1,5 @@
 /*
-int
+type: int
 parse 5 5
 parse 2+3 5
 parse 2*3 6
@@ -7,16 +7,16 @@ parse 2+3+4 9
 parse 2*3+4 10
 parse 2+3*4 14
 parse 2*3*4 24
-parse 53*(13+75) 4664
-parse _456_+_123_*_(_543_+___7_*_(987_+_2)_+_6)_ 919512
-noparse x Sum 0
+parse '53*(13+75)' 4664
+parse ' 456 + 123 * ( 543 +   7 * (987 + 2) + 6) ' 919512
+noparse x Sum 1
 */
 
 #include <sys/types.h>
 
 #include "syntax.h"
 
-int parse(char *ignore0, off_t ignore1, struct s_node **result) {
+int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
     /* Bryan Ford's trivial grammar with integers and spacing:

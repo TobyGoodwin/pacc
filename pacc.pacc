@@ -64,7 +64,7 @@ CodeNames
     / StringLit ns:CodeNames → ns
     / CharLit ns:CodeNames → ns
     / C_Comment ns:CodeNames → ns 
-    / c:Char &{ ref_0(c) != '}' } ns:CodeNames → ns
+    / (!"}" .) ns:CodeNames → ns
     / ε { 0 }
 
 CodeAndNames
@@ -90,21 +90,24 @@ StringLit ← "\"" q:QuotedChars "\"" _ → q
 
 QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
 
-# XXX probably not necessary any more
-Char :: ref_t
-    ← . { ref() }
-
 CharLit :: void
     ← "'" QuotedChar "'" _
 
+# XXX this needs to completely match the C:1999 definition, including
+# octal, hex and universal escapes. 
 QuotedChar
-    ← "\\n" / "\\t" / "\\\\" / "\\\"" / !"\\" Char
+    ← SimpleCharEscape
+    / !"\\" .
+
+SimpleCharEscape
+    ← "\\\'" / "\\\"" / "\\\?" / "\\\\"
+    / "\\a" / "\\b" / "\\f" / "\\n" / "\\r" / "\\t" / "\\v"
 
 NameStart
-    ← c:Char &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
+    ← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
 
 NameCont
-    ← c:Char &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
+    ← c:. &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
 
 TypeElement
     ← Name _ / "*" _
