@@ -1,0 +1,16 @@
+/*
+type: int
+source: arg
+parse 5 5
+parse 6 0
+*/
+
+/* XXX This is a previous version of bind4. Note that the expected
+ * results don't look very sensible, but they are correct. What this
+ * test *should* do, in a fantasy world, is issue a warning because the
+ * left hand side of the alternation matches the empty string: it must
+ * always succeed. The right hand side of the alternation is effectively
+ * unreachable code.
+ */
+ 
+P ← a:"5"* { atoi(ref_dup(a)) } / b:"6" { atoi(ref_dup(b)) }

@@ -12,7 +12,8 @@
  * than recursion.
  */
 
-/* The deblit (remove bound literal) sugaring converts this tree:
+/*
+The deblit (desugar bound literal) transform converts this tree:
 
         lit 115: five 
           call 114: Word 
@@ -72,16 +73,12 @@ static void deblit0(struct s_node *g, struct s_node *n) {
 }
 
 /*
-The debind sugaring creates a new rule for the right hand side of a
-non-rule binding:
-
-S <- r:("y" "z") { use r }
-
+The debind (desugar binding) transform creates a new rule for the right
+hand side of a non-rule binding.
+    S <- r:("y" "z") { use r }
 becomes, effectively
-
-S <- r:S_r { use r }
-S_r <- "y" "z"
-
+    S <- r:S_r { use r }
+    S_r <- "y" "z"
 except that the name of the invented rule contains a prohibited
 character instead of the underscore.
 */
@@ -120,10 +117,20 @@ static void debind0(struct s_node *g, struct s_node *n) {
     if (s_has_children(n->type))
 	for (p = n->first; p; p = p->next)
 	    if (p->type == bind && p->first->type != call)
-		debind1(g, p, name, c);
+		debind1(g, p, name, c++);
 	    else
 		debind0(g, p);
 }
+
+/*
+The derep (desugar repetitions) transform changes
+    Y <- "y" *
+into
+    Y <- Y_star
+    Y_star <- Y_one Y_star / epsilon
+    Y_one <- "y"
+except with different names for the virtual rules.
+*/
 
 static void derep1(struct s_node *g, struct s_node *n, char *name, int c) {
     char *x0, *x1, *xx;

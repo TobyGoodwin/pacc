@@ -1,17 +1,11 @@
 /*
 type: int
 source: arg
-parse '' 0
-parse '1' 1
-parse '2' 1
-parse '11' 2
-parse '22' 2
-parse '111' 3
-parse '222' 3
-parse '11111111111' 11
-parse '22222222222' 11
+parse '=' 1
+parse '1=' 0
+parse '=1' 0
+parse '1=1' 1
 */
 
-/* This Convertor speaks two different languages! */
-UnaryConvertor
-    <- a:"1"* { strlen(ref_dup(a)) } / a:"2"* { strlen(ref_dup(a)) }
+UnaryComparator :: int
+    <- a:"1"* "=" b:"1"* { strlen(ref_dup(a)) == strlen(ref_dup(b)) }

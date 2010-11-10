@@ -30,6 +30,14 @@ OK. So that's a 1 2 3 6 5 4 7. Let's see how far we get...
 Right, well the problem with number 1 is that I can't actually work out
 what I want error reporting to do at the moment. I'll come back to that.
 
+2a. Replace the three tree walks with a single one (but note that some
+desugarings interact).
+
+2b. Revoke the idea of creating unique rule names fit for human
+presentation. Create unique rule names, and use the imaginary error
+syntax to create good errors.
+
+2c. Implement the imaginary error syntax.
 
 2010-11-10
 ----------
