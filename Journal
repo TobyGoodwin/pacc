@@ -1,3 +1,65 @@
+2010-11-10
+----------
+
+Spent the day at the freezing market with my notebook to hand. I now seem 
+to have several strands ongoing. Here is a summary; more details are in
+this file or my notebook.
+
+1. Investigating error reporting (see earlier entry).
+
+2. Sorting out the cut'n'paste mess that sugar.c is becoming.
+
+3. Refactoring error reporting to use the struct _pacc_parser "object";
+it shouldn't be riveted to the parser engine itself as it is now.
+
+4. Rewriting the grammar to express the relationships between different
+bits of syntax in terms of precedence.
+
+5. Recognising that those changes should be prompted by test cases that
+demonstrate errors in the present grammar.
+
+6. Realising that this is a new *type* of test case: a grammar which is
+meant to fail, and that the test harness can be extended (perhaps in a
+reasonably clean way) to handle this new type.
+
+7. And implementing character classes down to the compiler. (Nearly
+forgot that one.)
+
+OK. So that's a 1 2 3 6 5 4 7. Let's see how far we get...
+
+Right, well the problem with number 1 is that I can't actually work out
+what I want error reporting to do at the moment. I'll come back to that.
+
+
+2010-11-10
+----------
+
+Darn. So I worked out why the comment test fails: the new system for
+generating names for desugared reps would produce a name like
+C_Comment:* for the first rep in the rule, and the same name again for
+the second rep! Hilarity ensues...
+
+This is a bit of an ugly bugger to fix. Obviously we can readily make
+the names unique again, for example by reintroducing the id as part of
+the name for invented rules. But this means we get rules with names like
+Word:129:*, which is not exactly pretty again. (Although still a slight
+improvement on x.129!) Could we make up names like C_Comment:*:0 for the
+first desugared rep?
+
+Well, yes, of course we can, although the code gets less and less
+pretty. Still, it's all in the name of good public relations, or
+usability as it's sometime known. We probably need to make similar
+changes to the deblit code.
+
+In fact, here we go: "parse.pacc:269:7 expected b.529". OK, so that
+would like much nicer as "... expected NameStart:c", which is what we
+now have. However, sugar.c is getting increasingly cut'n'pasted.
+
+Also, this error is being produced because we don't support 'x'
+character constants (and I don't intend to, either). But at this point
+there are several other options. Why doesn't pacc report any other
+possibilities? I feel another test case coming on...
+
 2010-11-09
 ----------
 

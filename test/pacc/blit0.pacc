@@ -4,7 +4,7 @@ parse 'five five' 25
 parse 'five six' 30
 parse 'six five' 30
 parse 'six six' 36
-noparse 'five seven' 'Word:*' 11
+noparse 'five seven' 'Word:*:0' 11
 */
 
 # Bound literals

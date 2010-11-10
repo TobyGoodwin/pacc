@@ -208,10 +208,13 @@ static void rule_pre(struct s_node *n) {
 static void rule_post(struct s_node *n) {
     printf("    cur->rule = (cur->rule & ~3) | status;\n");
     printf("    cur->remainder = col;\n");
+
+    /* XXX: See test/pacc/err0.c. This is wrong. What is right? */
     printf("    if (_pacc_err_col == rule_col) {\n");
     printf("        _pacc_err_valid = 0;\n"); /* Rule made no progress: over-write error */
     error(n->text, 0);
     printf("    }\n");
+
     printf("}\n");
     printf("goto contin;\n");
 }

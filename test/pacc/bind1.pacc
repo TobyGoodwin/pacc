@@ -1,6 +1,12 @@
 /*
-chars
-parse xyzx yz
+type: int
+source: arg
+parse '' 0
+parse '1' 1
+parse '11' 2
+parse '111' 3
+parse '11111111111' 11
 */
 
-S :: char * <- "x" r:("y" "z") "x" { ref_dup(r) }
+UnaryConvertor
+    <- a:"1"* { strlen(ref_dup(a)) }

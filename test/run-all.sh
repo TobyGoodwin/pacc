@@ -4,7 +4,12 @@ passes=0
 fails=0
 
 check() {
+    # Like make, say what we are about to do, in case we want to do it
+    # manually in a momemnt...
+    echo ./harness "$1"
+    # ...then do it, captuing all output.
     r=`./harness "$1" 2>&1`
+
     if [ "$r" = "$2" ]; then
 	echo "PASS: $1 ==> $2"
 	passes=`expr $passes + 1`

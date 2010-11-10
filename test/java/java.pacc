@@ -266,7 +266,7 @@ IntegerLiteral :: Literal =
 
 #IntegerTypeSuffixOpt :: {Integer -> Literal} =
 IntegerTypeSuffixOpt :: void =
-	  ('l' / 'L')				-> {LitLong}
+	  ("l" / "L")				-> {LitLong}
 	/ 					-> {LitInt}
 
 HexNumeral :: Integer =
@@ -280,7 +280,7 @@ HexDigit :: Int =
 	  c:Char	&{isHexDigit c}		-> {digitToInt c}
 
 OctalNumeral :: Integer =
-	  '0' v:OctalDigits			-> {v}
+	  "0" v:OctalDigits			-> {v}
 
 OctalDigits :: Integer =
 	  v:OctalDigits d:OctalDigit		-> {v * 8 + toInteger d}

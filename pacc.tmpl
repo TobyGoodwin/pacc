@@ -8,6 +8,7 @@ instance, "make".
 #undef NDEBUG
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -271,30 +272,42 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 
     //assert(cur == _pacc->m);
     if ((cur->rule & 3) == no_parse) {
-       size_t i;
-       off_t line_pos, p;
-       long nl;
+	size_t i;
+	off_t line_pos, p;
+	long nl;
 
-       nl = 1; /* line numbering is 1-based, natch */
-       line_pos = 0;
-       for (p = 0; p < _pacc_err_col; ++p) {
+	nl = 1; /* line numbering is 1-based, natch */
+	line_pos = 0;
+	for (p = 0; p < _pacc_err_col; ++p) {
 	    if (_pacc->string[p] == '\n') {
 		++nl;
 		line_pos = p;
 	    }
-       }
-       /* as is column numbering */
-       printf("%s:%ld:%ld ", _pacc->name, nl, 1 + _pacc_err_col - line_pos);
-       printf("expected ");
-       for (i = 0; i < _pacc_err_valid; ++i) {
-           printf("%s", _pacc_err[i]);
-           if (i + 1 < _pacc_err_valid) {
-               printf(", ");
-               if (i + 2 == _pacc_err_valid) printf("or ");
-           }
-       }
-       printf("\n");
-       //printf("(column %ld)\n", _pacc_err_col);
+	}
+	/* as is column numbering */
+	printf("%s:%ld:%ld ", _pacc->name, nl, 1 + _pacc_err_col - line_pos);
+	printf("expected ");
+	for (i = 0; i < _pacc_err_valid; ++i) {
+	    char *s;
+	    for (s = _pacc_err[i]; *s; ++s) {
+		if (isprint(*s)) putchar(*s);
+		else switch (*s) {
+		case '\n':
+		    puts("\\n");
+		    break;
+		default:
+		    printf("\\x%02x", *s);
+		    break;
+		    }
+	    }
+	    
+	    if (i + 1 < _pacc_err_valid) {
+		printf(", ");
+		if (i + 2 == _pacc_err_valid) printf("or ");
+	    }
+	}
+	printf("\n");
+	//printf("(column %ld)\n", _pacc_err_col);
     }
 
     Instr {
