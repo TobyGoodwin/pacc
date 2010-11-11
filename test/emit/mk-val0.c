@@ -1,5 +1,5 @@
 /*
-type: int
+type int
 parse 5 5
 noparse x A 1
 */

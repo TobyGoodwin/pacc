@@ -1,5 +1,5 @@
 /*
-chars
+type chars
 parse foo foo
 parse bar bar
 noparse qux P 1

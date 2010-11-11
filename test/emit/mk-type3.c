@@ -1,5 +1,5 @@
 /*
-type: int
+type int
 parse 78 78
 parse 321 321
 */

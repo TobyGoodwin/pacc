@@ -1,5 +1,5 @@
 /*
-type: int
+type int
 check 5 'hello, world!parsed with value 5'
 noparse x A 1
 */

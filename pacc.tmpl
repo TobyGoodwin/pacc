@@ -324,7 +324,7 @@ static void _pacc_error(struct _pacc_parser *p) {
 	}
     }
     /* as is column numbering */
-    printf("%s:%ld:%ld ", p->name, nl, 1 + p->err_col - line_pos);
+    printf("%s:%ld:%ld: ", p->name, nl, 1 + p->err_col - line_pos);
     printf("expected ");
     for (i = 0; i < p->err_valid; ++i) {
 	char *s;

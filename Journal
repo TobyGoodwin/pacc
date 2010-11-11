@@ -1,3 +1,16 @@
+2010-11-11
+----------
+
+A new type of test case: inputs that are in fact not valid pacc
+grammars, for example
+
+    S <- .**
+
+The proposal is to put these in test/bad, and then rework run-all.sh,
+*not* to know how to run these tests itself, but rather to call some
+bad-specific run script. (Obviously, we will then use this new
+abstraction to rework emit and java, too.)
+
 2010-11-10
 ----------
 

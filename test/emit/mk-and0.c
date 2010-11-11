@@ -1,6 +1,5 @@
 /*
-type: chars
-source: arg
+type chars
 parse ab a
 noparse ac '"b"' 2
 */
