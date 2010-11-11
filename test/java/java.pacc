@@ -1,6 +1,6 @@
 /*
-int
-parse_file java/simple.java 123
+type int
+parse java/simple.java 123
 */
 
 {

@@ -1,6 +1,5 @@
 /*
-type: int
-source: arg
+type int
 noparse xd 'expected "a", B, or see' 2
 */
 
