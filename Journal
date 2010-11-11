@@ -39,6 +39,14 @@ syntax to create good errors.
 
 2c. Implement the imaginary error syntax.
 
+OK, so after a long struggle (I think there are still problems with bits
+of test suite not being rebuilt when they should be), I have tidied up
+sugar.c as much as I can for now: 2a and then some. We may reconsider 2b
+and 2c later on.
+
+3 is done, as well as some additional tidying up around the mess left by
+the stack reworkings. The rest must wait now.
+
 2010-11-10
 ----------
 

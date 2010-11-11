@@ -111,29 +111,29 @@ void error (char *t, int quote) {
     printf("    int doit, append;\n");
     printf("Trace fprintf(stderr, \"error(%s, %d) at col %%ld\\n\", col);\n", t, quote);
     printf("    append = doit = 1;\n");
-    printf("    if (col > _pacc_err_col) append = 0;\n");
-    printf("    else if (col == _pacc_err_col) {\n");
+    printf("    if (col > _pacc->err_col) append = 0;\n");
+    printf("    else if (col == _pacc->err_col) {\n");
     printf("        size_t i;\n");
-    printf("        for (i = 0; i < _pacc_err_valid; ++i) {\n");
-    printf("            if (strcmp(_pacc_err[i], ");
+    printf("        for (i = 0; i < _pacc->err_valid; ++i) {\n");
+    printf("            if (strcmp(_pacc->err[i], ");
     if (quote) printf("\"\\\"%s\\\"\"", t);
     else printf("\"%s\"", t);
     printf(") == 0) doit = 0;\n");
     printf("        }\n");
     printf("    } else doit = 0;\n");
     printf("    if (doit) {\n");
-    printf("        if (append) ++_pacc_err_valid;\n");
-    printf("        else _pacc_err_valid = 1;\n");
-    printf("        if (_pacc_err_valid > _pacc_err_alloc) {\n");
-    printf("            _pacc_err_alloc = 2 * _pacc_err_alloc + 1;\n");
-    printf("            _pacc_err = realloc(_pacc_err, _pacc_err_alloc * sizeof(char *));\n");
-    printf("            if (!_pacc_err) nomem();\n");
+    printf("        if (append) ++_pacc->err_valid;\n");
+    printf("        else _pacc->err_valid = 1;\n");
+    printf("        if (_pacc->err_valid > _pacc->err_alloc) {\n");
+    printf("            _pacc->err_alloc = 2 * _pacc->err_alloc + 1;\n");
+    printf("            _pacc->err = realloc(_pacc->err, _pacc->err_alloc * sizeof(char *));\n");
+    printf("            if (!_pacc->err) nomem();\n");
     printf("        }\n");
-    printf("        _pacc_err[_pacc_err_valid - 1] = ");
+    printf("        _pacc->err[_pacc->err_valid - 1] = ");
     if (quote) printf("\"\\\"%s\\\"\"", t);
     else printf("\"%s\"", t);
     printf(";\n");
-    printf("        _pacc_err_col = col;\n");
+    printf("        _pacc->err_col = col;\n");
     printf("    }\n");
     printf("}\n");
 }
@@ -210,8 +210,8 @@ static void rule_post(struct s_node *n) {
     printf("    cur->remainder = col;\n");
 
     /* XXX: See test/pacc/err0.c. This is wrong. What is right? */
-    printf("    if (_pacc_err_col == rule_col) {\n");
-    printf("        _pacc_err_valid = 0;\n"); /* Rule made no progress: over-write error */
+    printf("    if (_pacc->err_col == rule_col) {\n");
+    printf("        _pacc->err_valid = 0;\n"); /* Rule made no progress: over-write error */
     error(n->text, 0);
     printf("    }\n");
 

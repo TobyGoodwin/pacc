@@ -71,6 +71,7 @@ run() {
 	    echo x > parse.pacc # Makefile has parse.c depends on parse.pacc
 	    cp $target emitter.c
 	    make emitter
+	    echo "./emitter -o parse.c parse.pacc"
 	    ./emitter -o parse.c parse.pacc
 	    ;;
 	*)

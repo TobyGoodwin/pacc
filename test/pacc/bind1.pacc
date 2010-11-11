@@ -1,0 +1,8 @@
+/*
+chars
+parse xyzx yz
+parse xzyx zy
+*/
+
+S :: char * <- "x" r:("y" "z") "x" { ref_dup(r) }
+    / "x" r:("z" "y") "x" { ref_dup(r) }

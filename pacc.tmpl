@@ -30,13 +30,6 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
-/* XXX doesn't this have to go into _pacc? */
-/* A dynamic array of error strings */
-char **_pacc_err = 0;
-size_t _pacc_err_alloc = 0;
-size_t _pacc_err_valid = 0;
-off_t _pacc_err_col;
-
 /* XXX probably want to reconsider this; see Journal 2010-02-10 */
 typedef off_t *ref_t;
 
@@ -80,33 +73,39 @@ struct _pacc_parser {
     unsigned int m_bkt_cnt;
     unsigned char *m_valid;
     unsigned char m_chain_max;
-    // this is not needed!
-    //union _pacc_stackable *cont_st; /* the stack */
-    char *cont_st;
-    char *cont_p; /* next slot in cont_st */
-    char *cont_alloc; /* last slot in cont_st */
+    
+    unsigned char *stack; /* the stack */
+    unsigned char *sp; /* next slot in stack */
+    unsigned char *stack_alloc; /* last slot in stack */
+
+    /* A dynamic array of error strings */
+    char **err;
+    size_t err_alloc;
+    size_t err_valid;
+    /* The highest column to have associated error */
+    off_t err_col;
 };
 
 static void _pacc_push(void *x, size_t s, struct _pacc_parser *p) {
-    if (p->cont_p + s >= p->cont_alloc) {
-	int l = 2 * (p->cont_alloc - p->cont_st) + s;
-	char *n = realloc(p->cont_st, l);
+    if (p->sp + s >= p->stack_alloc) {
+	int l = 2 * (p->stack_alloc - p->stack) + s;
+	unsigned char *n = realloc(p->stack, l);
 	if (!n) nomem();
-	p->cont_p = n + (p->cont_p - p->cont_st);
-	p->cont_st = n;
-	p->cont_alloc = n + l + 1;
+	p->sp = n + (p->sp - p->stack);
+	p->stack = n;
+	p->stack_alloc = n + l + 1;
     }
-    assert(p->cont_p >= p->cont_st && p->cont_p + s < p->cont_alloc);
-    memcpy(p->cont_p, x, s);
-    p->cont_p += s;
+    assert(p->sp >= p->stack && p->sp + s < p->stack_alloc);
+    memcpy(p->sp, x, s);
+    p->sp += s;
 }
 
 #define _pacc_Push(v) _pacc_push(&(v), sizeof (v), _pacc)
 
 static void *_pacc_pop(size_t s, struct _pacc_parser *p) {
-    assert(p->cont_p - s >= p->cont_st);
-    p->cont_p -= s;
-    return p->cont_p;
+    assert(p->sp - s >= p->stack);
+    p->sp -= s;
+    return p->sp;
 }
 
 #define _pacc_Pop(v) memcpy(&(v), _pacc_pop(sizeof (v), _pacc), sizeof (v))
@@ -180,9 +179,16 @@ static struct _pacc_parser *_pacc_parser_new(char *n, char *s, off_t l) {
 	r->m_valid[i * 2 + 1] = 0; /* allocated */
     }
     r->m_chain_max = 0;
-    r->cont_st = 0;
-    r->cont_p = r->cont_alloc = 0;
+    r->sp = 0;
+    r->stack = r->stack_alloc = 0;
+    r->err = 0;
+    r->err_alloc = 0;
+    r->err_valid = 0;
     return r;
+}
+
+static void _pacc_parser_destroy(struct _pacc_parser *p) {
+    free(p);
 }
 
 /* hash chains */
@@ -234,14 +240,14 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     col = 0;
     cur = _pacc_result(_pacc, col, start_rule_id);
     if (parsed && !evaluating && (cur->rule & 3) == parsed) {
-	char *stack_save;
+	unsigned char *stack_save;
 
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
 	evaluating = 1;
 	_pacc_ev_i = 0;
     eval_loop:
 	Trace fprintf(stderr, "eval loop with _pacc_ev_i == %d\n", _pacc_ev_i);
-	stack_save = _pacc->cont_p;
+	stack_save = _pacc->sp;
     eval1:
 	while (_pacc_ev_i < cur->ev_valid) {
 	    int col, rule;
@@ -261,53 +267,13 @@ static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
 	}
     _pacc_expr_done:
 	cur->rule = (cur->rule & ~3) | evaluated;
-	if (_pacc->cont_p != stack_save) {
+	if (_pacc->sp != stack_save) {
 	    _pacc_Pop(_pacc_ev_i);
 	    _pacc_Pop(cur);
 	    goto eval1;
 	}
 	Trace fprintf(stderr, "eval finished\n");
 	goto contin;
-    }
-
-    //assert(cur == _pacc->m);
-    if ((cur->rule & 3) == no_parse) {
-	size_t i;
-	off_t line_pos, p;
-	long nl;
-
-	nl = 1; /* line numbering is 1-based, natch */
-	line_pos = 0;
-	for (p = 0; p < _pacc_err_col; ++p) {
-	    if (_pacc->string[p] == '\n') {
-		++nl;
-		line_pos = p;
-	    }
-	}
-	/* as is column numbering */
-	printf("%s:%ld:%ld ", _pacc->name, nl, 1 + _pacc_err_col - line_pos);
-	printf("expected ");
-	for (i = 0; i < _pacc_err_valid; ++i) {
-	    char *s;
-	    for (s = _pacc_err[i]; *s; ++s) {
-		if (isprint(*s)) putchar(*s);
-		else switch (*s) {
-		case '\n':
-		    puts("\\n");
-		    break;
-		default:
-		    printf("\\x%02x", *s);
-		    break;
-		    }
-	    }
-	    
-	    if (i + 1 < _pacc_err_valid) {
-		printf(", ");
-		if (i + 2 == _pacc_err_valid) printf("or ");
-	    }
-	}
-	printf("\n");
-	//printf("(column %ld)\n", _pacc_err_col);
     }
 
     Instr {
@@ -344,9 +310,58 @@ contin:
     goto top;
 }
 
+static void _pacc_error(struct _pacc_parser *p) {
+    size_t i;
+    off_t c, line_pos;
+    long nl;
+
+    nl = 1; /* line numbering is 1-based, natch */
+    line_pos = 0;
+    for (c = 0; c < p->err_col; ++c) {
+	if (p->string[c] == '\n') {
+	    ++nl;
+	    line_pos = c;
+	}
+    }
+    /* as is column numbering */
+    printf("%s:%ld:%ld ", p->name, nl, 1 + p->err_col - line_pos);
+    printf("expected ");
+    for (i = 0; i < p->err_valid; ++i) {
+	char *s;
+	for (s = p->err[i]; *s; ++s) {
+	    if (isprint(*s)) putchar(*s);
+	    else switch (*s) {
+		case '\n':
+		    puts("\\n");
+		    break;
+		default:
+		    printf("\\x%02x", *s);
+		    break;
+	    }
+	}
+
+	if (i + 1 < p->err_valid) {
+	    printf(", ");
+	    if (i + 2 == p->err_valid) printf("or ");
+	}
+    }
+    printf("\n");
+    //printf("(column %ld)\n", _pacc->err_col);
+}
+
 int parse(char *name, char *addr, off_t l, PACC_TYPE *result) {
+    int parsed;
     struct _pacc_parser *p;
+
     /* XXX the result should live in the _pacc_parser */
+
     p = _pacc_parser_new(name, addr, l);
-    return engine(p, result);
+
+    parsed = engine(p, result);
+
+    if (!parsed) _pacc_error(p);
+
+    _pacc_parser_destroy(p);
+
+    return parsed;
 }

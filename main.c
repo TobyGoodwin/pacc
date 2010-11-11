@@ -16,6 +16,8 @@ int main(int argc, char **argv) {
 
     in = load(arg_input(), &size);
 
+    /* XXX what about command line flags to enable / disable dumping of
+     * the tree? */
     if (parse(arg_input(), in, size, &p)) {
 	s_dump(p);
 	desugar(p);

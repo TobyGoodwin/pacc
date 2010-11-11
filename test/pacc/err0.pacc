@@ -1,0 +1,20 @@
+/*
+type: int
+source: arg
+noparse xd 'expected "a", B, or see' 2
+*/
+
+/* XXX this test is a fantasy: pacc has never reported 'expected "a", B,
+ * or see', and I don't think it ever will. What *should* it say?
+ */
+
+/* This test verifies that when presented with several options, pacc
+ * reports all of them.
+ */
+S ← "x" ("a" / B / C)
+
+B ← "b"
+
+C ← see
+
+see ← "c"
