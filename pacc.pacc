@@ -22,15 +22,11 @@ Rule0
     ← s:Rule1 Slash r:Rule0 { s_alt(s, r) /* x y */ }
     / s:Rule1 → s
 
-#Rule1
-    #← Epsilon { s_new(seq) }
-    #/ r:Rule2 → r
-
 Rule1
-    ← r:Rule2 → r
+    / r:Rule2 → { s_kid(seq, r) }
 
 Rule2
-    ← r:Rule3 s:Rule2  { cons (r, s) }
+    ← r:Rule3 s:Rule2 { cons (r, s) }
     / ε { 0 }
 
 Rule3
