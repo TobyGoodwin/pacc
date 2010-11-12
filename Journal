@@ -11,6 +11,19 @@ The proposal is to put these in test/bad, and then rework run-all.sh,
 bad-specific run script. (Obviously, we will then use this new
 abstraction to rework emit and java, too.)
 
+OK, done. The test harness just became achingly beautiful, with
+sprawling shell functions slashed to a fraction of their size, yet with
+all their functionality maintained. Bourne shell can be good, when it's
+done right. So that's 6 done.
+
+What about 5? I can show you a grammar that incorrectly sequences
+epsilon. And one that combines bound literals with repetitions in an odd
+way. And of course pacc/scope1.pacc fails, although that may or may not
+be related. 
+
+In fact, the current grammar works surprisingly well. Still, that's no
+reason not to improve it. :-)
+
 2010-11-10
 ----------
 
