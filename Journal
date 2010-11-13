@@ -11,6 +11,9 @@ comment unclosed, and was told
 where 16:2 is end of file. This is pretty nifty, but needs to also say
 where the comment began.
 
+Finally, redone pacc0.c to match the improved grammar, and "make check"
+works again. Good night.
+
 2010-11-13
 ----------
 
