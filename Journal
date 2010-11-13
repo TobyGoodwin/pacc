@@ -1,3 +1,31 @@
+2010-11-13
+----------
+
+So I really thought that I could give ε a precedence lower than
+sequencing, so that
+
+    Foo ε Bar
+
+is a syntax error. The only snag is that currently results are members
+of a sequence, so putting  ε below sequencing would forbid rules like
+this.
+
+    Foos ← f:Foo fs:Foos { cons(f, fs) } / ε { 0 }
+
+I was going to bodge round this by saying that actually ε is shorthand
+for "{ 0 }" (glossing over what happens with void rules), but imagine my
+surprise to find this in pacc.pacc:
+
+    TypeOptional ← ... / ε { s_stashed_type() }
+
+So really, no that won't fly at all. (Good, 'cos the "{ 0 }" bodge was
+nasty anyway.)
+
+Now, baf doesn't have problems like this, as his results come after a
+sequence, and are not part of it. I changed this to implement lmatch()
+and rmatch(), but they went away back in February. So let's go back to
+that; test/bad/result0.pacc currently succeeds.
+
 2010-11-11
 ----------
 

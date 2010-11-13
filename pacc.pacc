@@ -22,17 +22,19 @@ Rule0
     ← s:Rule1 Slash r:Rule0 { s_alt(s, r) /* x y */ }
     / s:Rule1 → s
 
-Rule1
-    / r:Rule2 → { s_kid(seq, r) }
+/* XXX should use Result?, but not till we auto-generate the 0 value. */
+Rule1 
+    ← Epsilon r:Result → { s_kid(seq, r) }
+    / Epsilon → { s_kid(seq, 0) }
+    / s:Rule2 r:Result → { s_kid(seq, snoc(r, s)) }
+    / s:Rule2 → { s_kid(seq, snoc(0, s)) }
 
 Rule2
     ← r:Rule3 s:Rule2 { cons (r, s) }
     / ε { 0 }
 
 Rule3
-    ← r:Result → r
-    / Epsilon { s_new(seq) }
-    / And u:Rule4 { s_kid(and, u) }
+    ← And u:Rule4 { s_kid(and, u) }
     / Not u:Rule4 { s_kid(not, u) }
     / And c:Code { s_retype(guard, c) }
     / n:Name Colon u:Rule4 { s_both(bind, n, u) }
@@ -46,7 +48,7 @@ Rule4
     / r:Rule5 → r
 
 Rule5
-    ← n:Name { s_text(call, n) } !lArrow !ColCol
+    ← n:Name !lArrow !ColCol { s_text(call, n) }
     / Dot { s_new(any) }
     / l:StringLit { s_text(lit, l) }
     / r:Rule6 → r
