@@ -1,5 +1,5 @@
 /*
-type: int
+type int
 parse a9 9
 parse z3 3
 noparse zx A 3

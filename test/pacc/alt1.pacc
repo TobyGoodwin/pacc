@@ -1,5 +1,5 @@
 /*
-chars
+type chars
 parse 'foo bar' 'foo bar'
 parse 'foo qux' 'foo qux'
 noparse 'foo foo' A 5

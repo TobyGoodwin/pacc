@@ -15,45 +15,46 @@ Defns
     / ε { 0 }
 
 Defn
-    ← n:Name t:TypeOptional lArrow r:Rule _ →
+    ← n:Name t:TypeOptional lArrow r:Rule0 _ →
 	{ s_both(rule, n, cons(s_text(type, t), r)) }
 
-Rule
-    ← s:SeqRule Slash r:Rule { s_alt(s, r) /* x y */ }
-    / s:SeqRule → s
+Rule0
+    ← s:Rule1 Slash r:Rule0 { s_alt(s, r) /* x y */ }
+    / s:Rule1 → s
 
-SeqRule
-    ← s:Sequence → s
-    / u:UnaryRule → u
+/* XXX should use Result?, but not till we auto-generate the 0 value. */
+Rule1 
+    ← Epsilon r:Result → { s_kid(seq, r) }
+    / Epsilon → { s_kid(seq, 0) }
+    / s:Rule2 r:Result → { s_kid(seq, snoc(r, s)) }
+    / s:Rule2 → { s_kid(seq, snoc(0, s)) }
 
-UnaryRule
-    ← p:PrimRule Query { s_both(rep, ",1", p) }
-    / p:PrimRule Star { s_both(rep, 0, p) }
-    / p:PrimRule Plus { s_both(rep, "1,", p) }
-    / p:PrimRule → p
+Rule2
+    ← r:Rule3 s:Rule2 { cons (r, s) }
+    / ε { 0 }
 
-PrimRule
-    ← n:Name { s_text(call, n) } !lArrow !ColCol
-    / Dot { s_new(any) }
-    / l:StringLit Colon u:UnaryRule { s_both(lit, l, u) }
-    / l:StringLit { s_text(lit, l) }
-    / lParen r:Rule rParen → r
-
-Sequence
-    ← m:Matchers { s_kid(seq, m) }
-
-Matchers
-    ← m:Matcher ms:Matchers { cons(m, ms) }
-    / m:Matcher → m
-
-Matcher
-    ← Epsilon { s_new(seq) }
-    / r:Result → r
-    / And u:UnaryRule { s_kid(and, u) }
-    / Not u:UnaryRule { s_kid(not, u) }
+Rule3
+    ← And u:Rule4 { s_kid(and, u) }
+    / Not u:Rule4 { s_kid(not, u) }
     / And c:Code { s_retype(guard, c) }
-    / n:Name Colon u:UnaryRule { s_both(bind, n, u) }
-    / u:UnaryRule → u
+    / n:Name Colon u:Rule4 { s_both(bind, n, u) }
+    / l:StringLit Colon u:Rule4 { s_both(lit, l, u) }
+    / u:Rule4 → u
+
+Rule4
+    ← r:Rule5 Query { s_both(rep, ",1", r) }
+    / r:Rule5 Star { s_both(rep, 0, r) }
+    / r:Rule5 Plus { s_both(rep, "1,", r) }
+    / r:Rule5 → r
+
+Rule5
+    ← n:Name !lArrow !ColCol { s_text(call, n) }
+    / Dot { s_new(any) }
+    / l:StringLit { s_text(lit, l) }
+    / r:Rule6 → r
+
+Rule6
+    ← lParen r:Rule0 rParen → r
 
 Result
     ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }

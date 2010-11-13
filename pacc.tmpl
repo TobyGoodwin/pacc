@@ -324,7 +324,13 @@ static void _pacc_error(struct _pacc_parser *p) {
 	}
     }
     /* as is column numbering */
-    printf("%s:%ld:%ld ", p->name, nl, 1 + p->err_col - line_pos);
+    printf("%s:%ld:%ld: ", p->name, nl, 1 + p->err_col - line_pos);
+
+    /* XXX this, or something like it, is very handy, and needs to go
+     * in. But we're holding off for now as all failing test cases would
+     * need to be changed. */
+    //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
+
     printf("expected ");
     for (i = 0; i < p->err_valid; ++i) {
 	char *s;

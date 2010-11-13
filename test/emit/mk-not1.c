@@ -1,5 +1,5 @@
 /*
-type: chars
+type chars
 noparse f '"o"' 2
 noparse fo '"o"' 3
 parse foo yes

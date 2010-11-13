@@ -1,5 +1,5 @@
 /*
-type: chars
+type chars
 parse fred fred
 parse 'fred ' fred
 noparse 'fred barney' End 6

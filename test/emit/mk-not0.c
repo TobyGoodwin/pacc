@@ -1,5 +1,5 @@
 /*
-type: chars
+type chars
 parse a a
 parse ac a
 noparse ab A 2

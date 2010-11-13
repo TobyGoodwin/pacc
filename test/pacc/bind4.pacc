@@ -1,6 +1,5 @@
 /*
-type: int
-source: arg
+type int
 parse '' 0
 parse '1' 1
 parse '2' 1

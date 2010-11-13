@@ -1,5 +1,5 @@
 /*
-type: chars
+type chars
 parse foo foo
 noparse bar A 1
 */

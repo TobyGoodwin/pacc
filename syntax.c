@@ -130,12 +130,15 @@ struct s_node *cons(struct s_node *a, struct s_node *d) {
     return a;
 }
 
-struct s_node *snoc(struct s_node *l, struct s_node *a) {
+/* snoc: destructively add an element x to the end of a list l in O(l)
+ * time. */
+struct s_node *snoc(struct s_node *x, struct s_node *l) {
     struct s_node *p, *q;
-    if (!l) return a;
+    if (!l) return x;
+    if (!x) return l;
     for (p = l; p; p = p->next)
 	q = p;
-    q->next = a;
+    q->next = x;
     return l;
 }
 

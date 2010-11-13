@@ -83,7 +83,5 @@ void arg(int argc, char **argv) {
     }
     if (argc - optind != 1) usage();
     input = argv[optind];
-    fprintf(stderr, "input is %s\n", arg_input());
     if (!output) output = munge(input);
-    fprintf(stderr, "output is %s\n", arg_output());
 }

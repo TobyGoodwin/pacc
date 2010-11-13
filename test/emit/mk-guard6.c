@@ -1,5 +1,5 @@
 /*
-type: chars
+type chars
 parse q q
 parse qux qux
 parse q39a q39a

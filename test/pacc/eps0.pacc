@@ -1,0 +1,10 @@
+/*
+int
+parse '' 5
+noparse x S 1
+*/
+
+/* An epsilon can have a result. */
+
+S ← e:E !. → e
+E ← ε { 5 }

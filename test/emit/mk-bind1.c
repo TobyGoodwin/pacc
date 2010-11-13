@@ -1,5 +1,5 @@
 /*
-type: chars
+type chars
 parse xyzx yz
 */
 
