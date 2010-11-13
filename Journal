@@ -24,7 +24,31 @@ nasty anyway.)
 Now, baf doesn't have problems like this, as his results come after a
 sequence, and are not part of it. I changed this to implement lmatch()
 and rmatch(), but they went away back in February. So let's go back to
-that; test/bad/result0.pacc currently succeeds.
+that; test/bad/result0.pacc currently succeeds. And now it doesn't. This
+has introduced a "make check" failure, though. It just seems be
+different node ids, but that's not supposed to happen. Hmm...
+
+OK, here's another small dose of clarity. "make check" compares the
+output of pacc1 with the output of pacc2, and thus identifies functional
+differences between the hand-crafted and generated grammars. In this
+case, pacc1 parses "ε { 5 }" to "seq / seq / expr 5", where pacc2
+produces "seq / expr 5". It is this difference that "make check" is
+picking up here. I need to fix this, but I want to get pacc.pacc better
+before doing so.
+
+By the way, I just implemented the "-d" switch to optionally dump the
+parse tree before desugaring (use "--dump=post" to get a dump both
+before and after desugaring). Shoulda done this ages ago; it's *so* much
+nicer than commenting in the s_dump() calls in main.c, then having to
+recompile, then getting an ultra verbose pacc that fails most of its
+test suite.
+
+Current tasks:
+
+1. Make "?" and "*" return the value "0" if they matched nothing.
+Modify pacc.pacc to exploit this.
+
+2. Implement character classes.
 
 2010-11-11
 ----------

@@ -30,7 +30,7 @@ Rule1
     / s:Rule2 → { s_kid(seq, snoc(0, s)) }
 
 Rule2
-    ← r:Rule3 s:Rule2 { cons (r, s) }
+    ← r:Rule3 s:Rule2 { cons(r, s) }
     / ε { 0 }
 
 Rule3
