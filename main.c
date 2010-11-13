@@ -16,13 +16,11 @@ int main(int argc, char **argv) {
 
     in = load(arg_input(), &size);
 
-    /* XXX what about command line flags to enable / disable dumping of
-     * the tree? */
     if (parse(arg_input(), in, size, &p)) {
-	//s_dump(p);
+	if (arg_dump_pre()) s_dump(p);
 	desugar(p);
 	resolve(p);
-	//s_dump(p);
+	if (arg_dump_post()) s_dump(p);
 	save(arg_output());
 	emit(p);
 	return 0;

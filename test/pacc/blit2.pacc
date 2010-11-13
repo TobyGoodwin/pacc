@@ -1,0 +1,13 @@
+/*
+chars
+parse foofoo foofoo
+noparse '' S 1
+noparse foo 'S:_pacc_bl103:0:*:0' 4
+noparse foofoofoo 'S:_pacc_bl103:0:*:0' 10
+*/
+
+/* Bound literal is lower precedence than repetition. */
+
+S ← "foofoo":X* { ref_str() }
+
+X ← "foo"
