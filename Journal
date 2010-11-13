@@ -1,6 +1,80 @@
 2010-11-13
 ----------
 
+Hmm... I'm a little confused. Currently pacc.pacc says this:
+
+    Rule1 
+	← Epsilon r:Result → { s_kid(seq, r) }
+	/ Epsilon → { s_kid(seq, 0) }
+
+Obviously we want to change it to say this, instead:
+
+    Rule1 
+	← Epsilon r:Result? → { s_kid(seq, r) }
+
+So here's a tiny test case:
+
+    S ← x:Five? → x
+    Five ← "5" { 5 }
+
+But that can't work, because the query is implemented via an iRule
+(remember those?) and iRules are always :: ref_t. Darn.
+
+It's actually almost there; the dump for this code (x is bound to S:x:0)
+looks like this:
+
+      rule 118: S:x:0 
+	type 117: ref_t 
+	seq 116: 
+	  call 102: S:x:0:*:0 
+	  expr 115: ref() 
+      rule 127: S:x:0:*:0 
+	type 126: int 
+	alt 125: 
+	  seq 124: 
+	    call 123: S:x:0:1:0 
+	  seq 122: 
+      rule 121: S:x:0:1:0 
+	type 120: int 
+	call 101: Five 
+
+So all we'd need to do is propagate the return in seq 124, add an "expr
+0" to seq 122, and somehow make the binding to S:x:0:*:0 instead. (I
+suspect that the int types of the last two iRules are "virtual voids",
+but that could be fixed, too.) Hmm...
+
+There's also the issue that although this might work reasonably well for
+the "?" operator, it's not going to work for "*". If the rule was "S ←
+x:Five* → x", we can return 0 for no matches, but what do we return if
+it matches twice? In Haskell, "[5,5]". C has vectors, of course, and we
+could make x :: int[], but we don't know the length of the vector.
+Hmm... we could say that x :: (int *)[], with a null pointer to mark
+the end of the list, but that throws up a lot of memory management
+issues. We can't foist all this on the poor user.
+
+Another idea, that I think I've had before, is to give rules a way to
+say how they should be combined. For example, if "Five*" is supposed to
+return the sum of all the 5s it matches, we might say
+
+    Five ← "5" { 5 } { 0 } { a + d }
+
+and the whole thing is evaluated like foldr. The "a" and "d" are bound
+by the compiler. Or what about saying that the compiler will call the
+functions
+
+    int Five_zero(void)
+    int Five_fold(int, int)
+
+to evaluate the list (perhaps only if it's seen those names in the
+preamble).
+
+Obviously this will all have to be thought about much more. I do think
+that the "match or 0" effect for "?" should be done. It's interesting
+that query is in the end quite different from "*".
+
+2010-11-13
+----------
+
 So I really thought that I could give ε a precedence lower than
 sequencing, so that
 
