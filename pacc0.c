@@ -637,43 +637,6 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = s_new(rule); p->text = "Sequence"; p->first = q; p->next = r; r = p;
 
     /*
-	PrimRule
-	    ← n:Name { s_text(call, n) } !lArrow !ColCol
-	    / Dot { s_new(any) }
-	    / l:StringLit { s_text(lit, l) }
-	    / lParen r:Rule rParen → r
-    */
-    p = s_new(ident); p->text = "r"; i = p;
-    p = s_new(expr); p->text="r"; p->first = i; q = p;
-    p = s_new(call); p->text = "rParen"; p->next = q; q = p;
-    p = s_new(call); p->text = "Rule"; s = p;
-    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "lParen"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; t = p;
-
-    p = s_new(ident); p->text = "l"; i = p;
-    p = s_new(expr); p->text="s_text(lit, l)"; p->first = i; q = p;
-    p = s_new(call); p->text = "StringLit"; s = p;
-    p = s_new(bind); p->text = "l"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_text(expr, "s_new(any)");
-    p = cons(s_text(call, "Dot"), p);
-    t = cons(s_kid(seq, p), t);
-
-    p = s_kid(not, s_text(call, "ColCol"));
-    p = cons(s_kid(not, s_text(call, "lArrow")), p); q = p;
-    p = s_new(ident); p->text = "n"; i = p;
-    p = s_new(expr); p->text="s_text(call, n)"; p->first = i; p->next = q; q = p;
-    p = s_new(call); p->text = "Name"; s = p;
-    p = s_new(bind); p->text = "n"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; p->next = t; t = p;
-
-    p = s_new(alt); p->first = t; q = p;
-    p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "PrimRule"; p->first = q; p->next = r; r = p;
-
-    /*
 	UnaryRule
 	    ← p:PrimRule Query { s_both(rep, ",1", p) }
 	    / p:PrimRule Star { s_both(rep, 0, p) }
@@ -733,29 +696,204 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = s_new(rule); p->text = "SeqRule"; p->first = q; p->next = r; r = p;
 
     /*
-	Rule
-	    ← s:SeqRule Slash r:Rule { s_kid(alt, cons(s, r)) }
-	    / s:SeqRule → s
+	Rule6
+	    ← lParen r:Rule0 rParen → r
+     */
+
+    p = s_both(expr, "r", s_text(ident, "r"));
+    p = cons(s_text(call, "rParen"), p);
+    p = cons(s_both(bind, "r", s_text(call, "Rule0")), p);
+    p = cons(s_text(call, "lParen"), p);
+
+    p = s_kid(seq, s);
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = cons(s_text(rule, "Rule6"), p);
+    r = cons(p, r);
+
+
+    /*
+	Rule5
+	    ← n:Name !lArrow !ColCol { s_text(call, n) }
+	    / Dot { s_new(any) }
+	    / l:StringLit { s_text(lit, l) }
+	    / r:Rule6 → r
+     */
+
+    p = s_both(expr, "r", s_text(ident, "r"));
+    p = cons(s_both(bind, "r", s_text(call, "Rule6")), p);
+    s = s_kid(seq, p);
+
+    p = s_both(expr, "s_text(lit, l)", s_text(ident, "l"));
+    p = cons(s_both(bind, "l", s_text(call, "StringLit")), p);
+    s = cons(p, s);
+
+    p = s_text(expr, "s_new(any)");
+    p = cons(s_text(call, "Dot"), p);
+    s = cons(p, s);
+
+    p = s_both(expr, "s_text(call, n)", s_text(ident, "n"));
+    p = cons(s_kid(not, s_text(call, "ColCol")), p);
+    p = cons(s_kid(not, s_text(call, "lArrow")), p);
+    p = cons(s_both(bind, "n", s_text(call, "Name")), p);
+    s = cons(p, s);
+
+    p = s_kid(alt, s);
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = cons(s_text(rule, "Rule5"), p);
+    r = cons(p, r);
+
+    /*
+	Rule4
+	    ← r:Rule5 Query { s_both(rep, ",1", r) }
+	    / r:Rule5 Star { s_both(rep, 0, r) }
+	    / r:Rule5 Plus { s_both(rep, "1,", r) }
+	    / r:Rule5 → r
+     */
+
+    p = s_both(expr, "r", s_text(ident, "r"));
+    p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
+    s = s_kid(seq, p);
+
+    p = s_both(expr, "s_both(rep, \"1,\", r)", s_text(ident, "r"));
+    p = cons(s_text(call, "Plus"), p);
+    p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = s_text(ident, "r");
+    p = s_both(expr, "s_both(rep, 0, r)", p);
+    p = cons(s_text(call, "Star"), p);
+    p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = s_text(ident, "r");
+    p = s_both(expr, "s_both(rep, \",1\", r)", p);
+    p = cons(s_text(call, "Query"), p);
+    p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = s_kid(alt, s);
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = cons(s_text(rule, "Rule3"), p);
+    r = cons(p, r);
+
+    /*
+	Rule3
+	    ← And u:Rule4 { s_kid(and, u) }
+	    / Not u:Rule4 { s_kid(not, u) }
+	    / And c:Code { s_retype(guard, c) }
+	    / n:Name Colon u:Rule4 { s_both(bind, n, u) }
+	    / l:StringLit Colon u:Rule4 { s_both(lit, l, u) }
+	    / u:Rule4 → u
+     */
+
+    p = s_both(expr, "u", s_text(ident, "u"));
+    p = cons(s_both(bind, "u", s_text(call, "Rule4")), p);
+    s = s_kid(seq, p);
+
+    p = cons(s_text(ident, "l"), s_text(ident, "u"));
+    p = s_both(expr, "s_both(lit, l, u)", p);
+    p = cons(s_both(bind, "u", s_text(call, "Rule4")), p);
+    p = cons(s_text(call, "Colon"), p);
+    p = cons(s_both(bind, "l", s_text(call, "StringLit")), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = cons(s_text(ident, "n"), s_text(ident, "u"));
+    p = s_both(expr, "s_both(bind, n, u)", p);
+    p = cons(s_both(bind, "u", s_text(call, "Rule4")), p);
+    p = cons(s_text(call, "Colon"), p);
+    p = cons(s_both(bind, "n", s_text(call, "Name")), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = s_text(ident, "c");
+    p = s_both(expr, "s_retype(guard, c)", p);
+    p = cons(s_both(bind, "c", s_text(call, "Code")), p);
+    p = cons(s_text(call, "And"), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = s_text(ident, "u");
+    p = s_both(expr, "s_kid(not, u)", p);
+    p = cons(s_both(bind, "u", s_text(call, "Rule4")), p);
+    p = cons(s_text(call, "Not"), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = s_text(ident, "u");
+    p = s_both(expr, "s_kid(and, u)", p);
+    p = cons(s_both(bind, "u", s_text(call, "Rule4")), p);
+    p = cons(s_text(call, "And"), p);
+    s = cons(s_kid(seq, p), s);
+
+    p = s_kid(alt, cons(p, s));
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = cons(s_text(rule, "Rule3"), p);
+    r = cons(p, r);
+
+    /*
+	Rule2
+	    ← r:Rule3 s:Rule2 { cons(r, s) }
+	    / ε { 0 }
+     */
+
+    s = s_kid(seq, s_text(expr, "0"));
+
+    p = cons(s_text(ident, "s"), s_text(ident, "r"));
+    p = s_both(expr, "cons(r, s)", p);
+    p = cons(s_both(bind, "s", s_text(call, "Rule2")), p);
+    p = cons(s_both(bind, "r", s_text(call, "Rule3")), p);
+
+    p = s_kid(alt, cons(p, s));
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = cons(s_text(rule, "Rule2"), p);
+    r = cons(p, r);
+
+    /*
+	Rule1 
+	    ← Epsilon r:Result? → { s_kid(seq, r) }
+	    / s:Rule2 r:Result? → { s_kid(seq, snoc(r, s)) }
+     */
+
+    p = cons(s_text(ident, "s"), s_text(ident, "r"));
+    p = s_both(expr, "s_kid(seq, snoc(r, s))", p);
+    q = s_both(bind, "r", s_both(rep, ",1", s_text(call, "Result")));
+    p = cons(q, p);
+    p = cons(s_both(bind, "s", s_text(call, "Rule2")), p);
+    s = s_kid(seq, p);
+
+    p = s_text(ident, "r");
+    p = s_both(expr, "s_kid(seq, snoc(r, s))", p);
+    q = s_both(bind, "r", s_both(rep, ",1", s_text(call, "Result")));
+    p = cons(q, p);
+    p = cons(s_text(call, "Epsilon"), p);
+    q = cons(s_kid(seq, p), s);
+
+    p = s_new(alt); p->first = q; q = p;
+    p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
+    p = s_new(rule); p->text = "Rule1"; p->first = q; p->next = r; r = p;
+  
+    /*
+	Rule0
+	    ← s:Rule1 Slash r:Rule0 { s_alt(s, r) }
+	    / s:Rule1 → s
     */
+
     p = s_new(ident); p->text = "s"; i = p;
     p = s_new(expr); p->text="s"; p->first = i; q = p;
-    p = s_new(call); p->text = "SeqRule"; s = p;
+    p = s_new(call); p->text = "Rule1"; s = p;
     p = s_new(bind); p->text = "s"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; t = p;
 
     p = s_new(ident); p->text = "r"; i = p;
     p = s_new(ident); p->text = "s"; p->next = i; i = p;
     p = s_new(expr); p->text="s_alt(s, r)"; p->first = i; q = p;
-    p = s_new(call); p->text = "Rule"; s = p;
+    p = s_new(call); p->text = "Rule0"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Slash"; p->next = q; q = p;
-    p = s_new(call); p->text = "SeqRule"; s = p;
+    p = s_new(call); p->text = "Rule1"; s = p;
     p = s_new(bind); p->text = "s"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; q = p;
 
     p = s_new(alt); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "Rule"; p->first = q; p->next = r; r = p;
+    p = s_new(rule); p->text = "Rule0"; p->first = q; p->next = r; r = p;
 
     /*
 	Defn
@@ -813,19 +951,6 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
-
-#if 0
-    /* start anywhere... */
-    p = s_new(ident); p->text = "r"; i = p;
-    p = s_new(expr); p->text = "r"; p->first = i; q = p;
-    p = s_new(call); p->text = "End"; p->next = q; q = p;
-    p = s_new(call); p->text = "Sequence"; s = p;
-    p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "Start"; p->first = q; p->next = r;
-    r = p;
-#endif
 
     r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\n"), r);
     p = s_both(grammar, "yy", r);

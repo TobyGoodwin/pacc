@@ -83,7 +83,8 @@ preamble).
 
 Obviously this will all have to be thought about much more. I do think
 that the "match or 0" effect for "?" should be done. It's interesting
-that query is in the end quite different from "*".
+that query is in the end quite different from "*". OK, so this is done,
+although sugar.c is looking very ugly again.
 
 2010-11-13
 ----------
