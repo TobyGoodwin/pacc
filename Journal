@@ -1,6 +1,19 @@
 2010-11-13
 ----------
 
+Thinking about better error reporting... we need a way to let rules that
+parse multiline bracketed things (like C comments, or blocks) to save
+where they saw the start of the comment. For example, I just left a
+comment unclosed, and was told
+
+    parse.pacc:16:2: expected C_Comment:*:1, or "*/"
+
+where 16:2 is end of file. This is pretty nifty, but needs to also say
+where the comment began.
+
+2010-11-13
+----------
+
 Hmm... I'm a little confused. Currently pacc.pacc says this:
 
     Rule1 

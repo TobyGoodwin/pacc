@@ -1,0 +1,13 @@
+/*
+int
+parse 5 5
+parse '' 0
+*/
+
+/* The ? and * repetition operators return 0 if they matched nothing.
+ * This works because 0 is a member of most types in C.
+ */
+
+
+S ← x:Five? → x
+Five ← "5" { 5 }

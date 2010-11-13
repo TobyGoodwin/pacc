@@ -1,0 +1,20 @@
+/*
+chars
+parse 5 five
+parse '' nothing
+*/
+
+/* The ? operator returns 0 if it matched nothing.  This works because 0
+ * is a member of most types in C.
+ */
+
+/* Unfortunately, this test is not as discriminating as it should be.
+ * We really want to know if pacc is capable of propagating the type of
+ * the actual rule Five into the iRule that handles "Five?". But since
+ * integers and pointers are interchangeable on so many architectures,
+ * getting it wrong will likely only result in a compiler warning. We
+ * don't have a test harness that checks for those (yet).
+ */
+
+S :: char * ← x:Five? { x ? x : "nothing" }
+Five ← "5" { "five" }
