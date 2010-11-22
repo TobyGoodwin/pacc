@@ -48,10 +48,25 @@ Rule5
     ← n:Name !lArrow !ColCol { s_text(call, n) }
     / Dot { s_new(any) }
     / l:StringLit { s_text(lit, l) }
+    / c:CClass → c
     / r:Rule6 → r
 
 Rule6
     ← lParen r:Rule0 rParen → r
+
+# XXX All sorts of problems here: we don't handle negated character
+# classes, there's no way to include "]" in a character class, we don't
+# handle \n, or any more elaborate escapes.
+CClass
+    ← "[" c:CRanges "]" _ { s_both(cclass, 0, c) }
+
+CRanges
+    ← c:CRange cs:CRanges { cons2(c, cs) }
+    / ε { 0 }
+
+CRange
+    ← ! "]" a:. ! "-" { s_range1(ref_dup(a)) }
+    / ! "]" a:. "-" b:. { s_range2(ref_dup(a), ref_dup(b)) }
 
 Result
     ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }

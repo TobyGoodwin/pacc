@@ -130,6 +130,17 @@ struct s_node *cons(struct s_node *a, struct s_node *d) {
     return a;
 }
 
+/* destructive cons! */
+struct s_node *cons2(struct s_node *a, struct s_node *d) {
+    if (a->next)
+	a->next->next = d;
+    else
+	a->next = d;
+    return a;
+}
+
+
+
 /* snoc: destructively add an element x to the end of a list l in O(l)
  * time. */
 struct s_node *snoc(struct s_node *x, struct s_node *l) {
@@ -151,6 +162,26 @@ struct s_node *s_set_cons(struct s_node *i, struct s_node *l) {
     return cons(i, l);
 }
 
+static struct s_node *s_range(const char t, char *v) {
+    char *r;
+    struct s_node *p = s_new(crange);
+
+    r = malloc(1 + 2); /* XXX encoding */
+    if (!r) nomem();
+    strcpy(r + 1, v);
+    r[0] = t;
+    p->text = r;
+    return p;
+}
+
+struct s_node *s_range1(const char *v) {
+    return s_range('=', v);
+}
+
+struct s_node *s_range2(const char *u, const char *v) {
+    return cons(s_range('>', u), s_range('<', v));
+}
+
 char *decode_type(enum s_type t) {
     switch(t) {
     case alt:		return "alt";
@@ -158,6 +189,8 @@ char *decode_type(enum s_type t) {
     case any:		return "any";
     case bind:		return "bind";
     case call:		return "call";
+    case cclass:	return "cclass";
+    case crange:	return "crange";
     case expr:		return "expr";
     case grammar:	return "grammar";
     case guard:		return "guard";
@@ -174,14 +207,15 @@ char *decode_type(enum s_type t) {
 }
 
 int s_has_children(enum s_type t) {
-    return t == alt || t == and || t == bind || t == rule ||
+    return t == alt || t == and || t == bind || t == cclass ||
 	t == grammar || t == expr || t == guard || t == lit ||
-	t == not || t == rep || t == seq;
+	t == not || t == rep || t == rule || t == seq;
 }
 
 int s_has_text(enum s_type t) {
-    return t == bind || t == call || t == expr || t == grammar ||
-	t == guard || t == ident || t == lit || t == preamble || t == rep ||
+    return t == bind || t == call || t == cclass || t == crange ||
+	t == expr || t == grammar || t == guard || t == ident ||
+	t == lit || t == preamble || t == rep ||
 	t == rule || t == type;
 }
 

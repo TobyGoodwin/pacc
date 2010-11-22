@@ -1,0 +1,32 @@
+/*
+int
+parse 5 5
+parse 2+3 5
+parse '2*3' 6
+parse '2+3+4' 9
+parse '2*3+4' 10
+parse '2+3*4' 14
+parse '2*3*4' 24
+parse 456 456
+parse '53*(13+75)' 4664
+parse ' 456 + 123 * ( 543 + 7 * (987 + 2) + 6) ' 919512
+noparse x Sum 1
+*/
+
+# Bryan Ford's trivial grammar with integers, spacing, repetitions, and
+# character classes.
+
+Sum :: int ← Space a:Additive End → a
+Additive ← m:Multitive Plus a:Additive { m + a } / m:Multitive -> m
+Multitive ← p:Primary Times m:Multitive { p * m } / p:Primary -> p
+Primary ← Left a:Additive Right -> a / d:Decimal -> d
+Decimal ← Digit* Space { atoi(ref_ptr(ref())) }
+Digit ← [0-9]
+
+# rest should be void
+Left :: int ← "(" Space
+Right ← ")" Space
+Plus ← "+" Space
+Times ← "*" Space
+Space ← " " *
+End ← ! .

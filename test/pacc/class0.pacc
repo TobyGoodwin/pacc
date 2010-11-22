@@ -1,0 +1,14 @@
+/*
+chars
+parse bab bab
+parse pen pen
+parse git git
+parse box box
+parse tug tug
+noparse sky Vowel 2
+noparse end Word 1
+*/
+
+Word :: char * ← Consonant Vowel Consonant { ref_str() }
+Vowel ← [aeiou]
+Consonant ← [b-df-hj-np-tv-z]

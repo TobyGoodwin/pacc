@@ -7,6 +7,7 @@ enum s_type {
     expr, bind,		/* expressions */
     guard, ident,	/* semantic predicate */
     call, lit, any,	/* matchers */
+    cclass, crange,	/* character classes */
     rep, 		/* sugar */
     preamble,
     s_type_max
@@ -29,8 +30,14 @@ extern struct s_node *s_kid(enum s_type, struct s_node *);
 extern struct s_node *s_both(enum s_type, char *, struct s_node *);
 extern struct s_node *s_retype(enum s_type, struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);
+
+/* XXX kludge! */
+extern struct s_node *cons2(struct s_node *, struct s_node *);
+
 extern struct s_node *snoc(struct s_node *, struct s_node *);
 extern struct s_node *s_set_cons(struct s_node *, struct s_node *);
+extern struct s_node *s_range1(const char *);
+extern struct s_node *s_range2(const char *, const char *);
 #define new_node(t) s_new(t)
 
 extern struct s_node *s_alt(struct s_node *, struct s_node *);

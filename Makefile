@@ -11,7 +11,7 @@ OBJS0 = $(OBJS) pacc0.o
 pacc0: $(OBJS0) 
 	$(CC) $(LDFLAGS) -o $@ $^
 
-pacc0.o: pacc0.c pacc.h
+pacc0.o: pacc0.c pacc.h syntax.h
 
 OBJS1 = $(OBJS) pacc1.o
 
@@ -45,7 +45,7 @@ template.c: pacc.tmpl template.sh
 
 arg.o: arg.c arg.h
 
-emit.o: emit.c emit.h
+emit.o: emit.c emit.h syntax.h
 
 error.o: error.c error.h
 

@@ -1,3 +1,38 @@
+2010-11-22
+----------
+
+At the moment I'm thinking about character classes. It seems to me that
+we must add at least two node types to the grammar: cclass introduces a
+class; its children of type crange are a list that give the various
+ranges within the class. The value of the cclass node itself is null for
+a normal character class; anything ("^", say) for an inverted character
+class.
+
+The crange node's value consists of a type byte, which is ">", "=", or
+"<", followed by the character in question. So for example the character
+class [A-Z_] would appear in the tree as:
+
+    cclass: (null)
+      crange: ">A"
+      crange: "<Z"
+      crange: "=_"
+
+Code emission is fairly obvious I think.
+
+Also, I'm now more or less determined that we will support different
+character encodings. The important ones I know of are byte (no character
+encoding, each byte in the input represents itself), UTF-8, and UTF-16.
+Mainly I just need 2 functions. One function returns the length in bytes of
+the next character on the input (obviously this is always 1 for the byte
+noncoding; more complex for UTF-8 / UTF-16), which is used by the any
+matcher. The other function returns the next character on the input
+decoded into an int (or UTF-32), for use in the character class matcher.
+
+Supporting various combinations like "grammar is written in UTF-8 but
+input is in UTF-16" will be a little more complicated, but I think I can
+do it using function pointers in the struct _pacc_parser object. But
+more of that later.
+
 2010-11-13
 ----------
 

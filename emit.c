@@ -448,6 +448,36 @@ static void alt_post(struct s_node *n) {
     s_ptr = n_ptr = 0;
 }
 
+static void cclass_pre(struct s_node *n) {
+    debug_pre("cclass", n);
+    printf("{");
+    printf(" int c = _pacc->string[col];\n"); /* XXX encoding XXX also, couldn't there be just one c for the whole function? nasty to start a new block each time*/
+    printf(" if (");
+}
+
+static void emit_crange(struct s_node *n) {
+    assert(n->text[0] == '>' || n->text[0] == '=' || n->text[0] == '<');
+    assert(n->text[0] != '>' || (n->next && n->next->text[0] == '<'));
+
+    printf("c%c=%d", n->text[0], n->text[1]);
+    if (n->next) {
+	if (n->text[0] == '>') printf("&&");
+	else printf(" || ");
+    }
+}
+
+static void cclass_post(struct s_node *n) {
+    printf(") {\n");
+    printf("  status = parsed;\n");
+    printf("  col += %d;\n", 1); /* XXX encoding */
+    printf(" } else {\n");
+    error(n->text, 1);
+    printf("  status = no_parse;\n");
+    printf(" }\n");
+    printf("}\n");
+    debug_post("cclass", n);
+}
+
 static void rep_pre(struct s_node *n) {
     int sugar = 1;
 
@@ -481,6 +511,7 @@ void emit(struct s_node *g) {
     pre[bind] = bind_pre; pre[expr] = emit_expr;
     pre[guard] = guard_pre;
     pre[call] = emit_call; pre[lit] = literal; pre[any] = any_emit;
+    pre[cclass] = cclass_pre; pre[crange] = emit_crange;
     pre[rep] = rep_pre;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
@@ -490,6 +521,7 @@ void emit(struct s_node *g) {
     post[and] = and_post; post[not] = not_post;
     post[bind] = bind_post;
     post[guard] = guard_post;
+    post[cclass] = cclass_post;
 
     node(g);
 }
