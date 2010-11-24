@@ -1,0 +1,18 @@
+/*
+chars
+parse bab bab
+parse pen pen
+parse git git
+parse box box
+parse tug tug
+noparse sky Vowel 2
+noparse end Vowel 2
+*/
+
+# Testing inverted character classes. There's a curious symmetry here:
+# we could just as well write "Consonant ← &[^aeiou] [a-z]". This seems
+# a little odd.
+
+Word :: char * ← Consonant Vowel Consonant { ref_str() }
+Vowel ← [aeiou]
+Consonant ← &[a-z] [^aeiou]

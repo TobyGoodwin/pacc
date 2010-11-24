@@ -451,8 +451,9 @@ static void alt_post(struct s_node *n) {
 static void cclass_pre(struct s_node *n) {
     debug_pre("cclass", n);
     printf("{");
-    printf(" int c = _pacc->string[col];\n"); /* XXX encoding XXX also, couldn't there be just one c for the whole function? nasty to start a new block each time*/
+    printf(" int c = _pacc->string[col];\n"); /* XXX encoding XXX also, couldn't there be just one c for the whole engine? nasty to start a new block each time*/
     printf(" if (");
+    if (n->text[0] == '^') printf("!(");
 }
 
 static void emit_crange(struct s_node *n) {
@@ -467,6 +468,7 @@ static void emit_crange(struct s_node *n) {
 }
 
 static void cclass_post(struct s_node *n) {
+    if (n->text[0] == '^') printf(")");
     printf(") {\n");
     printf("  status = parsed;\n");
     printf("  col += %d;\n", 1); /* XXX encoding */

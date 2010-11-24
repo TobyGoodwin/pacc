@@ -54,11 +54,10 @@ Rule5
 Rule6
     ← lParen r:Rule0 rParen → r
 
-# XXX All sorts of problems here: we don't handle negated character
-# classes, there's no way to include "]" in a character class, we don't
-# handle \n, or any more elaborate escapes.
+# XXX Problems here: there's no way to include "]" in a character class,
+# we don't handle \n, or any more elaborate escapes.
 CClass
-    ← "[" c:CRanges "]" _ { s_both(cclass, 0, c) }
+    ← "[" i:"^"? c:CRanges "]" _ { s_both(cclass, ref_dup(i), c) }
 
 CRanges
     ← c:CRange cs:CRanges { append(c, cs) }

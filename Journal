@@ -7,12 +7,15 @@ handling of character escapes.
 
 (Inverted character classes are technically unnecessary, since "[^x]" is
 equivalent to "![x].". Hmm... we could actually implement them that way
-in pacc.pacc. I wonder...)
+in pacc.pacc. But on further reflection I think it's easier -- actually
+less code -- to carry the inversion down to emit, as I'd originally
+envisaged.)
 
 But first, some tidy up. I made a bit of a hash of syntax.c in the last
 throes of making character classes work, and thinking about it I suspect
-snoc is actually concat (essentially, we don't distinguish atoms from
-lists). Let's see...
+snoc is actually append (essentially, we don't distinguish atoms from
+lists). Let's see... that seems fine. And negated character classes
+work. Cool.
 
 2010-11-22
 ----------
