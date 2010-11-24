@@ -130,27 +130,15 @@ struct s_node *cons(struct s_node *a, struct s_node *d) {
     return a;
 }
 
-/* destructive cons! */
-struct s_node *cons2(struct s_node *a, struct s_node *d) {
-    if (a->next)
-	a->next->next = d;
-    else
-	a->next = d;
-    return a;
-}
-
-
-
-/* snoc: destructively add an element x to the end of a list l in O(l)
- * time. */
-struct s_node *snoc(struct s_node *x, struct s_node *l) {
+/* append(x, y): linear in the length of x */
+struct s_node *append(struct s_node *x, struct s_node *y) {
     struct s_node *p, *q;
-    if (!l) return x;
-    if (!x) return l;
-    for (p = l; p; p = p->next)
+    if (!y) return x;
+    if (!x) return y;
+    for (p = x; p; p = p->next)
 	q = p;
-    q->next = x;
-    return l;
+    q->next = y;
+    return x;
 }
 
 /* cons uniquely */
@@ -162,7 +150,7 @@ struct s_node *s_set_cons(struct s_node *i, struct s_node *l) {
     return cons(i, l);
 }
 
-static struct s_node *s_range(const char t, char *v) {
+static struct s_node *s_range(const char t, const char *v) {
     char *r;
     struct s_node *p = s_new(crange);
 

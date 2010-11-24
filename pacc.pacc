@@ -24,7 +24,7 @@ Rule0
 
 Rule1 
     ← Epsilon r:Result? → { s_kid(seq, r) }
-    / s:Rule2 r:Result? → { s_kid(seq, snoc(r, s)) }
+    / s:Rule2 r:Result? → { s_kid(seq, append(s, r)) }
 
 Rule2
     ← r:Rule3 s:Rule2 { cons(r, s) }
@@ -61,7 +61,7 @@ CClass
     ← "[" c:CRanges "]" _ { s_both(cclass, 0, c) }
 
 CRanges
-    ← c:CRange cs:CRanges { cons2(c, cs) }
+    ← c:CRange cs:CRanges { append(c, cs) }
     / ε { 0 }
 
 CRange

@@ -30,11 +30,7 @@ extern struct s_node *s_kid(enum s_type, struct s_node *);
 extern struct s_node *s_both(enum s_type, char *, struct s_node *);
 extern struct s_node *s_retype(enum s_type, struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);
-
-/* XXX kludge! */
-extern struct s_node *cons2(struct s_node *, struct s_node *);
-
-extern struct s_node *snoc(struct s_node *, struct s_node *);
+extern struct s_node *append(struct s_node *, struct s_node *);
 extern struct s_node *s_set_cons(struct s_node *, struct s_node *);
 extern struct s_node *s_range1(const char *);
 extern struct s_node *s_range2(const char *, const char *);

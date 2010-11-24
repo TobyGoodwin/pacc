@@ -686,11 +686,11 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     /*
 	Rule1 
 	    ← Epsilon r:Result? → { s_kid(seq, r) }
-	    / s:Rule2 r:Result? → { s_kid(seq, snoc(r, s)) }
+	    / s:Rule2 r:Result? → { s_kid(seq, append(s, r)) }
      */
 
     p = cons(s_text(ident, "s"), s_text(ident, "r"));
-    p = s_both(expr, "s_kid(seq, snoc(r, s))", p);
+    p = s_both(expr, "s_kid(seq, append(s, r))", p);
     q = s_both(bind, "r", s_both(rep, ",1", s_text(call, "Result")));
     p = cons(q, p);
     p = cons(s_both(bind, "s", s_text(call, "Rule2")), p);

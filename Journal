@@ -2,7 +2,17 @@
 ----------
 
 So basic character classes work, all the way from pacc.pacc to the
-compiler!
+compiler! Still missing are inverted character classes, and proper
+handling of character escapes.
+
+(Inverted character classes are technically unnecessary, since "[^x]" is
+equivalent to "![x].". Hmm... we could actually implement them that way
+in pacc.pacc. I wonder...)
+
+But first, some tidy up. I made a bit of a hash of syntax.c in the last
+throes of making character classes work, and thinking about it I suspect
+snoc is actually concat (essentially, we don't distinguish atoms from
+lists). Let's see...
 
 2010-11-22
 ----------
