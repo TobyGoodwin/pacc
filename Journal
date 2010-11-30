@@ -8,6 +8,15 @@ range, for example "[A-Za-z-_]". Need tests for all these cases, of
 course.) Rewrite pacc.pacc to use character classes. Copy new rules into
 pacc0.c.
 
+Hmm... making "-" work as expected was more effort than I'd expected. I
+was bitten by the usual problem that PEGs never backtrack, even when you
+expect that they might, and also that some of the low-level rules that
+match escaped characters were of type void -- they were normally glued
+together by a higher-level rule that used refs to get at the actual
+string value. But for character classes we need to know the characters.
+(Along the way, I think I spotted some problems with "#" comments
+occurring inside rules that I should pursue.)
+
 2010-11-24
 ----------
 

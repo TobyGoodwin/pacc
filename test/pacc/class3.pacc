@@ -1,0 +1,17 @@
+/*
+chars
+parse abcd abcd
+parse a-cd a-cd
+parse ab-d ab-d
+parse abc- abc-
+noparse -bcd Test 1
+*/
+
+# Testing "-" in character classes. We don't need or support escapes.
+
+Test ← None First Last After { ref_str() }
+
+None ← [abc]
+First ← [-abc]
+Last ← [abc-]
+After ← [a-c-d-f]

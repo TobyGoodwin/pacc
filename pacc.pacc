@@ -68,7 +68,7 @@ CRange
     / a:CChar { s_range1(a) }
 
 CChar :: char *
-    ← "\\]" { "]" / */ ! "]" y:QuotedChar → y
+    ← "\\]" { "]" } / ! "]" y:QuotedChar → y
 
 Result :: struct s_node *
     ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }
@@ -113,15 +113,15 @@ CharLit :: void
 
 # XXX this needs to completely match the C:1999 definition, including
 # octal, hex and universal escapes. 
-QuotedChar
-    ← SimpleCharEscape
-    / !"\\" .
+QuotedChar :: char *
+    ← c:SimpleCharEscape → c
+    / !"\\" x:. → { ref_dup(x) }
 
 SimpleCharEscape
-    ← "\\\'" / "\\\"" / "\\\?" / "\\\\"
-    / "\\a" / "\\b" / "\\f" / "\\n" / "\\r" / "\\t" / "\\v"
+    ← "\\" a:("\'" / "\"" / "\?" / "\\"
+    / "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
 
-NameStart
+NameStart :: void
     ← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
 
 NameCont
