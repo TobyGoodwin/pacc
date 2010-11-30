@@ -1,3 +1,13 @@
+2010-11-30
+----------
+
+What next? Fix character classes to support C escapes, and also the
+special escape \]. (Note that we don't need to escape "-", since it
+should work at the beginning, or end of a class, and also after any
+range, for example "[A-Za-z-_]". Need tests for all these cases, of
+course.) Rewrite pacc.pacc to use character classes. Copy new rules into
+pacc0.c.
+
 2010-11-24
 ----------
 
