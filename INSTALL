@@ -1,0 +1,6 @@
+to build pacc: make
+
+to run the third-stage compiler: make check
+
+to run the test suite: cd test; make check
+
