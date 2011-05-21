@@ -19,6 +19,8 @@ Down to 5 fails. First is pacc/class2.pacc. This is a case that fails to
 parse, and we disagree with the error message. I think pacc is right,
 fixed by fixing the description of the test case. 4 fails.
 
+There's pacc/err0.pacc.
+
 2011-01-19
 ----------
 
