@@ -13,7 +13,11 @@ First test suite failure is a core dump in emit/mk-class0.c. What's that
 about? Might just be an error in the test. Seems that it builds a bogus
 parse tree, since nothing else says we have to handle a cclass without a
 text. There's nothing that seems to be a corresponding failure using
-pacc itself to parse the grammar.
+pacc itself to parse the grammar. Yup, sorted.
+
+Down to 5 fails. First is pacc/class2.pacc. This is a case that fails to
+parse, and we disagree with the error message. I think pacc is right,
+fixed by fixing the description of the test case. 4 fails.
 
 2011-01-19
 ----------

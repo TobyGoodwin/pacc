@@ -6,7 +6,7 @@ parse git git
 parse box box
 parse tug tug
 noparse sky Vowel 2
-noparse end Vowel 2
+noparse end Word 1
 */
 
 # Testing inverted character classes. There's a curious symmetry here:
