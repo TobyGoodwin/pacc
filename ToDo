@@ -1,3 +1,8 @@
+    1. Make "?" and "*" return the value "0" if they matched nothing.
+    Modify pacc.pacc to exploit this.
+
+    2. Implement character classes.
+
 Error handling
 
     This needs more experience. Currently, the merging of errors
@@ -66,6 +71,11 @@ Review of pacc.pacc
     parse really has a meaning that works.
 
 Autoconfiscation
+
+    Reluctantly, for the Makefile is beautiful, we must ultimately
+    autoconfiscate for the sake of widest dispersal. (The option of
+    maintaining a release version and a "director's cut" in parallel does
+    not please me.)
 
 Only one instance of each type per union
 

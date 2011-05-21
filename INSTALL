@@ -1,6 +1,9 @@
-to build pacc: make
+to build pacc, and perform the pacc3 basic sanity check: make
 
-to run the third-stage compiler: make check
+to run the test suite: make check
 
-to run the test suite: cd test; make check
+to run an individual test: cd test; ./run.sh emit/mk-class0.c
 
+to dump a tree, first run individual test, then:
+    for an emit test: ./emitter -d -o parse.c parse.pacc
+    for any other test: ../pacc2 -d parse.pacc

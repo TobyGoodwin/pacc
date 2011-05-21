@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -g -W -Wall
 LDFLAGS = -g
 
-all: pacc
+all: pacc sane
 
 OBJS = arg.o emit.o error.o load.o main.o resolve.o sugar.o syntax.o template.o
 
@@ -59,8 +59,11 @@ syntax.o: syntax.c syntax.h
 
 template.o: template.h
 
-check: pacc2.c pacc3.c
+sane: pacc2.c pacc3.c
 	diff $^
+
+check:
+	cd test; $(MAKE) check
 
 clean:
 	rm -f pacc0 pacc1 pacc2 pacc3 pacc

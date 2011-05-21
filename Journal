@@ -1,3 +1,28 @@
+2011-04-23
+----------
+
+Far too long. I have hundreds of threads to pursue, and not enough time.
+I suspect I should publish, and see what occurs. For now, I'd like to
+take a quick look around, see if there's any failing tests, just have a
+hack.
+
+OK, first thing I think "make" should include the third-stage compiler
+check automatically, and "make check" should run the test suite. Done.
+
+First test suite failure is a core dump in emit/mk-class0.c. What's that
+about? Might just be an error in the test. Seems that it builds a bogus
+parse tree, since nothing else says we have to handle a cclass without a
+text. There's nothing that seems to be a corresponding failure using
+pacc itself to parse the grammar.
+
+2011-01-19
+----------
+
+On another project, I'm playing with various bits of GNOME, and I've
+just noticed that the gobject-introspection package uses flex and bison.
+I've no idea what it's parsing or why, but its's obviously a potential
+candidate for a pacc parser instead.
+
 2010-11-30
 ----------
 
