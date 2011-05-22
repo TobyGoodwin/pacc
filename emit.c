@@ -12,7 +12,7 @@ static int cur_rule;
 
 /* XXX obviously this needs cleanup! I'm almost sure that n_stack and
  * s_stack move in lockstep, so we only need one version of push, and
- * one pointer.
+ * one pointer. The assert proves this.
  */
 #define N_STACK_BODGE 30
 static char *n_stack[N_STACK_BODGE];
@@ -33,6 +33,7 @@ static void pushs(struct s_node *s) {
 	exit(1);
     }
     s_stack[s_ptr++] = s;
+    assert(s_ptr == n_ptr);
 }
 
 int binding = 0;

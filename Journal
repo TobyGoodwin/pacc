@@ -19,7 +19,11 @@ Down to 5 fails. First is pacc/class2.pacc. This is a case that fails to
 parse, and we disagree with the error message. I think pacc is right,
 fixed by fixing the description of the test case. 4 fails.
 
-There's pacc/err0.pacc.
+There's pacc/err0.pacc. That's a fantasy test, to do with error
+reporting. Let's handle that case, then. OK, nothing fancy, just echo
+something after the failure, so less time is wasted.
+
+Next is pacc/scope1.pacc. Aha! I was hoping to get to this.
 
 2011-01-19
 ----------
