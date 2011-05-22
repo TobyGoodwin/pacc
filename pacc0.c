@@ -168,7 +168,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = cons(s_kid(seq, s_text(lit, "\\n")), p);
     p = cons(s_kid(seq, s_text(lit, "\\t")), p);
     p = cons(s_kid(seq, s_text(lit, " ")), p);
-    p = s_both(rep, 0, s_kid(alt, p));
+    p = s_kid(seq, s_both(rep, 0, s_kid(seq, s_kid(alt, p))));
     p = cons(s_text(type, "int" /* XXX: void */), p);
     p = s_both(rule, "_", p);
     r = cons(p, r);
@@ -379,13 +379,13 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = s_new(expr); p->text = "s_stashed_type()"; q = p;
     p = s_new(seq); p->first = q; t = p;
 
-    p = s_new(expr); p->text = "s_stash_type(ref_str())"; q = p;
-    p = s_new(call); p->text = "TypeElement"; s = p;
-    p = s_text(rep, "1,"); p->first = s; p->next = q; q = p;
+    p = s_text(expr, "s_stash_type(ref_str())");
+    q = s_text(call, "TypeElement");
+    p = cons(s_both(rep, "1,", s_kid(seq, q)), p); q = p;
     p = s_new(call); p->text = "ColCol"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
-    p = s_new(alt); p->first = t; q = p;
+    p = s_kid(seq, s_kid(alt, t)); q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
     p = s_new(rule); p->text = "TypeOptional"; p->first = q; p->next = r; r = p;
 
@@ -395,7 +395,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     */
     p = s_both(expr, "ref_dup(n)", s_text(ident, "n"));
     p = cons(s_text(call, "_"), p);
-    q = s_both(rep, 0, s_text(call, "NameCont"));
+    q = s_both(rep, 0, s_kid(seq, s_text(call, "NameCont")));
     q = cons(s_text(call, "NameStart"), q);
     q = s_kid(seq, q);
     q = s_both(bind, "n", q);
@@ -524,7 +524,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
 
     p = s_both(expr, "c", s_text(ident, "c"));
     p = cons(s_both(bind, "c", s_text(call, "Code")), p);
-    p = cons(s_both(rep, ",1", s_text(call, "rArrow")), p);
+    p = cons(s_both(rep, ",1", s_kid(seq, s_text(call, "rArrow"))), p);
     t = s_kid(seq, p);
 
     p = s_new(ident); p->text = "n"; i = p;
@@ -594,19 +594,19 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = s_kid(seq, p);
 
-    p = s_both(expr, "s_both(rep, \"1,\", r)", s_text(ident, "r"));
+    p = s_both(expr, "s_both(rep, \"1,\", s_kid(seq, r))", s_text(ident, "r"));
     p = cons(s_text(call, "Plus"), p);
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = cons(s_kid(seq, p), s);
 
     p = s_text(ident, "r");
-    p = s_both(expr, "s_both(rep, 0, r)", p);
+    p = s_both(expr, "s_both(rep, 0, s_kid(seq, r))", p);
     p = cons(s_text(call, "Star"), p);
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = cons(s_kid(seq, p), s);
 
     p = s_text(ident, "r");
-    p = s_both(expr, "s_both(rep, \",1\", r)", p);
+    p = s_both(expr, "s_both(rep, \",1\", s_kid(seq, r))", p);
     p = cons(s_text(call, "Query"), p);
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = cons(s_kid(seq, p), s);

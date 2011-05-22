@@ -21,7 +21,7 @@ static struct assoc *a_stack;
 static int a_ptr = 0;
 static int a_alloc = 0;
 
-#if 1
+#if 0
 static void assoc_dump(void) {
     int i;
 
@@ -41,7 +41,6 @@ static void associate(char *n, struct s_node *s) {
     a_stack[a_ptr].name = n;
     a_stack[a_ptr++].value = s;
     
-    assoc_dump();
     /* a frame marker must always be first */
     assert(a_ptr > 0);
     assert(a_stack[0].name && !a_stack[0].value &&
@@ -57,7 +56,6 @@ static void frame_start() {
 static void frame_end() {
     int i = a_ptr - 1;
 
-    assoc_dump();
     assert(i >= 0);
     while (a_stack[i].value || !a_stack[i].name ||
 	    strcmp("<frame>", a_stack[i].name) != 0)
@@ -326,10 +324,12 @@ static void declarations(struct s_node *n) {
     int i;
     struct s_node *p;
 
+#if 0
     for (p = n->first; p; p = p->next) {
 	fprintf(stderr, "%s, ", p->text);
     }
     fprintf(stderr, "\n");
+#endif
 
     for (p = n->first; p; p = p->next) {
 	/* Search from the end, so that scopes nest, for the name.  */
