@@ -12,6 +12,19 @@ We're more sensible now that bindings are scoped only over a sequence,
 so for example each leg of an alt must be a seq. The code emitted for
 "alt" no longer produces anything that can mask this error.
 
+Ugh. I'd forgotten that I'd implemented dequery. It's great, but I'm now
+saying that seq is always the (only) child of a rep. This breaks
+dequery. Sure, I can fix it, but is all this insistence on imagined seqs
+everywhere the right way to go? After all, if there is only a single
+child of a rep, it can't possibly be binding anything.
+
+Oh wow. After some considerable time failing to get anywhere, I replaced
+the nasty <frame> markers in emit.c with a frame stack. As well as being
+loads cleaner, it worked first time. And the number of failures has
+dropped to 2, for the first time in ever-so-long. One of those is a
+fantasy concerning error messages, and the other is Java. So that's
+looking pretty good.
+
 2011-05-21
 ----------
 

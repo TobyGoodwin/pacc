@@ -47,9 +47,9 @@ Rule3
     / u:Rule4 → u
 
 Rule4
-    ← r:Rule5 Query { s_both(rep, ",1", s_kid(seq, r)) }
-    / r:Rule5 Star { s_both(rep, 0, s_kid(seq, r)) }
-    / r:Rule5 Plus { s_both(rep, "1,", s_kid(seq, r)) }
+    ← r:Rule5 Query { s_both(rep, ",1", r) }
+    / r:Rule5 Star { s_both(rep, 0, r) }
+    / r:Rule5 Plus { s_both(rep, "1,", r) }
     / r:Rule5 → r
 
 Rule5
