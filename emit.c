@@ -332,7 +332,7 @@ static void declarations(struct s_node *n) {
 #endif
 
     for (p = n->first; p; p = p->next) {
-	/* Search from the end, so that scopes nest, for the name.  */
+	/* Search for the name. Start from the end, so scopes nest. */
 	for (i = a_ptr - 1; i >= 0; --i)
 	    if (a_stack[i].value && strcmp(a_stack[i].name, p->text) == 0)
 		break;

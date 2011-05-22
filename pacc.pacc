@@ -22,9 +22,17 @@ Rule0
     ← s:Rule1 Slash r:Rule0 { s_alt(s, r) }
     / s:Rule1 → s
 
+# We should like to write:
+#Rule1 
+#    ← Epsilon r:Result? → { s_kid(seq, r) }
+#    / s:Rule2 r:Result? → { s_kid(seq, append(s, r)) }
+#but we can't, because r has type ref_t.
+
 Rule1 
-    ← Epsilon r:Result? → { s_kid(seq, r) }
-    / s:Rule2 r:Result? → { s_kid(seq, append(s, r)) }
+    ← Epsilon r:Result → { s_kid(seq, r) }
+    / Epsilon → { s_kid(seq, 0) }
+    / s:Rule2 r:Result → { s_kid(seq, append(s, r)) }
+    / s:Rule2 → { s_kid(seq, s) }
 
 Rule2
     ← r:Rule3 s:Rule2 { cons(r, s) }
