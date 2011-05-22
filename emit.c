@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "error.h"
 #include "syntax.h"
 #include "template.h"
 
@@ -10,30 +11,24 @@ static char *g_name; /* grammar name */
 static struct s_node *g_node; /* grammar root */
 static int cur_rule;
 
-/* XXX obviously this needs cleanup! I'm almost sure that n_stack and
- * s_stack move in lockstep, so we only need one version of push, and
- * one pointer. The assert proves this.
+/* XXX major cleanups completed, but still no nested scopes
  */
-#define N_STACK_BODGE 30
-static char *n_stack[N_STACK_BODGE];
+static char **n_stack;
+static struct s_node **s_stack;
 static int n_ptr = 0;
-static void pushn(char *n) {
-    if (n_ptr == N_STACK_BODGE) {
-	fprintf(stderr, "n_stack overflow\n");
-	exit(1);
+static int n_alloc = 0;
+static void push(char *n, struct s_node *s) {
+    if (n_ptr == n_alloc) {
+	int l = 2 * n_alloc + 1;
+	char **n = realloc(n_stack, l * sizeof *n_stack);
+	struct s_node **s = realloc(s_stack, l * sizeof *s_stack);
+	if (!n || !s) nomem();
+	n_stack = n;
+	s_stack = s;
+	n_alloc = l;
     }
-    n_stack[n_ptr++] = n;
-}
-
-struct s_node *s_stack[N_STACK_BODGE];
-int s_ptr = 0;
-static void pushs(struct s_node *s) {
-    if (s_ptr == N_STACK_BODGE) {
-	fprintf(stderr, "s_stack overflow\n");
-	exit(1);
-    }
-    s_stack[s_ptr++] = s;
-    assert(s_ptr == n_ptr);
+    n_stack[n_ptr] = n;
+    s_stack[n_ptr++] = s;
 }
 
 int binding = 0;
@@ -240,7 +235,7 @@ static void seq_pre(struct s_node *n) {
     printf("_pacc_Push(cont);\n");
     printf("cont = %ld;\n", n->id);
     printf("status = parsed;\n"); /* empty sequence */
-    s_ptr = n_ptr = 0;
+    n_ptr = 0;
 }
 
 static void seq_mid(struct s_node *n) {
@@ -285,8 +280,7 @@ static void bind_pre(struct s_node *n) {
     printf("/* bind: %s */\n", n->text);
     debug_pre("bind", n);
     /* Save the name bound, and the rule to which it is bound. */
-    pushn(n->text);
-    pushs(n->first->first);
+    push(n->text, n->first->first);
     binding = 1;
     printf("Trace fprintf(stderr, \"will bind %s @ rule %ld, col %%ld\\n\", col);\n", n->text, n->first->first->id);
 }
@@ -396,7 +390,7 @@ static void guard_post(struct s_node *n) {
 
 static void emit_call(struct s_node *n) {
     if (!binding) {
-	pushn(0); pushs(0); /* Save dummy "binding" if we're not binding */
+	push(0, 0); /* Save dummy "binding" if we're not binding */
     }
     //printf("_pacc_save_core(%ld, thr_%s, col);\n", n->first->id, binding ? "bound" : "rule");
     printf("_pacc_save_core(%ld, col);\n", n->first->id);
@@ -420,7 +414,7 @@ static void alt_pre(struct s_node *n) {
     printf("_pacc_Push(cont);\n");
     printf("cont = %ld;\n", n->id);
     savecol();
-    s_ptr = n_ptr = 0;
+    n_ptr = 0;
 }
 
 static void alt_mid(struct s_node *n) {
@@ -433,7 +427,7 @@ static void alt_mid(struct s_node *n) {
     savecol();
     printf("Trace fprintf(stderr, \"col restored to %%ld\\n\", col);\n");
     printf("Trace fprintf(stderr, \"alt %ld @ col %%ld? (next alternative)\\n\", col);\n", n->id);
-    s_ptr = n_ptr = 0;
+    n_ptr = 0;
 }
 
 static void alt_post(struct s_node *n) {
@@ -446,7 +440,7 @@ static void alt_post(struct s_node *n) {
     printf("_pacc_Pop(cont);\n");
     printf("Trace fprintf(stderr, \"alt %ld @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
-    s_ptr = n_ptr = 0;
+    n_ptr = 0;
 }
 
 static void cclass_pre(struct s_node *n) {

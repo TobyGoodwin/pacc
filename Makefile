@@ -45,7 +45,7 @@ template.c: pacc.tmpl template.sh
 
 arg.o: arg.c arg.h
 
-emit.o: emit.c emit.h syntax.h
+emit.o: emit.c emit.h error.h syntax.h template.h
 
 error.o: error.c error.h
 

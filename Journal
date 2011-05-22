@@ -23,7 +23,13 @@ There's pacc/err0.pacc. That's a fantasy test, to do with error
 reporting. Let's handle that case, then. OK, nothing fancy, just echo
 something after the failure, so less time is wasted.
 
-Next is pacc/scope1.pacc. Aha! I was hoping to get to this.
+Next is pacc/scope1.pacc. Aha! I was hoping to get to this. OK, so
+there's cleanup of name handling to do in emit.c. For a start, s_ptr has
+now gone. So we can definitely go down to a single push. Hang on. Done.
+Oh, let's make the stack autogrow too. Done that, and I think what comes
+next is obvious. Instead of resetting the stack, we just want to unpop
+as many names as we've pushed for the current sequence. And where do we
+save that? Hmmm...
 
 2011-01-19
 ----------
