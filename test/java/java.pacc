@@ -155,20 +155,6 @@ Start :: void =
     CompilationUnit
     !.
 
-CompilationUnit :: void =
-    pkg:Spacing
-    imps:Spacing
-    decls:Declaration*
-
-	  /*
-	  pkg:("package":Word n:QualifiedName ";":Sym -> {Just n}
-		/ -> {Nothing})
-	  imps:ImportDecl*
-	  decls:Declaration*
-	  !Char			// make sure we consume all input text
-				-> {(pkg, imps, decls)}
-				*/
-	
 ////---------------- Lexical Structure --------------------
 
 
@@ -198,7 +184,7 @@ EndOfLineComment :: void =
 	"//" (!LineTerminator .)* LineTerminator
 
 InputCharacter :: Char =
-	!LineTerminator c:Char					-> c
+	!LineTerminator c:.					-> c
 
 Space :: void =
 	  WhiteSpace						-> {()}
@@ -223,12 +209,12 @@ Word :: String =
 	  c:JavaLetter cs:JavaLetterOrDigit* Spacing 		-> {c : cs}
 
 JavaLetter :: Char =
-	  c:Char		&{isAlpha c}			-> c
+	  c:.		&{isAlpha c}			-> c
 	/ "_"
 	/ "$"
 
 JavaLetterOrDigit :: Char =
-	  c:Char		&{isAlphaNum c}			-> c
+	  c:.		&{isAlphaNum c}			-> c
 	/ "_"
 	/ "$"
 
@@ -277,7 +263,7 @@ HexDigits :: Integer =
 	/ d:HexDigit				-> {toInteger d}
 
 HexDigit :: Int =
-	  c:Char	&{isHexDigit c}		-> {digitToInt c}
+	  c:.	&{isHexDigit c}		-> {digitToInt c}
 
 OctalNumeral :: Integer =
 	  "0" v:OctalDigits			-> {v}
@@ -287,7 +273,7 @@ OctalDigits :: Integer =
 	/ d:OctalDigit				-> {toInteger d}
 
 OctalDigit :: Int =
-	  c:Char	&{isOctDigit c}		-> {digitToInt c}
+	  c:.	&{isOctDigit c}		-> {digitToInt c}
 
 DecimalNumeral :: Integer =
 	  v:Digits				-> {v}
@@ -297,16 +283,16 @@ Digits :: Integer =
 	/ d:Digit				-> {toInteger d}
 
 Digit :: Int =
-	  c:Char	&{isDigit c}		-> {digitToInt c}
+	  c:.	&{isDigit c}		-> {digitToInt c}
 
 
 // Floating point
 FloatingPointLiteral :: Literal =
-	  m:Digits '.' f:FractionPartOpt e:ExponentPartOpt t:FloatTypeSuffixOpt
+	  m:Digits "." f:FractionPartOpt e:ExponentPartOpt t:FloatTypeSuffixOpt
 	  Spacing
 		-> {t (fromRational ((fromInteger m + f) * 10.0 ^^ e))}
 
-	/ '.' f:FractionPart e:ExponentPartOpt t:FloatTypeSuffixOpt Spacing
+	/ "." f:FractionPart e:ExponentPartOpt t:FloatTypeSuffixOpt Spacing
 		-> {t (fromRational (f * 10.0 ^^ e))}
 
 	/ m:Digits e:ExponentPart t:FloatTypeSuffixOpt Spacing
@@ -328,16 +314,24 @@ ExponentPartOpt :: Integer =
 	/ 				-> { 0 }
 
 ExponentPart :: Integer =
-	  ('e' / 'E') '-' e:Digits	-> { -e }
-	/ ('e' / 'E') '+'? e:Digits	-> { e }
+	  ("e" / "E") "-" e:Digits	-> { -e }
+	/ ("e" / "E") "+"? e:Digits	-> { e }
 
-FloatTypeSuffixOpt :: {Rational -> Literal} =
+#FloatTypeSuffixOpt :: {Rational -> Literal} =
+#	  t:FloatTypeSuffix		-> t
+#	/ 				-> {\r -> LitDouble (fromRational r)}
+
+FloatTypeSuffixOpt :: int =
 	  t:FloatTypeSuffix		-> t
 	/ 				-> {\r -> LitDouble (fromRational r)}
 
-FloatTypeSuffix :: {Rational -> Literal} =
-	  ('f' / 'F')			-> {\r -> LitFloat (fromRational r)}
-	/ ('d' / 'D')			-> {\r -> LitDouble (fromRational r)}
+#FloatTypeSuffix :: {Rational -> Literal} =
+#	  ('f' / 'F')			-> {\r -> LitFloat (fromRational r)}
+#	/ ('d' / 'D')			-> {\r -> LitDouble (fromRational r)}
+
+FloatTypeSuffix :: int =
+	  ("f" / "F")			-> {\r -> LitFloat (fromRational r)}
+	/ ("d" / "D")			-> {\r -> LitDouble (fromRational r)}
 
 
 // Boolean literals
@@ -355,34 +349,34 @@ SingleCharacter :: Char =
 	  !"'" !"\\" c:InputCharacter		-> c
 
 StringLiteral :: Literal =
-	  '"' s:StringCharacter* '"' Spacing	-> { LitString s }
+	  "\"" s:StringCharacter* "\"" Spacing	-> { LitString s }
 
 StringCharacter :: Char =
-	  !'"' !'\\' c:InputCharacter		-> c
+	  !"\"" !"\\" c:InputCharacter		-> c
 	/ c:EscapeSequence			-> c
 
 EscapeSequence :: Char =
-	  '\\' 'b'				-> {'\b'}
-	/ '\\' 't'				-> {'\t'}
-	/ '\\' 'n'				-> {'\n'}
-	/ '\\' 'f'				-> {'\f'}
-	/ '\\' 'r'				-> {'\r'}
-	/ '\\' '"'				-> {'\"'}
-	/ '\\' "'"				-> {'\''}
-	/ '\\' '\\'				-> {'\\'}
+	  "\\" "b"				-> {'\b'}
+	/ "\\" "t"				-> {'\t'}
+	/ "\\" "n"				-> {'\n'}
+	/ "\\" "f"				-> {'\f'}
+	/ "\\" "r"				-> {'\r'}
+	/ "\\" "\""				-> {'\"'}
+	/ "\\" "'"				-> {'\''}
+	/ "\\" "\\"				-> {'\\'}
 	/ c:OctalEscape				-> c
 
 OctalEscape :: Char =
-	  '\\' x:ZeroToThree y:OctalDigit z:OctalDigit
+	  "\\" x:ZeroToThree y:OctalDigit z:OctalDigit
 						-> {chr (x*8*8 + y*8 + z)}
-	/ '\\' y:OctalDigit z:OctalDigit	-> {chr (y*8 + z)}
-	/ '\\' z:OctalDigit			-> {chr (z)}
+	/ "\\" y:OctalDigit z:OctalDigit	-> {chr (y*8 + z)}
+	/ "\\" z:OctalDigit			-> {chr (z)}
 
 ZeroToThree :: Int =
-	  '0'					-> {0}
-	/ '1'					-> {1}
-	/ '2'					-> {2}
-	/ '3'					-> {3}
+	  "0"					-> {0}
+	/ "1"					-> {1}
+	/ "2"					-> {2}
+	/ "3"					-> {3}
 
 
 // Null literals
@@ -410,7 +404,10 @@ PrimitiveType :: DeclType =
 	/ "double":Word				-> {DtDouble}
 	/ "boolean":Word			-> {DtBoolean}
 
-QualifiedName :: {[Identifier]} =
+#QualifiedName :: {[Identifier]} =
+#	  i:Identifier is:(".":Sym i:Identifier -> i)*	-> {i : is}
+
+QualifiedName :: int =
 	  i:Identifier is:(".":Sym i:Identifier -> i)*	-> {i : is}
 
 DimsOpt :: Int =
@@ -540,7 +537,8 @@ PrimExpr :: Expression =
 						-> {ExpNewArrayInit t d i}
 	/ "void":Word ".":Sym "class":Word	-> {ExpVoidClass}
 
-Arguments :: {[Expression]} =
+#Arguments :: {[Expression]} =
+Arguments :: int =
 	  "(":Sym e:Expression es:(",":Sym e:Expression -> e)* ")":Sym
 						-> {e : es}
 	/ "(":Sym ")":Sym				-> {[]}
@@ -548,7 +546,8 @@ Arguments :: {[Expression]} =
 DimExpr :: Expression =
 	  "[":Sym e:Expression "]":Sym	-> e
 
-ArrayInitializer :: {[Initializer]} =
+#ArrayInitializer :: {[Initializer]} =
+ArrayInitializer :: int =
 	  "{":Sym is:(i:Initializer ",":Sym -> i)* "}":Sym
 						-> is
 	/ "{":Sym i:Initializer is:(",":Sym i:Initializer -> i)* "}":Sym
@@ -561,7 +560,8 @@ Initializer :: Initializer =
 
 //------------------ Statements --------------------
 
-Block :: {[Statement]} =
+#Block :: {[Statement]} =
+Block :: int =
 	  "{":Sym ss:BlockStatement* "}":Sym	-> ss
 
 BlockStatement :: Statement =
@@ -618,7 +618,8 @@ FinalOpt :: Bool =
 	  "final":Word				-> {True}
 	/					-> {False}
 
-ExpressionsOpt :: {[Expression]} =
+#ExpressionsOpt :: {[Expression]} =
+ExpressionsOpt :: int =
 	  e:Expression es:(",":Sym e:Expression -> e)*	-> {e : es}
 	/ 						-> {[]}
 
@@ -652,12 +653,14 @@ FormalParam :: FormalParam =
 	  f:FinalOpt t:TypeSpec i:Identifier d:DimsOpt
 						-> {(f, t, i, d)}
 
-FormalParams :: {[FormalParam]} =
+#FormalParams :: {[FormalParam]} =
+FormalParams :: int =
 	  "(":Sym p:FormalParam ps:(",":Sym p:FormalParam -> p)* ")":Sym
 						-> {p : ps}
 	/ "(":Sym ")":Sym				-> {[]}
 
-Declarators :: {[Declarator]} =
+#Declarators :: {[Declarator]} =
+Declarators :: int =
 	  d:Declarator ds:(",":Sym d:Declarator -> d)*
 						-> {d : ds}
 
@@ -665,7 +668,8 @@ Declarator :: Declarator =
 	  id:Identifier dim:DimsOpt init:("=":Sym i:Initializer -> i)?
 						-> {(id, dim, init)}
 
-ClassBody :: {[Declaration]} =
+#ClassBody :: {[Declaration]} =
+ClassBody :: int =
 	  "{":Sym ds:Declaration* "}":Sym		-> ds
 
 Declaration :: Declaration =
@@ -703,7 +707,8 @@ Declaration :: Declaration =
 	  b:Block
 				-> {DeclBlock st b}
 
-ThrowsOpt :: {[Name]} =
+#ThrowsOpt :: {[Name]} =
+ThrowsOpt :: int =
 	  "throws":Word n:QualifiedName ns:(",":Sym n:QualifiedName -> n)*
 						-> {n : ns}
 	/					-> {[]}
@@ -717,7 +722,7 @@ CompilationUnit :: CompUnit =
 		/ -> {Nothing})
 	  imps:ImportDecl*
 	  decls:Declaration*
-	  !Char			// make sure we consume all input text
+	  !.			// make sure we consume all input text
 				-> {(pkg, imps, decls)}
 	
 

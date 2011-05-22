@@ -25,6 +25,10 @@ dropped to 2, for the first time in ever-so-long. One of those is a
 fantasy concerning error messages, and the other is Java. So that's
 looking pretty good.
 
+The Java parser is now parseable pacc, but the semantic actions are not
+C, so we don't build a working parser. That means that generating #line
+directives is the next thing to add.
+
 2011-05-21
 ----------
 

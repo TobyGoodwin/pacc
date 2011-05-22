@@ -4,8 +4,10 @@
 #include "error.h"
 #include "syntax.h"
 
-static void resolve0(struct s_node *g, struct s_node *n) {
+static void resolve0(struct s_node *g, struct s_node *n, struct s_node *from) {
     struct s_node *p;
+
+    if (n->type == rule) from = n;
     if (n->type == call && !n->first) {
 	struct s_node *i;
 	for (i = g->first; i; i = i->next) {
@@ -14,13 +16,14 @@ static void resolve0(struct s_node *g, struct s_node *n) {
 		n->first = i;
 	}
 	if (!n->first)
-	    fatal3("rule not found: `", n->text, "'");
+	    fatal5("rule not found: `", n->text,
+		    "' (called from `", from->text, "')");
     }
     if (s_has_children(n->type))
 	for (p = n->first; p; p = p->next)
-	    resolve0(g, p);
+	    resolve0(g, p, from);
 }
 
 void resolve(struct s_node *g) {
-    resolve0(g, g);
+    resolve0(g, g, 0);
 }

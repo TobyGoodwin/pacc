@@ -76,3 +76,12 @@ Dynamically allocate everything
 UTF-8 support
 
 Documentation
+
+More research
+
+    Top of the list, "left recursion considered harmful".
+
+Ask permissions
+
+    There is some code derived from Bryan Ford's material around,
+    particularly the Java parser.

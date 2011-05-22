@@ -49,8 +49,6 @@ static void deblit(struct s_node *n, const char *ign0, int ign1) {
     gd = malloc(l);
     if (!gd) nomem();
     snprintf(gd, l, "ref_streq(%s,\"%s\")", id, n->text);
-    fprintf(stderr, "in deblit1, id is %s\n", id);
-    fprintf(stderr, "in deblit1, gd is %s\n", gd);
 
     p = s_text(ident, id); q = p;
     p = s_both(guard, gd, q); q = p;
