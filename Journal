@@ -1,4 +1,18 @@
-2011-04-23
+2011-05-22
+----------
+
+OK, so I have a supposed implementation of stack frames for scoping...
+but now pacc1 cannot build pacc2 with a curious error. All the emit
+tests work, so I think I have to devise one that doesn't, but that's
+tricky since I don't know what's going wrong.
+
+Managed to spot a problem and add an assert that flags it up. Many of
+the emit test now *do* fail, where they had insufficient doses of "seq".
+We're more sensible now that bindings are scoped only over a sequence,
+so for example each leg of an alt must be a seq. The code emitted for
+"alt" no longer produces anything that can mask this error.
+
+2011-05-21
 ----------
 
 Far too long. I have hundreds of threads to pursue, and not enough time.

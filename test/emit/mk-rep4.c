@@ -39,6 +39,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
 
     p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(call); p->text = "Letter"; s = p;
+    p = s_kid(seq, s); s = p;
     p = s_text(rep, "1,"); p->first = s; p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
     p = new_node(type); p->text = "char *"; p->next = q; q = p;

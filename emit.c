@@ -11,32 +11,61 @@ static char *g_name; /* grammar name */
 static struct s_node *g_node; /* grammar root */
 static int cur_rule;
 
-/* XXX major cleanups completed, but still no nested scopes
+/* XXX some major cleanups completed, but still no nested scopes
  */
-static char **n_stack;
-static struct s_node **s_stack;
-static int n_ptr = 0;
-static int n_alloc = 0;
-static void push(char *n, struct s_node *s) {
-    if (n_ptr == n_alloc) {
-	int l = 2 * n_alloc + 1;
-	char **n = realloc(n_stack, l * sizeof *n_stack);
-	struct s_node **s = realloc(s_stack, l * sizeof *s_stack);
-	if (!n || !s) nomem();
-	n_stack = n;
-	s_stack = s;
-	n_alloc = l;
+struct assoc {
+    char *name;
+    struct s_node *value;
+};
+static struct assoc *a_stack;
+static int a_ptr = 0;
+static int a_alloc = 0;
+
+#if 1
+static void assoc_dump(void) {
+    int i;
+
+    for (i = 0; i < a_ptr; ++i)
+	fprintf(stderr, "var %s @ pos %d\n", a_stack[i].name, i);
+}
+#endif
+
+static void associate(char *n, struct s_node *s) {
+    if (a_ptr == a_alloc) {
+	int l = 2 * a_alloc + 1;
+	struct assoc *a = realloc(a_stack, l * sizeof *a_stack);
+	if (!a) nomem();
+	a_stack = a;
+	a_alloc = l;
     }
-    n_stack[n_ptr] = n;
-    s_stack[n_ptr++] = s;
+    a_stack[a_ptr].name = n;
+    a_stack[a_ptr++].value = s;
+    
+    assoc_dump();
+    /* a frame marker must always be first */
+    assert(a_ptr > 0);
+    assert(a_stack[0].name && !a_stack[0].value &&
+	    strcmp(a_stack[0].name, "<frame>") == 0);
 }
 
-int binding = 0;
+int associating = 0;
 
-/* Something to think about: should *every* grammar start with a
- * preamble? That would simplify a couple of things, and is how
- * pacc.pacc works at the moment. On the other hand, it's a bit odd to
- * represent no preamble with an empty preamble node. */
+static void frame_start() {
+    associate("<frame>", 0);
+}
+
+static void frame_end() {
+    int i = a_ptr - 1;
+
+    assoc_dump();
+    assert(i >= 0);
+    while (a_stack[i].value || !a_stack[i].name ||
+	    strcmp("<frame>", a_stack[i].name) != 0)
+	--i;
+    assert(i >= 0);
+    a_ptr = i;
+}
+
 static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
@@ -46,7 +75,9 @@ static void grammar_pre(struct s_node *n) {
     g_node = n;
 
     /* We slightly simplify both building & walking the tree and insist
-     * that every grammar starts with a preamble, which may be null. */
+     * that every grammar starts with a preamble, which may be null.
+     * It's a bit odd to represent no preamble with an empty preamble
+     * node. */
     p = n->first;
     assert(p->type == preamble);
     if (p->text) printf("%s\n", p->text);
@@ -231,11 +262,11 @@ static void accept_col(void) {
 }
 
 static void seq_pre(struct s_node *n) {
+    frame_start();
     printf("Trace fprintf(stderr, \"seq %ld @ col %%ld?\\n\", col);\n", n->id);
     printf("_pacc_Push(cont);\n");
     printf("cont = %ld;\n", n->id);
     printf("status = parsed;\n"); /* empty sequence */
-    n_ptr = 0;
 }
 
 static void seq_mid(struct s_node *n) {
@@ -249,6 +280,7 @@ static void seq_post(struct s_node *n) {
     printf("_pacc_Pop(cont);\n");
     printf("Trace fprintf(stderr, \"seq %ld @ col %%ld => %%s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
+    frame_end();
 }
 
 static void and_pre(struct s_node *n) {
@@ -280,13 +312,13 @@ static void bind_pre(struct s_node *n) {
     printf("/* bind: %s */\n", n->text);
     debug_pre("bind", n);
     /* Save the name bound, and the rule to which it is bound. */
-    push(n->text, n->first->first);
-    binding = 1;
+    associate(n->text, n->first->first);
+    associating = 1;
     printf("Trace fprintf(stderr, \"will bind %s @ rule %ld, col %%ld\\n\", col);\n", n->text, n->first->first->id);
 }
 
 static void bind_post(struct s_node *n) {
-    binding = 0;
+    associating = 0;
     printf("/* end bind: %s */\n", n->text);
 }
 
@@ -294,57 +326,73 @@ static void declarations(struct s_node *n) {
     int i;
     struct s_node *p;
 
-#if 0
     for (p = n->first; p; p = p->next) {
 	fprintf(stderr, "%s, ", p->text);
     }
     fprintf(stderr, "\n");
-#endif
 
     for (p = n->first; p; p = p->next) {
-	/* We have a list of names (n_stack) which are bound in the
-	 * current sequence. XXX Should we not search from the back?
-	 */
-	for (i = 0; i < n_ptr; ++i)
-	    if (n_stack[i] && strcmp(n_stack[i], p->text) == 0) break;
+	/* Search from the end, so that scopes nest, for the name.  */
+	for (i = a_ptr - 1; i >= 0; --i)
+	    if (a_stack[i].value && strcmp(a_stack[i].name, p->text) == 0)
+		break;
+
 	/* It is not an error if we have a name without a binding: the
 	 * parser will pick out names like "printf" from the code. */
-	if (i == n_ptr) continue;
-	assert(s_stack[i]->type == rule);
-	assert(s_stack[i]->first->type == type);
+	if (i < 0)
+	    continue;
+
+	assert(a_stack[i].value->type == rule);
+	assert(a_stack[i].value->first->type == type);
 	printf("/* i is %d */\n", i);
-	printf("/* type is %s */\n", s_stack[i]->first->text);
-	printf("    %s %s;\n", s_stack[i]->first->text, n_stack[i]);
+	printf("/* type is %s */\n", a_stack[i].value->first->text);
+	printf("    %s %s;\n",
+		a_stack[i].value->first->text, a_stack[i].name);
     }
 }
 
 static void bindings(struct s_node *n) {
-    int i;
     struct s_node *p;
 
     for (p = n->first; p; p = p->next) {
-
+	int i, p0, p1;
 	printf("/* binding %s */\n", p->text);
-#if 0
-	for (i = 0; i < n_ptr; ++i)
-	    fprintf(stderr, "var %s @ pos %d\n", n_stack[i], i);
-#endif
-	for (i = 0; i < n_ptr; ++i)
-	    if (n_stack[i] && strcmp(n_stack[i], p->text) == 0) break;
-	if (i == n_ptr) continue;
-	printf("pos = %d;\n", i);
+
+/*
+	for (i = 0; i < a_ptr; ++i)
+	    fprintf(stderr, "var %s @ pos %d\n", a_stack[i].name, i);
+*/
+
+	for (i = a_ptr - 1; i >= 0; --i)
+	    if (a_stack[i].value && strcmp(a_stack[i].name, p->text) == 0)
+		break;
+	if (i < 0)
+	    continue;
+
+	/* XXX this is ugly. having introduced <frame> markers, we need to
+	 * calculate a separate position on our name stack, and in
+	 * evlis. this makes dummy bindings a bit stupid, since they
+	 * were invented to keep the two in step.
+	 */
+	p0 = p1 = i;
+	for ( ; i >= 0; --i)
+	    if (!a_stack[i].value && a_stack[i].name &&
+		    strcmp(a_stack[i].name, "<frame>") == 0)
+		--p1;
+	printf("pos = %d;\n", p1);
+
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);
 
-	printf("    Trace fprintf(stderr, \"bind %s to r%ld @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, s_stack[i]->id);
-	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %ld);\n", s_stack[i]->id);
+	printf("    Trace fprintf(stderr, \"bind %s to r%ld @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, a_stack[p0].value->id);
+	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %ld);\n", a_stack[p0].value->id);
 	printf("    if ((cur->rule & 3) != evaluated) {\n");
 	printf("        _pacc_Push(col); _pacc_Push(cont);\n");
 	printf("        cont = %ld;\n", p->id);
 	printf("	_pacc_ev_i = 0; goto eval_loop;\n");
 	printf("case %ld:     _pacc_Pop(cont); _pacc_Pop(col);\n", p->id);
 	printf("    }\n");
-	printf("    %s = cur->value.u%ld;\n", p->text, s_stack[i]->id);
-	printf("    Trace fprintf(stderr, \"bound %s to r%ld @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, s_stack[i]->id);
+	printf("    %s = cur->value.u%ld;\n", p->text, a_stack[p0].value->id);
+	printf("    Trace fprintf(stderr, \"bound %s to r%ld @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, a_stack[p0].value->id);
     }
 }
 
@@ -389,9 +437,11 @@ static void guard_post(struct s_node *n) {
 }
 
 static void emit_call(struct s_node *n) {
-    if (!binding) {
-	push(0, 0); /* Save dummy "binding" if we're not binding */
-    }
+    /* The number of bindings is equal to the number of rule calls -
+     * this is assumed XXX where?, so save dummy "binding" if we're not
+     * binding.
+     */
+    if (!associating) associate(0, 0); 
     //printf("_pacc_save_core(%ld, thr_%s, col);\n", n->first->id, binding ? "bound" : "rule");
     printf("_pacc_save_core(%ld, col);\n", n->first->id);
     //printf("_pacc_save_col(col);\n");
@@ -414,7 +464,6 @@ static void alt_pre(struct s_node *n) {
     printf("_pacc_Push(cont);\n");
     printf("cont = %ld;\n", n->id);
     savecol();
-    n_ptr = 0;
 }
 
 static void alt_mid(struct s_node *n) {
@@ -427,7 +476,6 @@ static void alt_mid(struct s_node *n) {
     savecol();
     printf("Trace fprintf(stderr, \"col restored to %%ld\\n\", col);\n");
     printf("Trace fprintf(stderr, \"alt %ld @ col %%ld? (next alternative)\\n\", col);\n", n->id);
-    n_ptr = 0;
 }
 
 static void alt_post(struct s_node *n) {
@@ -440,7 +488,6 @@ static void alt_post(struct s_node *n) {
     printf("_pacc_Pop(cont);\n");
     printf("Trace fprintf(stderr, \"alt %ld @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
     printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
-    n_ptr = 0;
 }
 
 static void cclass_pre(struct s_node *n) {

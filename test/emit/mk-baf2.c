@@ -56,6 +56,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
 
     /* int Digits1 ← Digit Digits1 / Digit */
     p = s_new(call); p->text = "Digit"; s = p;
+    p = s_kid(seq, p); s = p;
     p = s_new(call); p->text = "Digits1"; q = p;
     p = s_new(call); p->text = "Digit"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = s; q = p;
