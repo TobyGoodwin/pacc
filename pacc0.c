@@ -594,19 +594,19 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = s_kid(seq, p);
 
-    p = s_both(expr, "s_both(rep, \"1,\", s_kid(seq, r))", s_text(ident, "r"));
+    p = s_both(expr, "s_both(rep, \"1,\", r)", s_text(ident, "r"));
     p = cons(s_text(call, "Plus"), p);
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = cons(s_kid(seq, p), s);
 
     p = s_text(ident, "r");
-    p = s_both(expr, "s_both(rep, 0, s_kid(seq, r))", p);
+    p = s_both(expr, "s_both(rep, 0, r)", p);
     p = cons(s_text(call, "Star"), p);
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = cons(s_kid(seq, p), s);
 
     p = s_text(ident, "r");
-    p = s_both(expr, "s_both(rep, \",1\", s_kid(seq, r))", p);
+    p = s_both(expr, "s_both(rep, \",1\", r)", p);
     p = cons(s_text(call, "Query"), p);
     p = cons(s_both(bind, "r", s_text(call, "Rule5")), p);
     s = cons(s_kid(seq, p), s);
@@ -691,14 +691,18 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
 
     p = cons(s_text(ident, "s"), s_text(ident, "r"));
     p = s_both(expr, "s_kid(seq, append(s, r))", p);
-    q = s_both(bind, "r", s_both(rep, ",1", s_text(call, "Result")));
+    //q = s_kid(seq, s_text(call, "Result"));
+    q = s_text(call, "Result");
+    q = s_both(bind, "r", s_both(rep, ",1", q));
     p = cons(q, p);
     p = cons(s_both(bind, "s", s_text(call, "Rule2")), p);
     s = s_kid(seq, p);
 
     p = s_text(ident, "r");
     p = s_both(expr, "s_kid(seq, r)", p);
-    q = s_both(bind, "r", s_both(rep, ",1", s_text(call, "Result")));
+    //q = s_kid(seq, s_text(call, "Result"));
+    q = s_text(call, "Result");
+    q = s_both(bind, "r", s_both(rep, ",1", q));
     p = cons(q, p);
     p = cons(s_text(call, "Epsilon"), p);
     q = cons(s_kid(seq, p), s);

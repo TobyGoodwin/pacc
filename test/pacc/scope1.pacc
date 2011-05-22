@@ -4,10 +4,8 @@ parse ab a
 parse ac a
 */
 
-# But since we're saying that names are lexically scoped over sequences,
-# the following should work, with the two "a" separately bound.
-
-# Currently, scope1 won't even compile
+# Names are lexically scoped over sequences, the following works, with
+# the two names "a" bound in separate but nested scopes.
 
 P :: char * ← a:A (a:B &{ *a == 'b' } / "c") → a
 

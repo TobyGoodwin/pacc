@@ -18,8 +18,7 @@ struct assoc {
     struct s_node *value;
 };
 static struct assoc *a_stack;
-static int a_ptr = 0;
-static int a_alloc = 0;
+static int a_ptr, a_alloc;
 
 #if 0
 static void assoc_dump(void) {
@@ -41,27 +40,28 @@ static void associate(char *n, struct s_node *s) {
     a_stack[a_ptr].name = n;
     a_stack[a_ptr++].value = s;
     
-    /* a frame marker must always be first */
     assert(a_ptr > 0);
-    assert(a_stack[0].name && !a_stack[0].value &&
-	    strcmp(a_stack[0].name, "<frame>") == 0);
 }
 
 int associating = 0;
 
+static int *f_stack;
+static int f_ptr, f_alloc;
+
 static void frame_start() {
-    associate("<frame>", 0);
+    if (f_ptr == f_alloc) {
+	int l = 2 * f_alloc + 1;
+	int *f = realloc(f_stack, l * sizeof *f_stack);
+	if (!f) nomem();
+	f_stack = f;
+	f_alloc = l;
+    }
+    f_stack[f_ptr++] = a_ptr;
 }
 
 static void frame_end() {
-    int i = a_ptr - 1;
-
-    assert(i >= 0);
-    while (a_stack[i].value || !a_stack[i].name ||
-	    strcmp("<frame>", a_stack[i].name) != 0)
-	--i;
-    assert(i >= 0);
-    a_ptr = i;
+    assert(f_ptr > 0);
+    a_ptr = f_stack[--f_ptr];
 }
 
 static void grammar_pre(struct s_node *n) {
@@ -364,7 +364,7 @@ static void bindings(struct s_node *n) {
 */
 
 	for (i = a_ptr - 1; i >= 0; --i)
-	    if (a_stack[i].value && strcmp(a_stack[i].name, p->text) == 0)
+	    if (a_stack[i].name && strcmp(a_stack[i].name, p->text) == 0)
 		break;
 	if (i < 0)
 	    continue;
@@ -375,10 +375,12 @@ static void bindings(struct s_node *n) {
 	 * were invented to keep the two in step.
 	 */
 	p0 = p1 = i;
+#if 0
 	for ( ; i >= 0; --i)
 	    if (!a_stack[i].value && a_stack[i].name &&
 		    strcmp(a_stack[i].name, "<frame>") == 0)
 		--p1;
+#endif
 	printf("pos = %d;\n", p1);
 
 	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);

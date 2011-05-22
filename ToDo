@@ -1,7 +1,7 @@
-    1. Make "?" and "*" return the value "0" if they matched nothing.
-    Modify pacc.pacc to exploit this.
+Semantics of rep
 
-    2. Implement character classes.
+    Make "?" and "*" return the value "0" if they matched nothing.
+    Modify pacc.pacc to exploit this.
 
 Error handling
 
@@ -34,16 +34,6 @@ Optimize
 
     First for space - this is ongoing with hashing, and eval list stuff.
     Then (and we will need some more test cases) for time.
-
-ref() stuff
-
-    A very beautiful piece of work. Still need to remove col_expr.
-    Anything else?
-
-Multiple expressions
-
-    Clarify or eliminate what it means for a sequence to contain more
-    than one expression.
 
 Scoping
 
