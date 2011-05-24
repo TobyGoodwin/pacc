@@ -1,3 +1,23 @@
+2011-05-24
+----------
+
+Plan: keeping a copy of java.pacc as it now is, remove all semantic
+actions from the grammar. This should give us a recogniser for valid
+utterances in the Java language, although it won't have a clue what they
+mean.
+
+Oh, here's something I came across whilst doing this:
+
+ QualifiedName :: {[Identifier]} =
+	  i:Identifier is:(".":Sym i:Identifier -> i)*	-> {i : is}
+
+I didn't realise you could write that in pappy. Currently the issue of
+whether, and how, the * and + operators construct a list of values is
+moot.
+
+Some progress, but I'm tired. Really must get #line going, to make this
+this sane to debug.
+
 2011-05-22
 ----------
 
