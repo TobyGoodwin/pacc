@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "arg.h"
 #include "error.h"
 #include "syntax.h"
 #include "template.h"
@@ -502,7 +503,8 @@ static void emit_expr(struct s_node *n) {
     c_str("cur->value.u"); c_int(cur_rule); c_strln("= (");
     // #line will go here
     c_strln(n->text);
-    // and here
+    c_str("#line "); c_long(line);
+    c_str(" \""); c_str(arg_output()); c_strln("\"");
     c_strln(");");
     c_str("Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%ld, ");
     c_int(cur_rule); c_strln(")\\n\", cur->value.u0, col);");
@@ -567,7 +569,7 @@ static void emit_call(struct s_node *n) {
     c_str("st = "); c_long(n->first->id); c_semi();
     c_str("/* call "); c_str(n->text); c_strln(" */");
     c_strln("goto top;");
-    c_strln("case "); c_long(n->id); c_str(": /* return from ");
+    c_str("case "); c_long(n->id); c_str(": /* return from ");
     c_str(n->text); c_strln(" */");
     c_strln("last = cur;");
     c_strln("_pacc_Pop(cont);");

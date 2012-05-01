@@ -4,12 +4,17 @@
 So this is a major rewrite of emit.c, and I've got to error(), which is
 the major cause of bloat in the emitted code. For example, pacc2.c is
 currently 11937 lines. I suppose now would be as good a time as any to
-fix that up. Well, it drops to 9476 lines, which is a > 20% reduction,
+fix that up. Well, it drops to 9331 lines, which is a > 20% reduction,
 so that's actually not bad.
 
 Reworking everything to go through c_str() and friends is complete. I
 could add the #line directives that go back to where we were, which was
 the whole point of that rewrite.
+
+Argh, so that's full of hideousnesses. First, #line is supposed to be
+left-justified, but that doesn't match the way indents work at the
+moment. Second, we need to know how long the template is. Thirdly, it
+means that the "diff" to check pacc2.c versus pacc3.c fails miserably.
 
 2012-04-28
 ----------
