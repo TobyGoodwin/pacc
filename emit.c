@@ -11,8 +11,6 @@ static char *g_name; /* grammar name */
 static struct s_node *g_node; /* grammar root */
 static int cur_rule;
 
-/* XXX some major cleanups completed, but still no nested scopes
- */
 struct assoc {
     char *name;
     struct s_node *value;
@@ -28,6 +26,26 @@ static void assoc_dump(void) {
 	fprintf(stderr, "var %s @ pos %d\n", a_stack[i].name, i);
 }
 #endif
+
+/* Low level routines to output things. */
+static int line = 1;
+static int indent = 2;
+
+static void c_strln(char *s) {
+    int i;
+    puts(s);
+    ++line;
+    for (i = 0; i < indent; ++i) { fputs("  ", stdout); }
+}
+
+static void c_str(char *s) { assert(!strchr(s, '\n')); fputs(s, stdout); }
+static void c_semi(void) { c_strln(";"); }
+static void c_char(char i) { printf("%c", i); }
+static void c_int(int i) { printf("%d", i); }
+static void c_long(long l) { printf("%ld", l); }
+/* Not quite 1TBS, but better than nothing. */
+static void c_open(void) { ++indent; c_strln(" {"); }
+static void c_close(void) { --indent; c_strln("}"); }
 
 static void associate(char *n, struct s_node *s) {
     if (a_ptr == a_alloc) {
@@ -78,98 +96,64 @@ static void grammar_pre(struct s_node *n) {
      * node. */
     p = n->first;
     assert(p->type == preamble);
-    if (p->text) printf("%s\n", p->text);
+    if (p->text) c_strln(p->text);
     p = p->next;
 
     for ( ; p; p = p->next) {
 	assert(p->type == rule);
 	++r;
     }
-    printf("const int n_rules = %d;\n", r);
-    printf("const int start_rule_id = %ld;\n", n->first->next->id);
+    c_str("const int n_rules = "); c_int(r); c_semi();
+    c_str("const int start_rule_id = "); c_long(n->first->next->id);
+    c_semi();
     g_name = n->text;
-    printf("union %s_union {\n", g_name);
+    c_str("union "); c_str(g_name); c_str("_union"); c_open();
     /* XXX we still need u0! */
-    printf("    %s u0;\n", n->first->next->first->text);
+    c_str(n->first->next->first->text); c_strln(" u0;");
     for (p = n->first, i = 0; p; p = p->next) {
 	if (p->type != rule) continue;
 	/* XXX obviously, we need to weed out duplicates, "void", etc. */
-	printf("    %s u%ld;\n", p->first->text, p->id);
+	c_str(p->first->text); c_str(" u"); c_long(p->id); c_semi();
 	++i;
     }
-    printf("};\n");
+    c_close(); c_semi();
 
     /* XXX just for debugging */
-    printf("#define TYPE_PRINTF ");
-    if (strcmp(n->first->next->first->text, "int") == 0) printf("\"%%d\"");
-    else if (strcmp(n->first->next->first->text, "char *") == 0) printf("\"%%s\"");
-    else printf("\"%%p\"");
-    printf("\n");
+    c_str("#define TYPE_PRINTF ");
+    if (strcmp(n->first->next->first->text, "int") == 0) c_str("\"%d\"");
+    else if (strcmp(n->first->next->first->text, "char *") == 0) c_str("\"%s\"");
+    else c_str("\"%p\"");
+    c_strln("");
 
-    printf("#define PACC_TYPE %s\n", n->first->next->first->text);
+    c_str("#define PACC_TYPE "); c_strln(n->first->next->first->text);
 
-    printf("/* not yet... %stype %svalue; */\n", g_name, g_name);
- 
     pre_engine();
 
-    printf("st = %ld;\ntop:\n",
-	    n->first->type == preamble ? n->first->next->id : n->first->id);
-    printf("Trace fprintf(stderr, \"switch to state %%d\\n\", st);\n");
-    printf("switch(st) {\n");
+    c_str("st=");
+    c_long(n->first->type == preamble ? n->first->next->id : n->first->id);
+    c_semi();
+    c_strln("top:");
+    c_strln("Trace fprintf(stderr, \"switch to state %d\\n\", st);");
+    c_str("switch(st)"); c_open();
 }
 
-static void grammar_post(struct s_node *n) {
-    printf("case -1: break;\n");
-    printf("}\n");
+static void grammar_post(__attribute__((unused)) struct s_node *n) {
+    c_strln("case -1: break;");
+    c_close();
     post_engine();
 }
 
-
-/* XXX there are some serious problems here. First, this is way too much
- * code to include time after time; it will have to be made part of the
- * explicit control circuitry (but *that* probably means that we will
- * need more than one label per rule, so we'll have to use "2 * id + 1"
- * type labels.
- */
-void error (char *t, int quote) {
-    printf("{\n");
-    printf("    int doit, append;\n");
-    printf("Trace fprintf(stderr, \"error(%s, %d) at col %%ld\\n\", col);\n", t, quote);
-    printf("    append = doit = 1;\n");
-    printf("    if (col > _pacc->err_col) append = 0;\n");
-    printf("    else if (col == _pacc->err_col) {\n");
-    printf("        size_t i;\n");
-    printf("        for (i = 0; i < _pacc->err_valid; ++i) {\n");
-    printf("            if (strcmp(_pacc->err[i], ");
-    if (quote) printf("\"\\\"%s\\\"\"", t);
-    else printf("\"%s\"", t);
-    printf(") == 0) doit = 0;\n");
-    printf("        }\n");
-    printf("    } else doit = 0;\n");
-    printf("    if (doit) {\n");
-    printf("        if (append) ++_pacc->err_valid;\n");
-    printf("        else _pacc->err_valid = 1;\n");
-    printf("        if (_pacc->err_valid > _pacc->err_alloc) {\n");
-    printf("            _pacc->err_alloc = 2 * _pacc->err_alloc + 1;\n");
-    printf("            _pacc->err = realloc(_pacc->err, _pacc->err_alloc * sizeof(char *));\n");
-    printf("            if (!_pacc->err) nomem();\n");
-    printf("        }\n");
-    printf("        _pacc->err[_pacc->err_valid - 1] = ");
-    if (quote) printf("\"\\\"%s\\\"\"", t);
-    else printf("\"%s\"", t);
-    printf(";\n");
-    printf("        _pacc->err_col = col;\n");
-    printf("    }\n");
-    printf("}\n");
-}
-
 static void debug_pre(char *type, struct s_node *n) {
-    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld?\\n\", col);\n", type, n->id);
+    c_str("Trace fprintf(stderr, \""); c_str(type); c_long(n->id);
+    c_strln(" @ col %ld?\\n\", col);");
 }
 
 static void debug_post(char *type, struct s_node *n) {
-    printf("Trace fprintf(stderr, \"%s %ld @ col %%ld => %%s\\n\", col, status != no_parse ? \"yes\" : \"no\");\n",
-	    type, n->id);
+    //printf("Trace fprintf(stderr, \"%s %ld @ col %%ld => %%s\\n\", col, status != no_parse ? \"yes\" : \"no\");\n",
+	    //type, n->id);
+    c_str("Trace fprintf(stderr, \""); c_str(type); c_str(" "); c_long(n->id);
+    c_strln(" %ld => %s\\n\", col, status != no_parse ? \"yes\" : \"no\");");
+
 }
 
 /* We recognise a properly-escaped C string in the grammar, and copy
@@ -200,84 +184,137 @@ static void literal(struct s_node *n) {
 	++l;
     }
     debug_pre("lit", n);
-    printf("Trace fprintf(stderr, \"lit %ld @ col %%ld => \", col);\n", n->id);
-    printf("if (col + %d <= _pacc->input_length &&\n", l);
-    printf("        memcmp(\"%s\", _pacc->string + col, %d) == 0) {\n", n->text, l);
-    printf("    status = parsed;\n");
-    printf("    col += %d;\n", l);
-    printf("} else {\n");
-    error(n->text, 1);
-    printf("    status = no_parse;\n");
-    printf("}\n");
+    //printf("Trace fprintf(stderr, \"lit %ld @ col %%ld => \", col);\n", n->id);
+    c_str("Trace fprintf(stderr, \"lit "); c_long(n->id);
+    c_strln(" @ col %ld => \", col);");
+    //printf("if (col + %d <= _pacc->input_length &&\n", l);
+    c_str("if (col+"); c_int(l); c_str(" <= _pacc->input_length && ");
+    c_str("memcmp(\""); c_str(n->text); c_str("\", _pacc->string + col, ");
+    c_int(l); c_str(") == 0)"); c_open();
+    //printf("        memcmp(\"%s\", _pacc->string + col, %d) == 0) {\n", n->text, l);
+    c_strln("status = parsed;");
+    c_str("col += "); c_int(l); c_semi();
+    //printf("    status = parsed;\n");
+    //printf("    col += %d;\n", l);
+    c_close(); c_str("else"); c_open();
+    //printf("} else {\n");
+    //error(n->text, 1);
+    c_str("error(_pacc, \"\\\""); c_str(n->text); c_strln("\\\"\", col);");
+    //printf("    error(_pacc, \"\\\"%s\\\"\", col);\n", n->text);
+    c_strln("status = no_parse;");
+    c_close();
+    //printf("    status = no_parse;\n");
+    //printf("}\n");
     debug_post("lit", n);
 }
 
 /* currently assumes 1 char == 1 byte (i.e. ASCII encoding) */
-static void any_emit(struct s_node *n) {
-    printf("if (col < _pacc->input_length) {\n");
-    printf("    status = parsed;\n");
-    printf("    ++col;\n");
-    printf("} else status = no_parse;\n");
+static void any_emit(__attribute__((unused)) struct s_node *n) {
+    c_strln("if (col < _pacc->input_length)"); c_open();
+    c_strln("status = parsed; ++col;");
+    c_close();
+    c_strln("else status = no_parse;");
+    //printf("if (col < _pacc->input_length) {\n");
+    //printf("    status = parsed;\n");
+    //printf("    ++col;\n");
+    //printf("} else status = no_parse;\n");
 }
 
 static void rule_pre(struct s_node *n) {
     cur_rule = n->id;
-    printf("case %ld: /* %s */\n", n->id, n->text); 
-    printf("Trace fprintf(stderr, \"rule %ld (%s) col %%ld\\n\", col);\n", n->id, n->text);
-    printf("rule_col = col;\n");
-    printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
-    printf("if ((cur->rule & 3) == uncomputed) {\n");
+    c_str("case "); c_long(n->id); c_str(": /* "); c_str(n->text);
+    c_strln(" */");
+    //printf("case %ld: /* %s */\n", n->id, n->text); 
+    c_str("Trace fprintf(stderr, \"rule "); c_long(n->id);
+    c_str(" ("); c_str(n->text); c_str(") col %ld\\n\", col)"); c_semi();
+    //printf("Trace fprintf(stderr, \"rule %ld (%s) col %%ld\\n\", col);\n", n->id, n->text);
+    c_strln("rule_col = col;");
+    //printf("rule_col = col;\n");
+    c_str("cur = _pacc_result(_pacc, col, "); c_int(cur_rule); c_strln(");");
+    //printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
+    c_str("if ((cur->rule & 3) == uncomputed)"); c_open(); /* memoization ON */
+    //c_str("if (1 || (cur->rule & 3) == uncomputed)"); c_open(); /* m9n OFF */
+    //printf("if ((cur->rule & 3) == uncomputed) {\n");
     //printf("if (1 || (cur->rule & 3) == uncomputed) {\n"); /* memoization OFF */
 }
 
 static void rule_post(struct s_node *n) {
-    printf("    cur->rule = (cur->rule & ~3) | status;\n");
-    printf("    cur->remainder = col;\n");
+    c_strln("cur->rule = (cur->rule & ~3) | status;");
+    c_strln("cur->remainder = col;");
+    //printf("    cur->rule = (cur->rule & ~3) | status;\n");
+    //printf("    cur->remainder = col;\n");
 
     /* XXX: See test/pacc/err0.c. This is wrong. What is right? */
+    c_str("if (_pacc->err_col == rule_col)"); c_open();
+    c_strln("_pacc->err_valid = 0;");
+    c_str("error(_pacc, \""); c_str(n->text); c_strln("\", col);");
+    c_close();
+
+    c_close(); /* this closes the open in rule_pre() */ 
+    c_strln("goto contin;");
+#if 0
     printf("    if (_pacc->err_col == rule_col) {\n");
     printf("        _pacc->err_valid = 0;\n"); /* Rule made no progress: over-write error */
-    error(n->text, 0);
+    //error(n->text, 0);
+    printf("    error(_pacc, \"%s\", col);\n", n->text);
     printf("    }\n");
 
     printf("}\n");
     printf("goto contin;\n");
+#endif
 }
 
 static void savecol(void) {
-    printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
-    printf("_pacc_Push(col); _pacc_Push(cur->ev_valid);\n");
+    //printf("Trace fprintf(stderr, \"save column registers\\n\");\n");
+    //printf("_pacc_Push(col); _pacc_Push(cur->ev_valid);\n");
+    c_strln("Trace fprintf(stderr, \"save column registers\\n\");");
+    c_strln("_pacc_Push(col); _pacc_Push(cur->ev_valid);");
 }
 
 static void restcol(void) {
-    printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
-    printf("_pacc_Pop(cur->ev_valid); _pacc_Pop(col);\n");
+    //printf("Trace fprintf(stderr, \"restore column registers\\n\");\n");
+    //printf("_pacc_Pop(cur->ev_valid); _pacc_Pop(col);\n");
+    c_strln("Trace fprintf(stderr, \"restore column registers\\n\");");
+    c_strln("_pacc_Pop(cur->ev_valid); _pacc_Pop(col);");
 }
 
 static void accept_col(void) {
-    printf("Trace fprintf(stderr, \"accept column registers\\n\");\n");
-    printf("_pacc_Discard(cur->ev_valid); _pacc_Discard(col);\n");
+    c_strln("Trace fprintf(stderr, \"accept column registers\\n\");");
+    c_strln("_pacc_Discard(cur->ev_valid); _pacc_Discard(col);");
 }
 
 static void seq_pre(struct s_node *n) {
     frame_start();
-    printf("Trace fprintf(stderr, \"seq %ld @ col %%ld?\\n\", col);\n", n->id);
-    printf("_pacc_Push(cont);\n");
-    printf("cont = %ld;\n", n->id);
-    printf("status = parsed;\n"); /* empty sequence */
+    //printf("Trace fprintf(stderr, \"seq %ld @ col %%ld?\\n\", col);\n", n->id);
+    //printf("_pacc_Push(cont);\n");
+    //printf("cont = %ld;\n", n->id);
+    //printf("status = parsed;\n"); /* empty sequence */
+    c_str("Trace fprintf(stderr, \"seq "); c_long(n->id);
+    c_strln(" @ col %ld?\\n\", col);");
+    c_strln("_pacc_Push(cont);");
+    c_str("cont = "); c_long(n->id); c_semi();
+    c_strln("status = parsed;");
 }
 
-static void seq_mid(struct s_node *n) {
-    printf("if (status == no_parse) {\n");
-    printf("    goto contin;\n");
-    printf("}\n");
+static void seq_mid(__attribute__((unused)) struct s_node *n) {
+    c_str("if (status == no_parse)"); c_open();
+    c_strln("goto contin;");
+    c_close();
+    //printf("if (status == no_parse) {\n");
+    //printf("    goto contin;\n");
+    //printf("}\n");
 }
 
 static void seq_post(struct s_node *n) {
-    printf("case %ld:\n", n->id);
-    printf("_pacc_Pop(cont);\n");
-    printf("Trace fprintf(stderr, \"seq %ld @ col %%ld => %%s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");\n", n->id);
-    printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
+    //printf("case %ld:\n", n->id);
+    //printf("_pacc_Pop(cont);\n");
+    //printf("Trace fprintf(stderr, \"seq %ld @ col %%ld => %%s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");\n", n->id);
+    //printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
+    c_str("case "); c_long(n->id); c_strln(":");
+    c_strln("_pacc_Pop(cont);");
+    c_str("Trace fprintf(stderr, \"seq "); c_long(n->id); 
+    c_strln(" @ col %ld => %s\\n\", rule_col, status!=no_parse?\"yes\":\"no\");");
+    c_strln("Trace fprintf(stderr, \"col is %ld\\n\", col);");
     frame_end();
 }
 
@@ -297,7 +334,8 @@ static void not_pre(struct s_node *n) {
 }
 
 static void not_post(struct s_node *n) {
-    printf("status = (status == no_parse) ? parsed : no_parse;\n");
+    //printf("status = (status == no_parse) ? parsed : no_parse;\n");
+    c_strln("status = (status == no_parse) ? parsed : no_parse;");
     restcol();
     debug_post("not", n);
 }
@@ -307,17 +345,22 @@ static void bind_pre(struct s_node *n) {
     assert(n->first && n->first->type == call);
     /* ... which itself must refer to a rule. */
     assert(n->first->first->type == rule);
-    printf("/* bind: %s */\n", n->text);
+    c_str("/* bind: "); c_str(n->text); c_strln(" */");
+    //printf("/* bind: %s */\n", n->text);
     debug_pre("bind", n);
     /* Save the name bound, and the rule to which it is bound. */
     associate(n->text, n->first->first);
     associating = 1;
-    printf("Trace fprintf(stderr, \"will bind %s @ rule %ld, col %%ld\\n\", col);\n", n->text, n->first->first->id);
+    //printf("Trace fprintf(stderr, \"will bind %s @ rule %ld, col %%ld\\n\", col);\n", n->text, n->first->first->id);
+    c_str("Trace fprintf(stderr, \"will bind "); c_str(n->text);
+    c_str(" @ rule "); c_long(n->first->first->id);
+    c_strln(", col %ld\\n\", col);");
 }
 
 static void bind_post(struct s_node *n) {
     associating = 0;
-    printf("/* end bind: %s */\n", n->text);
+    //printf("/* end bind: %s */\n", n->text);
+    c_str("/* end bind: "); c_str(n->text); c_strln(" */");
 }
 
 static void declarations(struct s_node *n) {
@@ -344,10 +387,14 @@ static void declarations(struct s_node *n) {
 
 	assert(a_stack[i].value->type == rule);
 	assert(a_stack[i].value->first->type == type);
-	printf("/* i is %d */\n", i);
-	printf("/* type is %s */\n", a_stack[i].value->first->text);
-	printf("    %s %s;\n",
-		a_stack[i].value->first->text, a_stack[i].name);
+	//printf("/* i is %d */\n", i);
+	//printf("/* type is %s */\n", a_stack[i].value->first->text);
+	//printf("    %s %s;\n",
+		//a_stack[i].value->first->text, a_stack[i].name);
+	c_str("/* i is "); c_int(i); c_str(", type is ");
+	c_str(a_stack[i].value->first->text); c_strln(" */");
+	c_str(a_stack[i].value->first->text); c_str(" ");
+	c_str(a_stack[i].name);c_semi();
     }
 }
 
@@ -381,20 +428,41 @@ static void bindings(struct s_node *n) {
 		    strcmp(a_stack[i].name, "<frame>") == 0)
 		--p1;
 #endif
-	printf("pos = %d;\n", p1);
+	//printf("pos = %d;\n", p1);
+	c_str("pos = "); c_int(p1); c_semi();
 
-	printf("Trace fprintf(stderr, \"binding of %s: pos %%d holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);
+	//printf("Trace fprintf(stderr, \"binding of %s: pos %%ld holds col %%ld\\n\", pos, _pacc_p->evlis[pos].col);\n", p->text);
+	c_str("Trace fprintf(stderr, \"binding of "); c_str(p->text);
+	c_strln(": pos %ld holds col %ld\\n\", pos, _pacc_p->evlis[pos].col);");
 
-	printf("    Trace fprintf(stderr, \"bind %s to r%ld @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, a_stack[p0].value->id);
-	printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %ld);\n", a_stack[p0].value->id);
-	printf("    if ((cur->rule & 3) != evaluated) {\n");
-	printf("        _pacc_Push(col); _pacc_Push(cont);\n");
-	printf("        cont = %ld;\n", p->id);
-	printf("	_pacc_ev_i = 0; goto eval_loop;\n");
-	printf("case %ld:     _pacc_Pop(cont); _pacc_Pop(col);\n", p->id);
-	printf("    }\n");
-	printf("    %s = cur->value.u%ld;\n", p->text, a_stack[p0].value->id);
-	printf("    Trace fprintf(stderr, \"bound %s to r%ld @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, a_stack[p0].value->id);
+	//printf("    Trace fprintf(stderr, \"bind %s to r%ld @ c%%ld\\n\", _pacc_p->evlis[pos].col);\n", p->text, a_stack[p0].value->id);
+	c_str("Trace fprintf(stderr, \"bind "); c_str(p->text);
+	c_str(" to r"); c_long(a_stack[p0].value->id);
+	c_strln(" @ c%ld\\n\", _pacc_p->evlis[pos].col);");
+	//printf("    cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, %ld);\n", a_stack[p0].value->id);
+	c_str("cur = _pacc_result(_pacc, _pacc_p->evlis[pos].col, ");
+	c_long(a_stack[p0].value->id); c_strln(");");
+
+	//printf("    if ((cur->rule & 3) != evaluated) {\n");
+	//printf("        _pacc_Push(col); _pacc_Push(cont);\n");
+	//printf("        cont = %ld;\n", p->id);
+	//printf("	_pacc_ev_i = 0; goto eval_loop;\n");
+	//printf("case %ld:     _pacc_Pop(cont); _pacc_Pop(col);\n", p->id);
+	//printf("    }\n");
+	//printf("    %s = cur->value.u%ld;\n", p->text, a_stack[p0].value->id);
+	//printf("    Trace fprintf(stderr, \"bound %s to r%ld @ c%%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);\n", p->text, a_stack[p0].value->id);
+	c_str("if ((cur->rule & 3) != evaluated)"); c_open();
+	c_strln("_pacc_Push(col); _pacc_Push(cont);");
+	c_str("cont = "); c_long(p->id); c_semi();
+	c_strln("_pacc_ev_i = 0; goto eval_loop;");
+	c_str("case "); c_long(p->id); c_strln(":");
+	c_strln("_pacc_Pop(cont); _pacc_Pop(col);");
+	c_close();
+	c_str(p->text);
+	c_str(" = cur->value.u"); c_long( a_stack[p0].value->id); c_semi();
+	c_str("Trace fprintf(stderr, \"bound "); c_str(p->text);
+	c_str(" to r"); c_long(a_stack[p0].value->id);
+	c_strln(" @ c%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);");
     }
 }
 
@@ -403,39 +471,72 @@ static void emit_expr(struct s_node *n) {
     /* When we encounter an expression whilst parsing, simply record the
      * expression's id. This will become the new state when we evaluate.
      */
-    printf("assert(cur->expr_id == 0);\n");
-    printf("cur->expr_id = %ld;\n", n->id);
+    //printf("assert(cur->expr_id == 0);\n");
+    //printf("cur->expr_id = %ld;\n", n->id);
+    c_strln("assert(cur->expr_id == 0);");
+    c_str("cur->expr_id = "); c_long(n->id); c_semi();
 
     /* When evaluating, we need to evaluate the expression! */
-    printf("case %ld:\n", n->id);
-    printf("if (evaluating) {\n");
-    printf("    struct intermed *_pacc_p;\n"); /* parent */
+//    printf("case %ld:\n", n->id);
+//    printf("if (evaluating) {\n");
+//    printf("    struct intermed *_pacc_p;\n"); /* parent */
+//    declarations(n);
+//    printf("    Trace fprintf(stderr, \"%ld: evaluating\\n\");\n", n->id);
+//    printf("    _pacc_p = cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
+//    bindings(n);
+//    printf("    cur = _pacc_p;\n");
+//    printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
+//    printf("    Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%%ld, %d)\\n\", cur->value.u0, col);\n", cur_rule);
+//    printf("    goto _pacc_expr_done;\n");
+//    printf("}\n");
+    c_str("case "); c_long(n->id); c_strln(":");
+    c_str("if (evaluating)"); c_open();
+    c_strln("struct intermed *_pacc_p;"); /* parent */
     declarations(n);
-    printf("    Trace fprintf(stderr, \"%ld: evaluating\\n\");\n", n->id);
-    printf("    _pacc_p = cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
+    c_str("Trace fprintf(stderr, \""); c_long(n->id);
+    c_strln(": evaluating\\n\");");
+    c_str("_pacc_p = cur = _pacc_result(_pacc, col, "); c_int(cur_rule);
+    c_strln(");");
     bindings(n);
-    printf("    cur = _pacc_p;\n");
-    printf("    cur->value.u%d = (%s);\n", cur_rule, n->text);
-    printf("    Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%%ld, %d)\\n\", cur->value.u0, col);\n", cur_rule);
-    printf("    goto _pacc_expr_done;\n");
-    printf("}\n");
+    c_strln("cur = _pacc_p;");
+    c_str("cur->value.u"); c_int(cur_rule); c_strln("= (");
+    // #line will go here
+    c_strln(n->text);
+    // and here
+    c_strln(");");
+    c_str("Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%ld, ");
+    c_int(cur_rule); c_strln(")\\n\", cur->value.u0, col);");
+    c_strln("goto _pacc_expr_done;");
+    c_close();
 }
 
 static void guard_pre(struct s_node *n) {
     debug_pre("guard", n);
-    printf("/* %ld: guard_pre() */\n", n->id);
-    printf("{\n    struct intermed *_pacc_p;\n"); /* parent */
+    c_str("/* "); c_long(n->id); c_strln(": guard_pre() */");
+    c_open();
+    c_strln("struct intermed *_pacc_p;"); /* parent */
     declarations(n);
-    printf("    _pacc_p = cur; evaluating = 1;\n");
+    c_strln("_pacc_p = cur; evaluating = 1;");
     bindings(n);
-    printf("    cur = _pacc_p; evaluating = 0;\n");
+    c_strln("cur = _pacc_p; evaluating = 0;");
+    //printf("/* %ld: guard_pre() */\n", n->id);
+    //printf("{\n    struct intermed *_pacc_p;\n"); /* parent */
+    //declarations(n);
+    //printf("    _pacc_p = cur; evaluating = 1;\n");
+    //bindings(n);
+    //printf("    cur = _pacc_p; evaluating = 0;\n");
 }
 
 /* obviously, the tricky part of a guard is the bindings! */
 static void guard_post(struct s_node *n) {
-    printf("    status = (%s) ? parsed : no_parse;\n", n->text);
+    c_strln("status = (");
+    // # line here
+    c_strln(n->text);
+    // and here
+    c_strln(") ? parsed : no_parse;");
+    //printf("    status = (%s) ? parsed : no_parse;\n", n->text);
     debug_post("guard", n);
-    printf("}\n");
+    c_close();
 }
 
 static void emit_call(struct s_node *n) {
@@ -445,86 +546,105 @@ static void emit_call(struct s_node *n) {
      */
     if (!associating) associate(0, 0); 
     //printf("_pacc_save_core(%ld, thr_%s, col);\n", n->first->id, binding ? "bound" : "rule");
-    printf("_pacc_save_core(%ld, col);\n", n->first->id);
+    //printf("_pacc_save_core(%ld, col);\n", n->first->id);
+    c_str("_pacc_save_core("); c_long(n->first->id); c_strln(", col);");
     //printf("_pacc_save_col(col);\n");
-    printf("_pacc_Push(rule_col);\n"); /* XXX this is not callee saves */
-    printf("_pacc_Push(cont);\n");
-    printf("cont = %ld;\n", n->id);
-    printf("st = %ld; /* call %s */\n", n->first->id, n->text);
-    printf("goto top;\n");
-    printf("case %ld: /* return from %s */\n", n->id, n->text);
-    printf("last = cur;\n");
-    printf("_pacc_Pop(cont);\n");
-    printf("status = last->rule & 3;\n");
-    printf("col = last->remainder;\n");
-    printf("_pacc_Pop(rule_col);\n");
-    printf("cur = _pacc_result(_pacc, rule_col, %d);\n", cur_rule);
+    //printf("_pacc_Push(rule_col);\n"); /* XXX this is not callee saves */
+    //printf("_pacc_Push(cont);\n");
+    //printf("cont = %ld;\n", n->id);
+    //printf("st = %ld; /* call %s */\n", n->first->id, n->text);
+    //printf("goto top;\n");
+    //printf("case %ld: /* return from %s */\n", n->id, n->text);
+    //printf("last = cur;\n");
+    //printf("_pacc_Pop(cont);\n");
+    //printf("status = last->rule & 3;\n");
+    //printf("col = last->remainder;\n");
+    //printf("_pacc_Pop(rule_col);\n");
+    //printf("cur = _pacc_result(_pacc, rule_col, %d);\n", cur_rule);
+    c_strln("_pacc_Push(rule_col);"); /* XXX this is not callee saves */
+    c_strln("_pacc_Push(cont);");
+    c_str("cont = "); c_long(n->id); c_semi();
+    c_str("st = "); c_long(n->first->id); c_semi();
+    c_str("/* call "); c_str(n->text); c_strln(" */");
+    c_strln("goto top;");
+    c_strln("case "); c_long(n->id); c_str(": /* return from ");
+    c_str(n->text); c_strln(" */");
+    c_strln("last = cur;");
+    c_strln("_pacc_Pop(cont);");
+    c_strln("status = last->rule & 3;");
+    c_strln("col = last->remainder;");
+    c_strln("_pacc_Pop(rule_col);");
+    c_str("cur = _pacc_result(_pacc, rule_col, "); c_int(cur_rule);
+    c_strln(");");
 }
 
 static void alt_pre(struct s_node *n) {
     debug_pre("alt", n);
-    printf("_pacc_Push(cont);\n");
-    printf("cont = %ld;\n", n->id);
+    c_strln("_pacc_Push(cont);");
+    c_str("cont = "); c_long(n->id); c_semi();
     savecol();
 }
 
 static void alt_mid(struct s_node *n) {
-    printf("Trace fprintf(stderr, \"alt %ld @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
-    printf("if (status != no_parse) {\n");
+    c_str("Trace fprintf(stderr, \"alt "); c_long(n->id);
+    c_strln(" @ col %ld => %s\\n\", col, status!=no_parse?\"yes\":\"no\");");
+    c_str("if (status != no_parse)"); c_open();
     accept_col();
-    printf("goto contin;\n");
-    printf("}\n");
+    c_strln("goto contin;");
+    c_close();
     restcol();
     savecol();
-    printf("Trace fprintf(stderr, \"col restored to %%ld\\n\", col);\n");
-    printf("Trace fprintf(stderr, \"alt %ld @ col %%ld? (next alternative)\\n\", col);\n", n->id);
+    c_strln("Trace fprintf(stderr, \"col restored to %ld\\n\", col);");
+    c_str("Trace fprintf(stderr, \"alt "); c_long(n->id);
+    c_strln(" @ col %ld? (next alternative)\\n\", col);");
 }
 
 static void alt_post(struct s_node *n) {
-    printf("if (status == no_parse) {\n");
+    c_str("if (status == no_parse)"); c_open();
     restcol();
-    printf("} else {\n");
+    c_close(); c_str("else"); c_open();
     accept_col();
-    printf("}\n");
-    printf("case %ld:\n", n->id);
-    printf("_pacc_Pop(cont);\n");
-    printf("Trace fprintf(stderr, \"alt %ld @ col %%ld => %%s\\n\", col, status!=no_parse?\"yes\":\"no\");\n", n->id);
-    printf("Trace fprintf(stderr, \"col is %%ld\\n\", col);\n");
+    c_close();
+    c_str("case "); c_long(n->id); c_strln(":");
+    c_strln("_pacc_Pop(cont);");
+    c_str("Trace fprintf(stderr, \"alt "); c_long(n->id);
+    c_strln(" @ col %ld => %s\\n\", col, status!=no_parse?\"yes\":\"no\");");
+    c_strln("Trace fprintf(stderr, \"col is %ld\\n\", col);");
 }
 
 static void cclass_pre(struct s_node *n) {
     debug_pre("cclass", n);
-    printf("{");
-    printf(" int c = _pacc->string[col];\n"); /* XXX encoding XXX also, couldn't there be just one c for the whole engine? nasty to start a new block each time*/
-    printf(" if (");
-    if (n->text[0] == '^') printf("!(");
+    c_open();
+    c_strln("int c = _pacc->string[col];"); /* XXX encoding XXX also, couldn't there be just one c for the whole engine? nasty to start a new block each time*/
+    c_str(" if (");
+    if (n->text[0] == '^') c_str("!(");
 }
 
 static void emit_crange(struct s_node *n) {
     assert(n->text[0] == '>' || n->text[0] == '=' || n->text[0] == '<');
     assert(n->text[0] != '>' || (n->next && n->next->text[0] == '<'));
 
-    printf("c%c=%d", n->text[0], n->text[1]);
+    c_str("c"); c_char(n->text[0]); c_str("="); c_int(n->text[1]);
     if (n->next) {
-	if (n->text[0] == '>') printf("&&");
-	else printf(" || ");
+	if (n->text[0] == '>') c_str("&&");
+	else c_str(" || ");
     }
 }
 
 static void cclass_post(struct s_node *n) {
-    if (n->text[0] == '^') printf(")");
-    printf(") {\n");
-    printf("  status = parsed;\n");
-    printf("  col += %d;\n", 1); /* XXX encoding */
-    printf(" } else {\n");
-    error(n->text, 1);
-    printf("  status = no_parse;\n");
-    printf(" }\n");
-    printf("}\n");
+    if (n->text[0] == '^') c_str(")");
+    c_str(")"); c_open();
+    c_strln("status = parsed;");
+    c_strln("  col += "); c_int(1); c_semi(); /* XXX encoding */
+    c_close(); c_str("else"); c_open();
+    //error(n->text, 1);
+    c_str("error(_pacc, \"\\\""); c_str(n->text); c_strln("\\\"\", col);");
+    c_strln("status = no_parse;");
+    c_close(); c_close();
     debug_post("cclass", n);
 }
 
-static void rep_pre(struct s_node *n) {
+static void rep_pre(__attribute__((unused)) struct s_node *n) {
     int sugar = 1;
 
     assert(!sugar);

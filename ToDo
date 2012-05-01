@@ -35,12 +35,6 @@ Optimize
     First for space - this is ongoing with hashing, and eval list stuff.
     Then (and we will need some more test cases) for time.
 
-Scoping
-
-    Names in pacc grammars are supposed to scope statically over
-    sequences, but that clearly isn't the case at the moment, otherwise
-    test/pacc/scope1.pacc would compile!
-
 Parser optimization / manipulation (including partialization hack)
 
 Value inheritance

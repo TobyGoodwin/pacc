@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -W -Wall
+CFLAGS = -g -Wall -Wextra
 LDFLAGS = -g
 
 all: pacc sane

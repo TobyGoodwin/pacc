@@ -1,3 +1,106 @@
+2012-04-30
+----------
+
+So this is a major rewrite of emit.c, and I've got to error(), which is
+the major cause of bloat in the emitted code. For example, pacc2.c is
+currently 11937 lines. I suppose now would be as good a time as any to
+fix that up. Well, it drops to 9476 lines, which is a > 20% reduction,
+so that's actually not bad.
+
+Reworking everything to go through c_str() and friends is complete. I
+could add the #line directives that go back to where we were, which was
+the whole point of that rewrite.
+
+2012-04-28
+----------
+
+So what about implementing #line directives? First thing is that we need
+to get line numbers into the AST. And I'm afraid to say that I really
+suspect the easiest (and possibly best) way to do this is to make an
+`expr` node hold a value like
+
+    6:"yes"
+
+which will eventually turn into
+
+   something_or_other = (
+   #line 6 "parse.pacc"
+   "yes"
+   #line 943 "parse.c"
+   );
+
+These are both fiddly - it's irritating that the C pre-processor does't
+have a "#unline" directive. The second "#line" will need to be on line
+942 of file parse.c to tell it that the next line is 943 in parse.c!
+
+To implement this, I'm going to expunge all the random printf()s in
+emit.c. This will make removing redundant types from the union much
+simpler, too.
+
+2012-04-19
+----------
+
+I had a brilliant idea today. Why not write an RFC-822 (or whatever it
+is these days) parser? Lots of sample input texts, many slightly
+invalid. And I have lots of experience in the area. (Can I still find a
+copy of TIM?)
+
+Quick note on #line directives: they look like this:
+
+    #line 23 "foobar.pacc"
+
+2012-04-18
+----------
+
+10 months and 24 days. This is barely happening, is it? I spent a while
+last night reviewing this Journal, and the ToDo file. I'm quite
+staggered by how much work I've done on this (and how opaque most of
+these notes are!). Some thoughts:
+
+The Java parser seems like a bit of a red herring. Let's focus on making
+a release.
+
+In another project, I divided the todo list into "blockers" and
+"laters". Let's try that here.
+
+Blockers:
+
+- add #line directives
+- implement --feed / partialization (this is my unique selling point)
+- complete command line interface
+- detect left recursion
+- one instance of each type per union
+- dynamically allocate everything
+- UTF-8 support
+- basic documentation
+
+Laters:
+
+- void types
+- autoconfiscation, because I really want to make at least one public
+  release with my beautiful pristine makefile
+- parser optimization
+- value inheritance
+- XXX cleanups
+- review
+- more research
+- permissions (since I won't actually distribute the Java parser yet)
+
+Now done:
+
+- Scoping
+
+    Names in pacc grammars are supposed to scope statically over
+    sequences, but that clearly isn't the case at the moment, otherwise
+    test/pacc/scope1.pacc would compile!
+
+First up would seem to be #line directives. As far as I can see, we
+include user-supplied in emit.c::emit_expr(), ::guard_post(), and that's
+all. However, where do we get the information from to go in the #line
+directive? As far as I can see, we're not storing that anywhere at
+present, so we'll need to fix up the Result rule to store that somehow
+(a new node type?)
+
 2011-05-24
 ----------
 
