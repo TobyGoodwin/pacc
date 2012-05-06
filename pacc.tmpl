@@ -248,6 +248,28 @@ static void error(struct _pacc_parser *_pacc, char *what, off_t col) {
     }
 }
 
+/* Given a parser p, and a column col, return the line number, and set
+ * the position within the line *pos. XXX this will probably need to be
+ * memoized. */
+static long _pacc_line(struct _pacc_parser *p, off_t col, off_t *pos) {
+    off_t c, start;
+    long nl;
+
+    nl = 1; /* line numbering is 1-based, natch */
+    start = 0;
+    for (c = 0; c < col; ++c) {
+	if (p->string[c] == '\n') {
+	    ++nl;
+	    start = c;
+	}
+    }
+    /* as is column numbering */
+    if (pos) *pos = 1 + c - start;
+    return nl;
+}
+/* The userland version */
+#define pacc_line (_pacc_line(_pacc, col, 0))
+
 static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
     int cont, st;
@@ -335,20 +357,12 @@ contin:
 }
 
 static void _pacc_error(struct _pacc_parser *p) {
-    size_t i;
-    off_t c, line_pos;
     long nl;
+    off_t column;
+    size_t i;
 
-    nl = 1; /* line numbering is 1-based, natch */
-    line_pos = 0;
-    for (c = 0; c < p->err_col; ++c) {
-	if (p->string[c] == '\n') {
-	    ++nl;
-	    line_pos = c;
-	}
-    }
-    /* as is column numbering */
-    printf("%s:%ld:%ld: ", p->name, nl, 1 + p->err_col - line_pos);
+    nl = _pacc_line(p, p->err_col, &column);
+    printf("%s:%ld:%ld: ", p->name, nl, column);
 
     /* XXX this, or something like it, is very handy, and needs to go
      * in. But we're holding off for now as all failing test cases would

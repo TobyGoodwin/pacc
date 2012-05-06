@@ -4,7 +4,7 @@ enum s_type {
     grammar, rule,	/* scaffolding */
     type, alt, seq,	/* fundamentals */
     and, not,		/* syntactic predicates */
-    expr, bind,		/* expressions */
+    expr, bind, line,	/* expressions */
     guard, ident,	/* semantic predicate */
     call, lit, any,	/* matchers */
     cclass, crange,	/* character classes */
@@ -26,8 +26,11 @@ extern struct s_node *create(void);
 
 extern struct s_node *s_new(enum s_type);
 extern struct s_node *s_text(enum s_type, char *);
+extern struct s_node *s_long(enum s_type, long);
+extern struct s_node *s_child(struct s_node *, struct s_node *);
 extern struct s_node *s_kid(enum s_type, struct s_node *);
 extern struct s_node *s_both(enum s_type, char *, struct s_node *);
+extern struct s_node *s_child_cons(struct s_node *r, struct s_node *s);
 extern struct s_node *s_retype(enum s_type, struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);
 extern struct s_node *append(struct s_node *, struct s_node *);

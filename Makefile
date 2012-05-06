@@ -59,7 +59,10 @@ syntax.o: syntax.c syntax.h
 
 template.o: template.h
 
-sane: pacc2.c pacc3.c
+%.d: %.c
+	sed '/^#/d' $^ > $@
+
+sane: pacc2.d pacc3.d
 	diff $^
 
 check:

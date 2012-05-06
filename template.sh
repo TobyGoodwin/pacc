@@ -1,4 +1,4 @@
-sedcmd='s/\\/\\\\/g;s/"/\\"/g;s/^/puts("/;s/$/");/'
+sedcmd='s/\\/\\\\/g;s/"/\\"/g;s/^/puts("/;s/$/");++nr;/'
 
 echo '#include <stdio.h>'
 

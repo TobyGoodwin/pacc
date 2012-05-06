@@ -23,16 +23,36 @@ struct s_node *s_text(enum s_type t, char *n) {
     return r;
 }
 
+struct s_node *s_long(enum s_type t, long n) {
+    struct s_node *r = s_new(t);
+    int c = 1 + snprintf(0, 0, "%ld", n);
+    char *s = malloc(c);
+    if (!s) nomem();
+    snprintf(s, c, "%ld", n);
+    r->text = s;
+    return r;
+}
+
+struct s_node *s_child(struct s_node *p, struct s_node *c) {
+    p->first = c;
+    return p;
+}
+
 struct s_node *s_kid(enum s_type t, struct s_node *n) {
     struct s_node *r = s_new(t);
-    r->first = n;
-    return r;
+    return s_child(r, n);
 }
 
 struct s_node *s_both(enum s_type t, char *n, struct s_node *s) {
     struct s_node *r = s_new(t);
     r->text = n;
     r->first = s;
+    return r;
+}
+
+/* cons s to r's children */
+struct s_node *s_child_cons(struct s_node *r, struct s_node *s) {
+    r->first = cons(s, r->first);
     return r;
 }
 
@@ -183,6 +203,7 @@ char *decode_type(enum s_type t) {
     case grammar:	return "grammar";
     case guard:		return "guard";
     case ident:		return "ident";
+    case line:		return "line";
     case lit:		return "lit";
     case not:		return "not";
     case preamble:	return "preamble";
@@ -196,14 +217,14 @@ char *decode_type(enum s_type t) {
 
 int s_has_children(enum s_type t) {
     return t == alt || t == and || t == bind || t == cclass ||
-	t == grammar || t == expr || t == guard || t == lit ||
+	t == grammar || t == expr || t == guard || t == line || t == lit ||
 	t == not || t == rep || t == rule || t == seq;
 }
 
 int s_has_text(enum s_type t) {
     return t == bind || t == call || t == cclass || t == crange ||
 	t == expr || t == grammar || t == guard || t == ident ||
-	t == lit || t == preamble || t == rep ||
+	t == line || t == lit || t == preamble || t == rep ||
 	t == rule || t == type;
 }
 

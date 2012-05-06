@@ -1,3 +1,33 @@
+2012-05-05
+----------
+
+When we report an error, we calculate the line number (and column
+number) in the input by counting '\n's. Which is all right as far as it
+goes, but we don't want to keep doing that every time we encounter an
+expression.
+
+OK, I don't know why I've been holding off on this (except perhaps that
+there's this vast body of code that I barely understand). We need
+_pacc_line_number(_pacc_parser *, off_t). Initially use the code we've
+got, counting '\n's. Later we can memoize it.
+
+(I'm worry about off_t again; wondering if we wouldn't be better off
+with intmax_t or intptr_t or int_fast64_t. The problem is, I need to
+write some code that will convert a line number into a string. Oh, but
+hang, they're longs anyway. OK, no problem.)
+
+Right, well, that all seems to work *except* there's discrepancies
+between pacc2.c and pacc3.c on node numbers. Right, because pacc1
+doesn't build line numbers into the tree. So let's fix that. Done.
+
+2012-05-02
+----------
+
+So, onto how to emit sensible #lines for the user-supplied text. At the
+moment, we have nodes in the parse tree like "expr 102: 5". Either we
+change those to include the line number where that expr came from, so we
+might have "expr 102: 7 5", or we add another node type.
+
 2012-04-30
 ----------
 
@@ -15,6 +45,7 @@ Argh, so that's full of hideousnesses. First, #line is supposed to be
 left-justified, but that doesn't match the way indents work at the
 moment. Second, we need to know how long the template is. Thirdly, it
 means that the "diff" to check pacc2.c versus pacc3.c fails miserably.
+All solved.
 
 2012-04-28
 ----------

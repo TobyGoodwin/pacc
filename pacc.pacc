@@ -84,70 +84,73 @@ CodeNames
     / ε { 0 }
 
 CodeAndNames
-	← n:CodeNames { s_both(expr, ref_str(), n) }
+    ← n:CodeNames { s_both(expr, ref_str(), n) }
 
-    Code
-	← "{" n:CodeAndNames "}" _ → n
+Code
+    ← l:CodeStart n:CodeAndNames "}" _ → { s_child_cons(n, l) }
 
-    # XXX unfortunately, emit assumes that there is always a preamble node,
-    # even if there is no preamble. We could say
-    # Preamble
-    #     ← c:Code? { c ? s_retype(preamble, c) : s_text(preamble, 0) }
-    # but that doesn't seem like an improvement. Perhaps the "optimizer" and
-    # tree preener could insert an empty preamble when needed.
-    Preamble
-	← c:Code { s_retype(preamble, c) }
-	/ ε { s_text(preamble, 0) }
+CodeStart
+    ← "{" → { s_long(line, pacc_line) }
 
-    Name :: char *
-	← n:(NameStart NameCont*) _ { ref_dup(n) }
+# XXX unfortunately, emit assumes that there is always a preamble node,
+# even if there is no preamble. We could say
+# Preamble
+#     ← c:Code? { c ? s_retype(preamble, c) : s_text(preamble, 0) }
+# but that doesn't seem like an improvement. Perhaps the "optimizer" and
+# tree preener could insert an empty preamble when needed.
+Preamble
+    ← c:Code { s_retype(preamble, c) }
+    / ε { s_text(preamble, 0) }
 
-    TypeOptional
-	← ColCol TypeElement+ { s_stash_type(ref_str()) }
-	/ ε { s_stashed_type() }
+Name :: char *
+    ← n:(NameStart NameCont*) _ { ref_dup(n) }
 
-    StringLit ← "\"" q:QuotedChars "\"" _ → q
+TypeOptional
+    ← ColCol TypeElement+ { s_stash_type(ref_str()) }
+    / ε { s_stashed_type() }
 
-    QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
+StringLit ← "\"" q:QuotedChars "\"" _ → q
 
-    CharLit :: void
-	← "'" QuotedChar "'" _
+QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
 
-    # XXX this needs to completely match the C:1999 definition, including
-    # octal, hex and universal escapes. 
-    QuotedChar :: char *
-	← c:SimpleCharEscape → c
-	/ !"\\" x:. → { ref_dup(x) }
+CharLit :: void
+    ← "'" QuotedChar "'" _
 
-    SimpleCharEscape
-	← "\\" a:("\'" / "\"" / "\?" / "\\"
-	/ "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
+# XXX this needs to completely match the C:1999 definition, including
+# octal, hex and universal escapes. 
+QuotedChar :: char *
+    ← c:SimpleCharEscape → c
+    / !"\\" x:. → { ref_dup(x) }
 
-    NameStart :: void
-	← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
+SimpleCharEscape
+    ← "\\" a:("\'" / "\"" / "\?" / "\\"
+    / "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
 
-    NameCont
-	← c:. &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
+NameStart :: void
+    ← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
 
-    TypeElement
-	← Name _ / "*" _
+NameCont
+    ← c:. &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
 
-    Comment
-	← "#" (!"\n" .)* "\n"
-	/ C_Comment
+TypeElement
+    ← Name _ / "*" _
 
-    C_Comment
-	← "//" (!"\n" .)* "\n"
-	/ "/*" (!"*/" .)* "*/"
+Comment
+    ← "#" (!"\n" .)* "\n"
+    / C_Comment
 
-    _
-	← (" " / "\t" / "\n" / Comment) *
+C_Comment
+    ← "//" (!"\n" .)* "\n"
+    / "/*" (!"*/" .)* "*/"
 
-    And ← "&" _
-    lArrow  ← ("←" / "<-" / "=") _
-    rArrow  ← ("→" / "->") _
-    lBrace ← "{" _
-    rBrace ← "}" _
+_
+    ← (" " / "\t" / "\n" / Comment) *
+
+And ← "&" _
+lArrow  ← ("←" / "<-" / "=") _
+rArrow  ← ("→" / "->") _
+lBrace ← "{" _
+rBrace ← "}" _
 Colon ← ":" _
 ColCol ← "::" _
 Dot ← "." _

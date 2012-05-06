@@ -438,8 +438,19 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = s_new(rule); p->text = "Preamble"; p->first = q; p->next = r; r = p;
 
     /*
+	CodeStart
+	    ← "{" → { s_long(line, pacc_line) }
+    */
+    p = s_text(expr, "s_long(line, pacc_line)");
+    p = cons(s_text(lit, "{"), p);
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = s_both(rule, "CodeStart", p);
+    r = cons(p, r);
+
+    /*
 	Code
-	    ← "{" n:CodeAndNames "}" _ → n
+	    ← l:CodeStart n:CodeAndNames "}" _ → { s_child_cons(n, l) }
      */
 
     /* XXX probably want lBrace and rBrace */
@@ -448,7 +459,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = cons(s_text(call, "_"), p);
     p = cons(s_text(lit, "}"), p);
     p = cons(s_both(bind, "n", s_text(call, "CodeAndNames")), p);
-    p = cons(s_text(lit, "{"), p);
+    p = cons(s_both(bind, "l", s_text(call, "CodeStart")), p);
     p = s_kid(seq, p);
     p = cons(s_text(type, "struct s_node *"), p);
     p = s_both(rule, "Code", p);

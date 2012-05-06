@@ -29,22 +29,41 @@ static void assoc_dump(void) {
 #endif
 
 /* Low level routines to output things. */
-static int line = 1;
+int nr = 1;
 static int indent = 2;
+static int need_indent = 0;
 
-static void c_strln(char *s) {
-    int i;
-    puts(s);
-    ++line;
-    for (i = 0; i < indent; ++i) { fputs("  ", stdout); }
+static void c_str(char *s) {
+    assert(!strchr(s, '\n'));
+    if (*s == '#') need_indent = 0;
+    if (need_indent) {
+	int i;
+	for (i = 0; i < indent; ++i) { fputs("  ", stdout); }
+	need_indent = 0;
+    }
+    fputs(s, stdout);
 }
 
-static void c_str(char *s) { assert(!strchr(s, '\n')); fputs(s, stdout); }
+static void c_strln(char *s) {
+    c_str(s);
+//    printf(" %ld",nr);
+    putchar('\n');
+    ++nr;
+    need_indent = 1;
+}
+
+static void c_raw(char *s) {
+    while (*s) {
+	if (*s == '\n') ++nr;
+	putchar(*s);
+	++s;
+    }
+}
+
 static void c_semi(void) { c_strln(";"); }
 static void c_char(char i) { printf("%c", i); }
 static void c_int(int i) { printf("%d", i); }
 static void c_long(long l) { printf("%ld", l); }
-/* Not quite 1TBS, but better than nothing. */
 static void c_open(void) { ++indent; c_strln(" {"); }
 static void c_close(void) { --indent; c_strln("}"); }
 
@@ -97,7 +116,7 @@ static void grammar_pre(struct s_node *n) {
      * node. */
     p = n->first;
     assert(p->type == preamble);
-    if (p->text) c_strln(p->text);
+    if (p->text) c_raw(p->text);
     p = p->next;
 
     for ( ; p; p = p->next) {
@@ -404,7 +423,6 @@ static void bindings(struct s_node *n) {
 
     for (p = n->first; p; p = p->next) {
 	int i, p0, p1;
-	printf("/* binding %s */\n", p->text);
 
 /*
 	for (i = 0; i < a_ptr; ++i)
@@ -501,9 +519,15 @@ static void emit_expr(struct s_node *n) {
     bindings(n);
     c_strln("cur = _pacc_p;");
     c_str("cur->value.u"); c_int(cur_rule); c_strln("= (");
+    /* XXX except for pacc0, there is always a line as a first child of
+     * expr, so it would be better to fix pacc0 and assert here */
+    if (n->first && n->first->type == line) {
+	c_str("#line "); c_str(n->first->text);
+	c_str(" \""); c_str(arg_input()); c_strln("\"");
+    }
     // #line will go here
     c_strln(n->text);
-    c_str("#line "); c_long(line);
+    c_str("#line "); c_long(nr + 1);
     c_str(" \""); c_str(arg_output()); c_strln("\"");
     c_strln(");");
     c_str("Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%ld, ");
