@@ -455,7 +455,9 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
 
     /* XXX probably want lBrace and rBrace */
 
-    p = s_both(expr, "n", s_text(ident, "n"));
+    p = s_text(ident, "l");
+    p = cons(s_text(ident, "n"), p);
+    p = s_both(expr, "s_child_cons(n, l)", p);
     p = cons(s_text(call, "_"), p);
     p = cons(s_text(lit, "}"), p);
     p = cons(s_both(bind, "n", s_text(call, "CodeAndNames")), p);

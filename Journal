@@ -10,7 +10,7 @@ use an anonymous union (supported in C11 apparently as well as ganuck
 and others).
 
 Almost there, but still some minor hitch with positioning, and one of
-those darned pacc2 vs pacc3 errors...
+those darned pacc2 vs pacc3 errors... which was easily fixed.
 
 2012-05-06
 ----------

@@ -527,7 +527,8 @@ static void emit_expr(struct s_node *n) {
 	c_str(" \""); c_str(arg_input()); c_strln("\"");
 	/* We'll do our own indenting here */
 	need_indent = 0;
-	for (i = 0; i < n->first->pair[1]; ++i) c_str(" ");
+	/* 1 because we've gone one too many; one for the upcoming ( */
+	for (i = 0; i < n->first->pair[1] - 2; ++i) c_str(" ");
     }
     c_str("(");c_str(n->text); c_strln(");");
     c_str("#line "); c_long(nr + 1);
@@ -560,13 +561,15 @@ static void guard_post(struct s_node *n) {
     c_strln("status =");
     /* XXX except for pacc0, there is always a coords as a first child
      * of expr, so it would be better to fix pacc0 and assert here */
+    //assert(n->first && n->first->type == coords);
     if (n->first && n->first->type == coords) {
 	int i;
 	c_str("#line "); c_int(n->first->pair[0]);
 	c_str(" \""); c_str(arg_input()); c_strln("\"");
 	/* We'll do our own indenting here */
 	need_indent = 0;
-	for (i = 0; i < n->first->pair[1]; ++i) c_str(" ");
+	/* 1 because we've gone one too many; one for the upcoming ( */
+	for (i = 0; i < n->first->pair[1] - 2; ++i) c_str(" ");
     }
     c_str("("); c_str(n->text); c_strln(")");
     c_str("#line "); c_long(nr + 1);
