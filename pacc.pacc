@@ -90,7 +90,7 @@ Code
     ← l:CodeStart n:CodeAndNames "}" _ → { s_child_cons(n, l) }
 
 CodeStart
-    ← "{" → { s_long(line, pacc_line) }
+    ← "{" → { s_coords(pacc_coords) }
 
 # XXX unfortunately, emit assumes that there is always a preamble node,
 # even if there is no preamble. We could say

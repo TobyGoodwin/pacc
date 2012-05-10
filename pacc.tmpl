@@ -125,7 +125,7 @@ char *_pacc_ref_dup(ref_t a, struct _pacc_parser *p) {
     off_t l;
 
     l = a[1] - a[0];
-    r = malloc(l + 1); if (!r) nomem();
+    r = realloc(0, l + 1); if (!r) nomem();
     strncpy(r, p->string + a[0], l);
     r[l] = '\0';
     return r;
@@ -248,13 +248,14 @@ static void error(struct _pacc_parser *_pacc, char *what, off_t col) {
     }
 }
 
-/* Given a parser p, and a column col, return the line number, and set
- * the position within the line *pos. XXX this will probably need to be
- * memoized. */
-static long _pacc_line(struct _pacc_parser *p, off_t col, off_t *pos) {
-    off_t c, start;
-    long nl;
+/* Given a parser p, and a column col, return the "coordinates" in a
+ * newly allocated pair of ints.  coord[0] is the line number, and
+ * coord[1] is the column within the line.  XXX till this isn't
+ * memoized, we're no longer linear. */
+static int *_pacc_coords(struct _pacc_parser *p, off_t col) {
+    int c, nl, start, *coords;
 
+    coords = realloc(0, 2 * sizeof(int)); if (!coords) nomem();
     nl = 1; /* line numbering is 1-based, natch */
     start = 0;
     for (c = 0; c < col; ++c) {
@@ -263,12 +264,13 @@ static long _pacc_line(struct _pacc_parser *p, off_t col, off_t *pos) {
 	    start = c;
 	}
     }
+    coords[0] = nl;
     /* as is column numbering */
-    if (pos) *pos = 1 + c - start;
-    return nl;
+    coords[1] = 1 + c - start;
+    return coords;
 }
 /* The userland version */
-#define pacc_line (_pacc_line(_pacc, col, 0))
+#define pacc_coords _pacc_coords(_pacc, col)
 
 static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
@@ -357,12 +359,11 @@ contin:
 }
 
 static void _pacc_error(struct _pacc_parser *p) {
-    long nl;
-    off_t column;
+    int *coords;
     size_t i;
 
-    nl = _pacc_line(p, p->err_col, &column);
-    printf("%s:%ld:%ld: ", p->name, nl, column);
+    coords = _pacc_coords(p, p->err_col);
+    printf("%s:%d:%d: ", p->name, coords[0], coords[1]);
 
     /* XXX this, or something like it, is very handy, and needs to go
      * in. But we're holding off for now as all failing test cases would

@@ -13,5 +13,14 @@ nopacc() {
 }
 export -f nopacc
 
+nocc() {
+    loc=$1 err=$2
+    echo $pacc -o parse.c $target
+    $pacc -o parse.c $target || fail 'pacc failed on nocc test'
+    echo cc parse.c
+    cc parse.c
+}
+export -f nocc
+
 target=$1
 script_from $target

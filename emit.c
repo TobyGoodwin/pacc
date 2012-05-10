@@ -518,18 +518,20 @@ static void emit_expr(struct s_node *n) {
     c_strln(");");
     bindings(n);
     c_strln("cur = _pacc_p;");
-    c_str("cur->value.u"); c_int(cur_rule); c_strln("= (");
-    /* XXX except for pacc0, there is always a line as a first child of
+    c_str("cur->value.u"); c_int(cur_rule); c_strln("=");
+    /* XXX except for pacc0, there is always a coords as a first child of
      * expr, so it would be better to fix pacc0 and assert here */
-    if (n->first && n->first->type == line) {
-	c_str("#line "); c_str(n->first->text);
+    if (n->first && n->first->type == coords) {
+	int i;
+	c_str("#line "); c_int(n->first->pair[0]);
 	c_str(" \""); c_str(arg_input()); c_strln("\"");
+	/* We'll do our own indenting here */
+	need_indent = 0;
+	for (i = 0; i < n->first->pair[1]; ++i) c_str(" ");
     }
-    // #line will go here
-    c_strln(n->text);
+    c_str("(");c_str(n->text); c_strln(");");
     c_str("#line "); c_long(nr + 1);
     c_str(" \""); c_str(arg_output()); c_strln("\"");
-    c_strln(");");
     c_str("Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%ld, ");
     c_int(cur_rule); c_strln(")\\n\", cur->value.u0, col);");
     c_strln("goto _pacc_expr_done;");
@@ -555,11 +557,21 @@ static void guard_pre(struct s_node *n) {
 
 /* obviously, the tricky part of a guard is the bindings! */
 static void guard_post(struct s_node *n) {
-    c_strln("status = (");
-    // # line here
-    c_strln(n->text);
-    // and here
-    c_strln(") ? parsed : no_parse;");
+    c_strln("status =");
+    /* XXX except for pacc0, there is always a coords as a first child
+     * of expr, so it would be better to fix pacc0 and assert here */
+    if (n->first && n->first->type == coords) {
+	int i;
+	c_str("#line "); c_int(n->first->pair[0]);
+	c_str(" \""); c_str(arg_input()); c_strln("\"");
+	/* We'll do our own indenting here */
+	need_indent = 0;
+	for (i = 0; i < n->first->pair[1]; ++i) c_str(" ");
+    }
+    c_str("("); c_str(n->text); c_strln(")");
+    c_str("#line "); c_long(nr + 1);
+    c_str(" \""); c_str(arg_output()); c_strln("\"");
+    c_strln(" ? parsed : no_parse;");
     //printf("    status = (%s) ? parsed : no_parse;\n", n->text);
     debug_post("guard", n);
     c_close();

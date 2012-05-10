@@ -439,9 +439,9 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
 
     /*
 	CodeStart
-	    ← "{" → { s_long(line, pacc_line) }
+	    ← "{" → { s_coords(pacc_coords) }
     */
-    p = s_text(expr, "s_long(line, pacc_line)");
+    p = s_text(expr, "s_coords(pacc_coords)");
     p = cons(s_text(lit, "{"), p);
     p = s_kid(seq, p);
     p = cons(s_text(type, "struct s_node *"), p);

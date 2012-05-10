@@ -1,0 +1,7 @@
+/*
+nocc foo
+*/
+
+/* test that C errors are reported at the right place in the pacc file */
+
+S <- "foo" { ++ }

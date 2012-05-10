@@ -23,13 +23,9 @@ struct s_node *s_text(enum s_type t, char *n) {
     return r;
 }
 
-struct s_node *s_long(enum s_type t, long n) {
-    struct s_node *r = s_new(t);
-    int c = 1 + snprintf(0, 0, "%ld", n);
-    char *s = malloc(c);
-    if (!s) nomem();
-    snprintf(s, c, "%ld", n);
-    r->text = s;
+struct s_node *s_coords(int *c) {
+    struct s_node *r = s_new(coords);
+    r->pair = c;
     return r;
 }
 
@@ -198,12 +194,12 @@ char *decode_type(enum s_type t) {
     case bind:		return "bind";
     case call:		return "call";
     case cclass:	return "cclass";
+    case coords:	return "coords";
     case crange:	return "crange";
     case expr:		return "expr";
     case grammar:	return "grammar";
     case guard:		return "guard";
     case ident:		return "ident";
-    case line:		return "line";
     case lit:		return "lit";
     case not:		return "not";
     case preamble:	return "preamble";
@@ -217,15 +213,18 @@ char *decode_type(enum s_type t) {
 
 int s_has_children(enum s_type t) {
     return t == alt || t == and || t == bind || t == cclass ||
-	t == grammar || t == expr || t == guard || t == line || t == lit ||
+	t == grammar || t == expr || t == guard || t == lit ||
 	t == not || t == rep || t == rule || t == seq;
 }
 
-int s_has_text(enum s_type t) {
+int s_is_text(enum s_type t) {
     return t == bind || t == call || t == cclass || t == crange ||
 	t == expr || t == grammar || t == guard || t == ident ||
-	t == line || t == lit || t == preamble || t == rep ||
-	t == rule || t == type;
+	t == lit || t == preamble || t == rep || t == rule || t == type;
+}
+
+int s_is_pair(enum s_type t) {
+    return t == coords;
 }
 
 static void dump(struct s_node *p, int indent) {
@@ -234,7 +233,9 @@ static void dump(struct s_node *p, int indent) {
     if (!p) return;
     for (i = 0; i < indent; ++i) fprintf(stderr, "  ");
     fprintf(stderr, "%s %ld: ", decode_type(p->type), p->id);
-    if (s_has_text(p->type))
+    if (s_is_pair(p->type))
+	fprintf(stderr, "%d %d ", p->pair[0], p->pair[1]);
+    if (s_is_text(p->type))
 	fprintf(stderr, "%s ", p->text);
     fprintf(stderr, "\n");
 

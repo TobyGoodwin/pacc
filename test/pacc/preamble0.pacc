@@ -1,0 +1,17 @@
+/*
+type int
+parse foo 0
+parse keyword 1
+*/
+
+{
+    /* This is the preamble, including a function definition. */
+    #include <string.h>
+
+    int iskeyword(char *s) {
+	return strcmp(s, "keyword") == 0;
+    }
+
+}
+
+P ← w:[a-z]+ { iskeyword(ref_ptr(w)) }

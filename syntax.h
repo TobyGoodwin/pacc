@@ -4,7 +4,7 @@ enum s_type {
     grammar, rule,	/* scaffolding */
     type, alt, seq,	/* fundamentals */
     and, not,		/* syntactic predicates */
-    expr, bind, line,	/* expressions */
+    expr, bind, coords,	/* expressions */
     guard, ident,	/* semantic predicate */
     call, lit, any,	/* matchers */
     cclass, crange,	/* character classes */
@@ -18,7 +18,10 @@ struct s_node {
     long id;
     struct s_node *first, *last; /* children */
     struct s_node *next; /* sibling */
-    char *text;
+    union {
+	char *text;
+	int *pair;
+    };
 };
 
 /* building trees */
@@ -26,7 +29,7 @@ extern struct s_node *create(void);
 
 extern struct s_node *s_new(enum s_type);
 extern struct s_node *s_text(enum s_type, char *);
-extern struct s_node *s_long(enum s_type, long);
+extern struct s_node *s_coords(int *);
 extern struct s_node *s_child(struct s_node *, struct s_node *);
 extern struct s_node *s_kid(enum s_type, struct s_node *);
 extern struct s_node *s_both(enum s_type, char *, struct s_node *);
@@ -50,7 +53,8 @@ extern void resolve(struct s_node *);
 /* examining trees */
 extern void s_dump(struct s_node *);
 extern int s_has_children(enum s_type);
-extern int s_has_text(enum s_type);
+extern int s_is_text(enum s_type);
+extern int s_is_pair(enum s_type);
 
 extern char *prefix;
 #endif

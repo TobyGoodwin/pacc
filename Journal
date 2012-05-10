@@ -1,3 +1,46 @@
+2012-05-09
+----------
+
+Couple of things we can do here. We could have a node type ``coord``
+that holds int[2]. We could have node types of ``line`` and ``column``
+that both hold an int. We could have a single node type of type ``num``
+that holds an int, and distinguish them by their position. On the whole,
+the first seems easiest. Especially since I've decided that it's OK to
+use an anonymous union (supported in C11 apparently as well as ganuck
+and others).
+
+Almost there, but still some minor hitch with positioning, and one of
+those darned pacc2 vs pacc3 errors...
+
+2012-05-06
+----------
+
+Guards! Guards! They don't have #line numbers yet.
+
+Well that's something I wouldn't have anticipated. First #line
+implementation produces code that looks like this:
+
+          cur->value.u106= (
+#line 7 "bad/line.pacc"
+           ++ 
+#line 332 "parse.c"
+          );
+
+But in this case, gcc doesn't spot the syntax error till it sees the
+closing brace, so we need to put that on the same line as the
+expression. Hmm... and now it says
+
+bad/line.pacc:7:15: error: expected expression before ‘)’ token
+
+which is a touch confusing, but I don't think there's much I can do
+about it. The column numbers are wrong, too, which will be fiddly to
+fix, sigh. Oh, here's a thought. Instead of tediously using snprintf
+(twice) to turn a line number into a n->text node, if the AST actually
+supported numeric nodes, we could carry the line and column numbers
+through as numbers. Then the line numbers trivial to turn into a string
+(because we're writing to a stream, rather than memory), and the column
+number can be used as a number to indent appropriately.
+
 2012-05-05
 ----------
 
