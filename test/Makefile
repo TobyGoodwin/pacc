@@ -10,7 +10,7 @@ clean:
 	rm -f harness harness.o parse.c
 
 emitter: emitter.o
-	$(CC) $(CFLAGS) -o $@ $^ ../arg.o ../emit.o ../error.o ../load.o ../main.o ../resolve.o ../sugar.o ../syntax.o ../template.o
+	$(CC) $(CFLAGS) -o $@ $^ ../arg.o ../emit.o ../error.o ../load.o ../main.o ../preen.o ../sugar.o ../syntax.o ../template.o
 
 harness: harness.o parse.o
 	$(CC) $(CFLAGS) -o harness $^

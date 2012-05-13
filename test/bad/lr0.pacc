@@ -1,0 +1,6 @@
+/*
+nopacc1 "pacc: fatal: left recursion in rule \`sub'"
+*/
+
+sub <- sub "-" digit / digit
+digit <- "0" / "1"

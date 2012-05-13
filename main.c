@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     if (parse(arg_input(), in, size, &p)) {
 	if (arg_dump_pre()) s_dump(p);
 	desugar(p);
-	resolve(p);
+	preen(p);
 	if (arg_dump_post()) s_dump(p);
 	save(arg_output());
 	emit(p);

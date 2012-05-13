@@ -13,6 +13,14 @@ nopacc() {
 }
 export -f nopacc
 
+nopacc1() {
+    err=$1
+    echo $pacc $target
+    r=`$pacc $target 2>&1 && fail 'parsed bad grammar by mistake!'`
+    check "$r" "$err"
+}
+export -f nopacc1
+
 nocc() {
     loc=$1 err=$2
     echo $pacc -o parse.c $target

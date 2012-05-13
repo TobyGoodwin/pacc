@@ -22,6 +22,7 @@ struct s_node {
 	char *text;
 	int *pair;
     };
+    unsigned reached : 1;
 };
 
 /* building trees */
@@ -48,7 +49,6 @@ extern char *s_stashed_type(void);
 
 /* manipulating trees */
 extern void desugar(struct s_node *);
-extern void resolve(struct s_node *);
 
 /* examining trees */
 extern void s_dump(struct s_node *);

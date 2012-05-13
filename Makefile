@@ -4,7 +4,7 @@ LDFLAGS = -g
 
 all: pacc sane
 
-OBJS = arg.o emit.o error.o load.o main.o resolve.o sugar.o syntax.o template.o
+OBJS = arg.o emit.o error.o load.o main.o preen.o sugar.o syntax.o template.o
 
 OBJS0 = $(OBJS) pacc0.o
 
@@ -51,7 +51,7 @@ error.o: error.c error.h
 
 load.o: load.c load.h
 
-resolve.o: resolve.c resolve.h syntax.h
+preen.o: preen.c preen.h syntax.h
 
 sugar.o: sugar.c sugar.h syntax.h
 

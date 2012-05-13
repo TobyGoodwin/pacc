@@ -88,7 +88,7 @@ struct _pacc_parser {
 
 static void _pacc_push(void *x, size_t s, struct _pacc_parser *p) {
     if (p->sp + s >= p->stack_alloc) {
-	int l = 2 * (p->stack_alloc - p->stack) + s;
+	size_t l = 2 * (p->stack_alloc - p->stack) + s;
 	unsigned char *n = realloc(p->stack, l);
 	if (!n) nomem();
 	p->sp = n + (p->sp - p->stack);

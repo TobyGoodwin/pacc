@@ -14,6 +14,7 @@ struct s_node *s_new(enum s_type t) {
     n->id = id++; n->type = t;
     n->first = n->last = n->next = 0;
     n->text = 0;
+    n->reached = 0;
     return n;
 }
 

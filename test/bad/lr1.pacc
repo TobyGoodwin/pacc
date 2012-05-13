@@ -1,0 +1,7 @@
+/*
+nopacc1 "pacc: fatal: left recursion in rule \`A'"
+*/
+
+A <- B / "a"
+B <- C / "b"
+C <- A / "c"

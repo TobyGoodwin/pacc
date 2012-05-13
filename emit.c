@@ -10,7 +10,7 @@
 
 static char *g_name; /* grammar name */
 static struct s_node *g_node; /* grammar root */
-static int cur_rule;
+static struct s_node *cur_rule;
 
 struct assoc {
     char *name;
@@ -102,6 +102,29 @@ static void frame_end() {
     a_ptr = f_stack[--f_ptr];
 }
 
+static char **t_list;
+static int t_max, t_alloc;
+
+static int type_list(char *t) {
+    int i;
+    for (i = 0; i < t_max; ++i) {
+	if (strcmp(t, t_list[i]) == 0) return i;
+    }
+    if (t_max == t_alloc) {
+	int l = 2 * t_alloc + 1;
+	char **t = realloc(t_list, l * sizeof *t_list);
+	if (!t) nomem();
+	t_list = t;
+	t_alloc = l;
+    }
+    t_list[t_max] = t;
+    return t_max++;
+}
+
+static int rule_u(struct s_node *r) {
+    return type_list(r->first->text);
+}
+
 static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
@@ -127,15 +150,26 @@ static void grammar_pre(struct s_node *n) {
     c_str("const int start_rule_id = "); c_long(n->first->next->id);
     c_semi();
     g_name = n->text;
+    /* type of start rule is always u0 */
+    type_list(n->first->next->first->text);
+    for (p = n->first; p; p = p->next)
+	if (p->type == rule) type_list(p->first->text);
     c_str("union "); c_str(g_name); c_str("_union"); c_open();
-    /* XXX we still need u0! */
+    for (i = 0; i < t_max; ++i) {
+	c_str(t_list[i]); c_str(" u"); c_int(i); c_semi();
+    }
+
+#if 0
     c_str(n->first->next->first->text); c_strln(" u0;");
-    for (p = n->first, i = 0; p; p = p->next) {
+    for (p = n->first; p; p = p->next) {
 	if (p->type != rule) continue;
 	/* XXX obviously, we need to weed out duplicates, "void", etc. */
-	c_str(p->first->text); c_str(" u"); c_long(p->id); c_semi();
-	++i;
+	type_list(p->first->text);
+	//c_str(p->first->text); c_str(" u"); c_long(p->id); c_semi();
+	c_str(p->first->text);
+	c_str(" u"); type_list(p->first->text); c_semi();
     }
+#endif
     c_close(); c_semi();
 
     /* XXX just for debugging */
@@ -241,7 +275,7 @@ static void any_emit(__attribute__((unused)) struct s_node *n) {
 }
 
 static void rule_pre(struct s_node *n) {
-    cur_rule = n->id;
+    cur_rule = n;
     c_str("case "); c_long(n->id); c_str(": /* "); c_str(n->text);
     c_strln(" */");
     //printf("case %ld: /* %s */\n", n->id, n->text); 
@@ -250,7 +284,7 @@ static void rule_pre(struct s_node *n) {
     //printf("Trace fprintf(stderr, \"rule %ld (%s) col %%ld\\n\", col);\n", n->id, n->text);
     c_strln("rule_col = col;");
     //printf("rule_col = col;\n");
-    c_str("cur = _pacc_result(_pacc, col, "); c_int(cur_rule); c_strln(");");
+    c_str("cur = _pacc_result(_pacc, col, "); c_int(cur_rule->id); c_strln(");");
     //printf("cur = _pacc_result(_pacc, col, %d);\n", cur_rule);
     c_str("if ((cur->rule & 3) == uncomputed)"); c_open(); /* memoization ON */
     //c_str("if (1 || (cur->rule & 3) == uncomputed)"); c_open(); /* m9n OFF */
@@ -478,7 +512,9 @@ static void bindings(struct s_node *n) {
 	c_strln("_pacc_Pop(cont); _pacc_Pop(col);");
 	c_close();
 	c_str(p->text);
-	c_str(" = cur->value.u"); c_long( a_stack[p0].value->id); c_semi();
+	//c_str(" = cur->value.u"); c_long(a_stack[p0].value->id); c_semi();
+	c_str(" = cur->value.u"); c_int(rule_u(a_stack[p0].value));
+	c_semi();
 	c_str("Trace fprintf(stderr, \"bound "); c_str(p->text);
 	c_str(" to r"); c_long(a_stack[p0].value->id);
 	c_strln(" @ c%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[pos].col, cur->value.u0);");
@@ -514,11 +550,11 @@ static void emit_expr(struct s_node *n) {
     declarations(n);
     c_str("Trace fprintf(stderr, \""); c_long(n->id);
     c_strln(": evaluating\\n\");");
-    c_str("_pacc_p = cur = _pacc_result(_pacc, col, "); c_int(cur_rule);
+    c_str("_pacc_p = cur = _pacc_result(_pacc, col, "); c_int(cur_rule->id);
     c_strln(");");
     bindings(n);
     c_strln("cur = _pacc_p;");
-    c_str("cur->value.u"); c_int(cur_rule); c_strln("=");
+    c_str("cur->value.u"); c_int(rule_u(cur_rule)); c_strln("=");
     /* XXX except for pacc0, there is always a coords as a first child of
      * expr, so it would be better to fix pacc0 and assert here */
     if (n->first && n->first->type == coords) {
@@ -534,7 +570,7 @@ static void emit_expr(struct s_node *n) {
     c_str("#line "); c_long(nr + 1);
     c_str(" \""); c_str(arg_output()); c_strln("\"");
     c_str("Trace fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%ld, ");
-    c_int(cur_rule); c_strln(")\\n\", cur->value.u0, col);");
+    c_int(cur_rule->id); c_strln(")\\n\", cur->value.u0, col);");
     c_strln("goto _pacc_expr_done;");
     c_close();
 }
@@ -615,7 +651,7 @@ static void emit_call(struct s_node *n) {
     c_strln("status = last->rule & 3;");
     c_strln("col = last->remainder;");
     c_strln("_pacc_Pop(rule_col);");
-    c_str("cur = _pacc_result(_pacc, rule_col, "); c_int(cur_rule);
+    c_str("cur = _pacc_result(_pacc, rule_col, "); c_int(cur_rule->id);
     c_strln(");");
 }
 
