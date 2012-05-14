@@ -4,7 +4,7 @@ LDFLAGS = -g
 
 all: pacc sane
 
-OBJS = arg.o emit.o error.o load.o main.o preen.o sugar.o syntax.o template.o
+OBJS = arg.o cook.o emit.o error.o load.o main.o preen.o sugar.o syntax.o template.o
 
 OBJS0 = $(OBJS) pacc0.o
 
@@ -44,6 +44,8 @@ template.c: pacc.tmpl template.sh
 	sh template.sh > $@
 
 arg.o: arg.c arg.h
+
+cook.o: cook.c cook.h arg.h syntax.h
 
 emit.o: emit.c emit.h error.h syntax.h template.h
 

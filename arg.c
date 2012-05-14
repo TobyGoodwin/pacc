@@ -8,38 +8,41 @@
 #include "error.h"
 
 static const struct option long_opts[] = {
-    { "dump-ast", optional_argument, 0, 'd' },
+    { "dump-ast", required_argument, 0, 'd' },
+    { "feed", required_argument, 0, 'f' },
+    { "feed-rule", required_argument, 0, 'r' },
+    { "help", no_argument, 0, '?' },
     { "output", required_argument, 0, 'o' },
-    { "partial-rule", required_argument, 0, 'p' },
     { 0, 0, 0, 0 }
 };
 
-/* Use "-d" to dump the AST before desugaring; use "--dump-ast=post" (or
- * any string that doesn't start with "0") to dump both before and after
- * desugaring. */
-static char *dump_ast = 0;
-int arg_dump_pre() {
-    return dump_ast != 0;
-}
-int arg_dump_post() {
-    return dump_ast && *dump_ast != '0';
+/* Use "-d 0" to dump the AST before desugaring; 1 after desugaring, 2
+ * after cooking. They can be combined, e.g. "-d02". */
+static char *dump = "";
+char *arg_dump(void) {
+    return dump;
 }
 
 static char *input = 0;
-char *arg_input() {
+char *arg_input(void) {
     assert(input);
     return input;
 }
 
-static char *output = 0;
-char *arg_output() {
-    assert(output);
-    return output;
+static char *feed = 0;
+char *arg_feed(void) {
+    return feed;
 }
 
-static char *partial = 0;
-char *arg_partial() {
-    return partial;
+static char *feed_rule = "__";
+char *arg_feed_rule(void) {
+    return feed_rule;
+}
+
+static char *output = 0;
+char *arg_output(void) {
+    assert(output);
+    return output;
 }
 
 static void usage(void) {
@@ -78,11 +81,12 @@ static char *munge(const char *i) {
 void arg(int argc, char **argv) {
     int c, opt_i;
 
-    while ((c = getopt_long(argc, argv, "do:p:", long_opts, &opt_i)) != -1) {
+    while ((c = getopt_long(argc, argv, "d:f:o:r:", long_opts, &opt_i)) != -1) {
 	switch (c) {
-	case 'd': dump_ast = optarg ? optarg : "0"; break;
+	case 'd': dump = optarg; break;
+	case 'f': feed = optarg; break;
 	case 'o': output = optarg; break;
-	case 'p': partial = optarg; break;
+	case 'r': feed_rule = optarg; break;
 	case '?': usage(); break;
 	default: assert(0);
 	}

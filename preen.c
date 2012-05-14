@@ -32,12 +32,12 @@ static int consumes(struct s_node *n) {
     //fprintf(stderr, "considering %ld\n", n->id);
     switch (n->type) {
 	case rule:
-	    r = 0;
 	    if (n->reached) {
 		fatal3("left recursion in rule `", n->text, "'");
 		//fprintf(stderr, "left recursion in rule `%s'\n", n->text);
 		//return 0;
 	    }
+	    r = 0;
 	    n->reached = 1;
 	    for (p = n->first; p; p = p->next)
 		r += consumes(p);

@@ -1,0 +1,12 @@
+/*
+chars
+noparse f S 1
+noparse fo S 1
+parse foo yes
+noparse food S 4
+*/
+
+# End of input:
+
+S :: char * ← "foo" End { "yes" }
+End ← !.

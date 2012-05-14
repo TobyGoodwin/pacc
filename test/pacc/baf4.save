@@ -11,7 +11,6 @@ parse 456 456
 parse '53*(13+75)' 4664
 parse ' 456 + 123 * ( 543 + 7 * (987 + 2) + 6) ' 919512
 noparse x Sum 1
-noparse '2 + ' Additive 5
 */
 
 # Bryan Ford's trivial grammar with integers, spacing, repetitions, and
@@ -21,7 +20,7 @@ Sum :: int ← Space a:Additive End → a
 Additive ← m:Multitive Plus a:Additive { m + a } / m:Multitive -> m
 Multitive ← p:Primary Times m:Multitive { p * m } / p:Primary -> p
 Primary ← Left a:Additive Right -> a / d:Decimal -> d
-Decimal ← Digit+ Space { atoi(ref_ptr(ref())) }
+Decimal ← Digit* Space { atoi(ref_ptr(ref())) }
 Digit ← [0-9]
 
 # rest should be void
