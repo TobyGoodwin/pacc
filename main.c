@@ -14,11 +14,13 @@ int main(int argc, char **argv) {
 
     arg(argc, argv);
 
+#if 0
 if (arg_feed()) {
 fprintf(stderr, "we will be feeding, fn = %s, rule = %s\n", arg_feed(), arg_feed_rule());
 } else {
 fprintf(stderr, "not feeding\n");
 }
+#endif
 
     in = load(arg_input(), &size);
 
@@ -28,11 +30,13 @@ fprintf(stderr, "not feeding\n");
 	preen(p);
 	if (strchr(arg_dump(), '1')) s_dump(p);
 	save(arg_output());
+	emit(p);
 	if (arg_feed()) {
 	    cook(p);
 	    if (strchr(arg_dump(), '2')) s_dump(p);
+	    save(arg_feed());
+	    emit(p);
 	}
-	emit(p);
 	return 0;
     }
 

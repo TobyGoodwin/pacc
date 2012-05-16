@@ -8,7 +8,7 @@
 
 Grammar :: struct s_node *
     ← _ p:Preamble ds:Defns End → 
-    { s_both(grammar, "yy", cons(p, ds)) }
+    { s_both(grammar, "", cons(p, ds)) }
 
 Defns
     ← d:Defn ds:Defns { cons(d, ds) }

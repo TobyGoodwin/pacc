@@ -146,8 +146,8 @@ static void grammar_pre(struct s_node *n) {
 	assert(p->type == rule);
 	++r;
     }
-    c_str("const int n_rules = "); c_int(r); c_semi();
-    c_str("const int start_rule_id = "); c_long(n->first->next->id);
+    c_str("static const int n_rules = "); c_int(r); c_semi();
+    c_str("static const int start_rule_id = "); c_long(n->first->next->id);
     c_semi();
     g_name = n->text;
     /* type of start rule is always u0 */
@@ -181,7 +181,7 @@ static void grammar_pre(struct s_node *n) {
 
     c_str("#define PACC_TYPE "); c_strln(n->first->next->first->text);
 
-    pre_engine();
+    pre_engine(n->text);
 
     c_str("st=");
     c_long(n->first->type == preamble ? n->first->next->id : n->first->id);
@@ -194,7 +194,7 @@ static void grammar_pre(struct s_node *n) {
 static void grammar_post(__attribute__((unused)) struct s_node *n) {
     c_strln("case -1: break;");
     c_close();
-    post_engine();
+    post_engine(n->text);
 }
 
 static void debug_pre(char *type, struct s_node *n) {
@@ -767,4 +767,5 @@ void emit(struct s_node *g) {
     post[cclass] = cclass_post;
 
     node(g);
+    fflush(stdout);
 }

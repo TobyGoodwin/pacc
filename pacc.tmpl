@@ -41,7 +41,7 @@ struct intermed {
     long rule; off_t col;
     off_t remainder; /* unparsed string */
     long expr_id; /* id of the expression to evaluate, yielding... */
-    union yy_union value; /* ... the semantic value XXX needs to use g_name */
+    union YY_union value; /* ... the semantic value XXX needs to use g_name */
     struct {
 	long call_id; /* a call */
 	off_t col; /* a column */
@@ -120,7 +120,7 @@ static void *_pacc_pop(size_t s, struct _pacc_parser *p) {
 #define ref_str() (_pacc_ref_dup(ref(), _pacc))
 #define ref_streq(a, b) (_pacc_ref_streq((a), (b), _pacc))
 
-char *_pacc_ref_dup(ref_t a, struct _pacc_parser *p) {
+static char *_pacc_ref_dup(ref_t a, struct _pacc_parser *p) {
     char *r;
     off_t l;
 
@@ -131,7 +131,7 @@ char *_pacc_ref_dup(ref_t a, struct _pacc_parser *p) {
     return r;
 }
 
-int _pacc_ref_streq(ref_t a, char *b, struct _pacc_parser *p) {
+static int _pacc_ref_streq(ref_t a, char *b, struct _pacc_parser *p) {
     /* XXX this could be made quicker */
     if (strlen(b) != (size_t)(a[1] - a[0])) return 0;
     return strncmp(p->string + a[0], b, a[1] - a[0]) == 0; 
@@ -394,7 +394,7 @@ static void _pacc_error(struct _pacc_parser *p) {
     //printf("(column %ld)\n", _pacc->err_col);
 }
 
-int parse(char *name, char *addr, off_t l, PACC_TYPE *result) {
+int YYparse(char *name, char *addr, off_t l, PACC_TYPE *result) {
     int parsed;
     struct _pacc_parser *p;
 

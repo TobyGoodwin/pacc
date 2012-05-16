@@ -796,7 +796,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     */
     p = s_new(ident); p->text = "ds"; i = p;
     p = s_new(ident); p->text = "p"; p->next = i; i = p;
-    p = s_both(expr, "s_both(grammar, \"yy\", cons(p, ds))", i); q = p;
+    p = s_both(expr, "s_both(grammar, \"\", cons(p, ds))", i); q = p;
     p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "Defns"; s = p;
     p = s_new(bind); p->text = "ds"; p->first = s; p->next = q; q = p;
@@ -808,7 +808,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
 
     r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\n"), r);
-    p = s_both(grammar, "yy", r);
+    p = s_both(grammar, "", r);
 
     *result = p;
     return 1;

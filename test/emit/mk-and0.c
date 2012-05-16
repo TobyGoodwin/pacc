@@ -29,7 +29,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
     r = cons(s_text(preamble, 0), r);
-    p = new_node(grammar); p->text = "yy"; p->first = r;
+    p = s_both(grammar, "", r);
 
     *result = p;
     return 1;
