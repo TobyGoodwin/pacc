@@ -1,0 +1,17 @@
+/*
+type int
+parse 5 2+3
+noparse 1:1 Sum x
+parse 7 3 +4
+parse 7 3+ 4
+parse 7 3 + 4
+noparse 2:1 '__:*:0, or "+"' 3 q
+end 3
+end 3 +
+*/
+
+Sum :: int ← a:Digit __ "+" __ b:Digit "\n" → { a + b }
+Digit ← [0-9]  → { *ref_ptr(ref()) - '0' }
+
+# rest should be void
+__ ← "\n" *

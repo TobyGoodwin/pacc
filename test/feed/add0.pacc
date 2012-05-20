@@ -1,0 +1,17 @@
+/*
+type int
+parse 5 23
+noparse 1:1 Sum x
+parse 7 3 4
+parse 9 4 '' 5
+noparse 2:1 Digit 2 x
+end 2
+*/
+
+/* About the simplest feeder I can imagine */
+
+Sum :: int ← a:Digit __ b:Digit "\n" → { a + b }
+Digit ← [0-9]  → { *ref_ptr(ref()) - '0' }
+
+# rest should be void
+__ ← "\n" *
