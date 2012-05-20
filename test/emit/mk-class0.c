@@ -13,7 +13,7 @@ noparse end Word 1
 
 #include "syntax.h"
 
-int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
+int pacc_parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *r;
 
     /*
@@ -59,7 +59,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     r = cons(p, r);
 
     r = cons(s_text(preamble, 0), r);
-    r = s_both(grammar, "yy", r);
+    r = s_both(grammar, "pacc", r);
 
     *result = r;
     return 1;

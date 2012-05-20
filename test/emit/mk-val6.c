@@ -20,7 +20,7 @@ noparse 5.+ A 3
 
 #include "syntax.h"
 
-int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
+int pacc_parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
     /* Nested calls with alternatives & values:
@@ -73,7 +73,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = new_node(rule); p->text = "P"; p->first = q; p->next = r; r = p;
 
     r = cons(s_text(preamble, 0), r);
-    p = s_both(grammar, "yy", r);
+    p = s_both(grammar, "pacc", r);
 
     *result = p;
     return 1;

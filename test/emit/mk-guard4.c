@@ -11,7 +11,7 @@ noparse % A 2
 
 #include "syntax.h"
 
-int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
+int pacc_parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* Semantic predicate and any matcher:
@@ -53,7 +53,7 @@ int parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     p = new_node(rule); p->text = "P"; p->first = q; p->next = r; r = p;
 
     r = cons(s_text(preamble, 0), r);
-    p = new_node(grammar); p->text = "yy"; p->first = r;
+    p = new_node(grammar); p->text = "pacc"; p->first = r;
 
     *result = p;
     return 1;

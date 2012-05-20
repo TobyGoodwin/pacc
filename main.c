@@ -24,7 +24,7 @@ fprintf(stderr, "not feeding\n");
 
     in = load(arg_input(), &size);
 
-    if (parse(arg_input(), in, size, &p)) {
+    if (pacc_parse(arg_input(), in, size, &p)) {
 	if (strchr(arg_dump(), '0')) s_dump(p);
 	desugar(p);
 	preen(p);

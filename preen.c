@@ -75,6 +75,7 @@ static void check_recursion(struct s_node *g) {
 }
 
 void preen(struct s_node *g) {
+    if (!g->text || g->text[0] == '\0') g->text = "pacc";
     resolve(g, g, 0);
     check_recursion(g);
 }

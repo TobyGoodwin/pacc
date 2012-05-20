@@ -65,7 +65,7 @@ static void _pacc_save_core(long c, off_t col) {
 }
 
 /* a pacc parser */
-struct _pacc_parser {
+struct pacc_parser {
     char *name;
     char *string;
     off_t input_length;
@@ -86,7 +86,7 @@ struct _pacc_parser {
     off_t err_col;
 };
 
-static void _pacc_push(void *x, size_t s, struct _pacc_parser *p) {
+static void _pacc_push(void *x, size_t s, struct pacc_parser *p) {
     if (p->sp + s >= p->stack_alloc) {
 	size_t l = 2 * (p->stack_alloc - p->stack) + s;
 	unsigned char *n = realloc(p->stack, l);
@@ -102,7 +102,7 @@ static void _pacc_push(void *x, size_t s, struct _pacc_parser *p) {
 
 #define _pacc_Push(v) _pacc_push(&(v), sizeof (v), _pacc)
 
-static void *_pacc_pop(size_t s, struct _pacc_parser *p) {
+static void *_pacc_pop(size_t s, struct pacc_parser *p) {
     assert(p->sp - s >= p->stack);
     p->sp -= s;
     return p->sp;
@@ -120,7 +120,7 @@ static void *_pacc_pop(size_t s, struct _pacc_parser *p) {
 #define ref_str() (_pacc_ref_dup(ref(), _pacc))
 #define ref_streq(a, b) (_pacc_ref_streq((a), (b), _pacc))
 
-static char *_pacc_ref_dup(ref_t a, struct _pacc_parser *p) {
+static char *_pacc_ref_dup(ref_t a, struct pacc_parser *p) {
     char *r;
     off_t l;
 
@@ -131,7 +131,7 @@ static char *_pacc_ref_dup(ref_t a, struct _pacc_parser *p) {
     return r;
 }
 
-static int _pacc_ref_streq(ref_t a, char *b, struct _pacc_parser *p) {
+static int _pacc_ref_streq(ref_t a, char *b, struct pacc_parser *p) {
     /* XXX this could be made quicker */
     if (strlen(b) != (size_t)(a[1] - a[0])) return 0;
     return strncmp(p->string + a[0], b, a[1] - a[0]) == 0; 
@@ -145,7 +145,7 @@ perl -le '$x=1;while(($e=int(exp($x/1)))<2**32){print "./primes ",$e," ",100+$e,
 
  * except that I replaced 2 with 3.
  */
-static void _pacc_set_bkt_cnt(struct _pacc_parser *p) {
+static void _pacc_set_bkt_cnt(struct pacc_parser *p) {
     static unsigned int primes[] = {
 	3, 7, 23, 59, 149, 409, 1097, 2999, 8111, 22027, 59879, 162779, 442439,
 	1202609, 3269029, 8886113, 24154957, 65659969, 178482319, 485165237,
@@ -160,39 +160,43 @@ static void _pacc_set_bkt_cnt(struct _pacc_parser *p) {
     p->m_bkt_cnt = primes[i - 1];
 }
 
-static struct _pacc_parser *_pacc_parser_new(char *n, char *s, off_t l) {
-    unsigned int i;
-    struct _pacc_parser *r;
+static struct pacc_parser *YY_new(void) {
+    struct pacc_parser *p;
 
-    r = realloc(0, sizeof *r);
-    if (!r) nomem();
-    r->name = n;
-    r->string = s;
-    r->input_length = l;
-    _pacc_set_bkt_cnt(r);
-    r->m_bkt = realloc(0, sizeof(struct intermed *) * r->m_bkt_cnt);
-    if (!r->m_bkt) nomem();
-    r->m_valid = realloc(0, 2 * r->m_bkt_cnt);
-    for (i = 0; i < r->m_bkt_cnt; ++i) {
-	r->m_bkt[i] = 0;
-	r->m_valid[i * 2] = 0; /* valid */
-	r->m_valid[i * 2 + 1] = 0; /* allocated */
-    }
-    r->m_chain_max = 0;
-    r->sp = 0;
-    r->stack = r->stack_alloc = 0;
-    r->err = 0;
-    r->err_alloc = 0;
-    r->err_valid = 0;
-    return r;
+    p = realloc(0, sizeof *p);
+    if (!p) nomem();
+    p->m_chain_max = 0;
+    p->sp = 0;
+    p->stack = p->stack_alloc = 0;
+    p->err = 0;
+    p->err_alloc = 0;
+    p->err_valid = 0;
+    return p;
 }
 
-static void _pacc_parser_destroy(struct _pacc_parser *p) {
+static void YY_input(struct pacc_parser *p, char *n, char *s, off_t l) {
+    unsigned int i;
+
+    p->name = n;
+    p->string = s;
+    p->input_length = l;
+    _pacc_set_bkt_cnt(p);
+    p->m_bkt = realloc(0, sizeof(struct intermed *) * p->m_bkt_cnt);
+    if (!p->m_bkt) nomem();
+    p->m_valid = realloc(0, 2 * p->m_bkt_cnt);
+    for (i = 0; i < p->m_bkt_cnt; ++i) {
+	p->m_bkt[i] = 0;
+	p->m_valid[i * 2] = 0; /* valid */
+	p->m_valid[i * 2 + 1] = 0; /* allocated */
+    }
+}
+
+static void pacc_parser_destroy(struct pacc_parser *p) {
     free(p);
 }
 
 /* hash chains */
-static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rule) {
+static struct intermed *_pacc_result(struct pacc_parser *p, off_t col, long rule) {
     unsigned char i;
     unsigned int h;
     struct intermed *bkt, *r;
@@ -224,7 +228,7 @@ static struct intermed *_pacc_result(struct _pacc_parser *p, off_t col, long rul
     return r;
 }
 
-static void error(struct _pacc_parser *_pacc, char *what, off_t col) {
+static void error(struct pacc_parser *_pacc, char *what, off_t col) {
     int doit, append;
 //Trace fprintf(stderr, "error(Grammar, 0) at col %ld\n", col);
     append = doit = 1;
@@ -252,7 +256,7 @@ static void error(struct _pacc_parser *_pacc, char *what, off_t col) {
  * newly allocated pair of ints.  coord[0] is the line number, and
  * coord[1] is the column within the line.  XXX till this isn't
  * memoized, we're no longer linear. */
-static int *_pacc_coords(struct _pacc_parser *p, off_t col) {
+static int *_pacc_coords(struct pacc_parser *p, off_t col) {
     int c, nl, start, *coords;
 
     coords = realloc(0, 2 * sizeof(int)); if (!coords) nomem();
@@ -272,7 +276,7 @@ static int *_pacc_coords(struct _pacc_parser *p, off_t col) {
 /* The userland version */
 #define pacc_coords _pacc_coords(_pacc, col)
 
-static int engine(struct _pacc_parser *_pacc, PACC_TYPE *result) {
+static int engine(struct pacc_parser *_pacc, PACC_TYPE *result) {
     enum status status;
     int cont, st;
     off_t col, rule_col;
@@ -358,7 +362,7 @@ contin:
     goto top;
 }
 
-static void _pacc_error(struct _pacc_parser *p) {
+static void _pacc_error(struct pacc_parser *p) {
     int *coords;
     size_t i;
 
@@ -394,19 +398,20 @@ static void _pacc_error(struct _pacc_parser *p) {
     //printf("(column %ld)\n", _pacc->err_col);
 }
 
-int YYparse(char *name, char *addr, off_t l, PACC_TYPE *result) {
+int YY_parse(char *name, char *addr, off_t l, PACC_TYPE *result) {
     int parsed;
-    struct _pacc_parser *p;
+    struct pacc_parser *p;
 
-    /* XXX the result should live in the _pacc_parser */
+    /* XXX the result should live in the pacc_parser */
 
-    p = _pacc_parser_new(name, addr, l);
+    p = YY_new();
+    YY_input(p, name, addr, l);
 
     parsed = engine(p, result);
 
     if (!parsed) _pacc_error(p);
 
-    _pacc_parser_destroy(p);
+    pacc_parser_destroy(p);
 
     return parsed;
 }
