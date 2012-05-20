@@ -69,6 +69,7 @@ struct pacc_parser {
     char *name;
     char *string;
     off_t input_length;
+    PACC_TYPE value;
     struct intermed **m_bkt;
     unsigned int m_bkt_cnt;
     unsigned char *m_valid;
@@ -160,7 +161,7 @@ static void _pacc_set_bkt_cnt(struct pacc_parser *p) {
     p->m_bkt_cnt = primes[i - 1];
 }
 
-static struct pacc_parser *YY_new(void) {
+struct pacc_parser *YY_new(void) {
     struct pacc_parser *p;
 
     p = realloc(0, sizeof *p);
@@ -174,7 +175,7 @@ static struct pacc_parser *YY_new(void) {
     return p;
 }
 
-static void YY_input(struct pacc_parser *p, char *n, char *s, off_t l) {
+void YY_input(struct pacc_parser *p, char *n, char *s, off_t l) {
     unsigned int i;
 
     p->name = n;
@@ -191,7 +192,9 @@ static void YY_input(struct pacc_parser *p, char *n, char *s, off_t l) {
     }
 }
 
-static void pacc_parser_destroy(struct pacc_parser *p) {
+void YY_destroy(struct pacc_parser *p) {
+    free(p->m_bkt);
+    free(p->m_valid);
     free(p);
 }
 
@@ -261,7 +264,7 @@ static int *_pacc_coords(struct pacc_parser *p, off_t col) {
 
     coords = realloc(0, 2 * sizeof(int)); if (!coords) nomem();
     nl = 1; /* line numbering is 1-based, natch */
-    start = 0;
+    start = -1;
     for (c = 0; c < col; ++c) {
 	if (p->string[c] == '\n') {
 	    ++nl;
@@ -269,14 +272,14 @@ static int *_pacc_coords(struct pacc_parser *p, off_t col) {
 	}
     }
     coords[0] = nl;
-    /* as is column numbering */
-    coords[1] = 1 + c - start;
+    /* column numbering is also 1-based; start points to \n */
+    coords[1] = c - start;
     return coords;
 }
 /* The userland version */
 #define pacc_coords _pacc_coords(_pacc, col)
 
-static int engine(struct pacc_parser *_pacc, PACC_TYPE *result) {
+int YY_parse(struct pacc_parser *_pacc) {
     enum status status;
     int cont, st;
     off_t col, rule_col;
@@ -350,7 +353,7 @@ static int engine(struct pacc_parser *_pacc, PACC_TYPE *result) {
     }
     if ((cur->rule & 3) == evaluated) {
 	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
-	*result = cur->value.u0;
+	_pacc->value = cur->value.u0;
     } else if ((cur->rule & 3) == parsed) {
 	Trace fprintf(stderr, "parsed with void value\n");
     } else Trace fprintf(stderr, "not parsed\n");
@@ -362,7 +365,11 @@ contin:
     goto top;
 }
 
-static void _pacc_error(struct pacc_parser *p) {
+PACC_TYPE YY_result(struct pacc_parser *p) {
+    return p->value;
+}
+
+void YY_error(struct pacc_parser *p) {
     int *coords;
     size_t i;
 
@@ -398,20 +405,18 @@ static void _pacc_error(struct pacc_parser *p) {
     //printf("(column %ld)\n", _pacc->err_col);
 }
 
-int YY_parse(char *name, char *addr, off_t l, PACC_TYPE *result) {
+int YY_wrap(char *name, char *addr, off_t l, PACC_TYPE *result) {
     int parsed;
     struct pacc_parser *p;
 
-    /* XXX the result should live in the pacc_parser */
-
     p = YY_new();
+
     YY_input(p, name, addr, l);
+    parsed = YY_parse(p);
+    if (parsed) *result = YY_result(p);
+    else YY_error(p);
 
-    parsed = engine(p, result);
-
-    if (!parsed) _pacc_error(p);
-
-    pacc_parser_destroy(p);
+    YY_destroy(p);
 
     return parsed;
 }

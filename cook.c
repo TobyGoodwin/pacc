@@ -23,9 +23,9 @@ static struct s_node *cook0(struct s_node *n, struct s_node *pre) {
 	t = s_kid(seq, s_kid(not, s_new(any)));
 	t = cons(s_kid(seq, n->next), t);
 	t = s_kid(alt, t);
-	pre->next = t;
-	free(n);
-	n = t;
+//	pre->next = t;
+//	free(n);
+	n->next = t;
     }
 
     /* remove all expr nodes */

@@ -10,7 +10,7 @@ noparse food S 4
 
 #include "syntax.h"
 
-int pacc_parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
+int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
     /* End of input:

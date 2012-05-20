@@ -3,7 +3,11 @@
 
 char *prefix = 0; /* XXX */
 
-int pacc_parse(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
+int pacc_wrap(
+	__attribute__((unused)) const char *ign0,
+	__attribute__((unused)) char *ign1,
+	__attribute__((unused)) off_t ign2,
+	struct s_node **result) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
     /*
