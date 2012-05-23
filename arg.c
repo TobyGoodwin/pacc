@@ -7,56 +7,12 @@
 #include "assert.h"
 #include "error.h"
 
-static const struct option long_opts[] = {
-    { "dump-ast", required_argument, 0, 'd' },
-    { "feed", required_argument, 0, 'f' },
-    { "feed-rule", required_argument, 0, 'r' },
-    { "help", no_argument, 0, '?' },
-    { "output", required_argument, 0, 'o' },
-    { 0, 0, 0, 0 }
-};
-
-/* Use "-d 0" to dump the AST before desugaring; 1 after desugaring, 2
- * after cooking. They can be combined, e.g. "-d02". */
-static char *dump = "";
-char *arg_dump(void) {
-    return dump;
-}
-
-static char *input = 0;
-char *arg_input(void) {
-    assert(input);
-    return input;
-}
-
-static char *feed = 0;
-char *arg_feed(void) {
-    return feed;
-}
-
-static char *feed_rule = "__";
-char *arg_feed_rule(void) {
-    return feed_rule;
-}
-
-static char *output = 0;
-char *arg_output(void) {
-    assert(output);
-    return output;
-}
-
-static void usage(void) {
-    fprintf(stderr, "Usage: pacc [OPTION]... FILE\n");
-    exit(1);
-}
-
 /* The inventively named munge() returns a newly-allocated string
  * holding the basename of its input, with suffix replacing the existing
  * suffix (or appended if there was no suffix). For example,
- * munge("/foo/x.pacc") ==> "x.c".
+ * munge("/foo/x.pacc", ".c") ==> "x.c".
  */
-static char suffix[] = ".c";
-static char *munge(const char *i) {
+static char *munge(const char *i, const char *suffix) {
     const char *b, *d, *p;
     char *r;
     size_t l;
@@ -78,20 +34,101 @@ static char *munge(const char *i) {
     return r;
 }
 
+static const struct option long_opts[] = {
+    { "dump-ast", required_argument, 0, 'D' },
+    { "defines", optional_argument, 0, 'd' },
+    { "feed", required_argument, 0, 'f' },
+    { "feed-rule", optional_argument, 0, 'r' },
+    { "output", required_argument, 0, 'o' },
+    { "help", no_argument, 0, 'h' },
+    { "version", no_argument, 0, 'v' },
+    { 0, 0, 0, 0 }
+};
+
+/* Use "-d 0" to dump the AST before desugaring; 1 after desugaring, 2
+ * after cooking. They can be combined, e.g. "-d02". */
+static char *dump = "";
+char *arg_dump(void) {
+    return dump;
+}
+
+static char *input = 0;
+char *arg_input(void) {
+    assert(input);
+    return input;
+}
+
+static int defining = 0;
+static char *defines = 0;
+char *arg_defines(void) {
+    return defines;
+}
+
+static char *feed = 0;
+char *arg_feed(void) {
+    return feed;
+}
+
+static char *feed_rule = 0;
+char *arg_feed_rule(void) {
+    if (!feed_rule) return "__";
+    return feed_rule;
+}
+
+static char *output = 0;
+char *arg_output(void) {
+    assert(output);
+    return output;
+}
+
+static void usage(void) {
+    puts("Usage: pacc [OPTION]... FILE");
+    puts("");
+    puts("Operation modes");
+    puts("  -h, --help               display this help and exit");
+    puts("  -v, --version            report version number and exit");
+    puts("  -D, --dump-ast=WHEN      dump the parse tree at various points");
+    puts("");
+    puts("Parser:");
+    puts("  -f, --feed                 produce two parsers for feeding");
+    puts("  -r, --feed-rule[=RULE]     rule to enable feeding");
+    puts("");
+    puts("Output:");
+    puts("  -d, --define[=FILE]        also produce a header file");
+    puts("  -o, --output=FILE          write output to FILE");
+    puts("");
+    puts("Report bugs to <bug@paccrat.org>.");
+    exit(0);
+}
+
+static void version(void) {
+    puts("pacc 0.0 (ninja)");
+    puts("Written by Tobias Jayne Goodwin <toby@paccrat.org>");
+    puts("");
+    puts("Copyright (C) 2012 Free Software Foundation, Inc.");
+    puts("This is free software; see the source for copying conditions.  There is NO");
+    puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
+    exit(0);
+}
+
 void arg(int argc, char **argv) {
     int c, opt_i;
 
-    while ((c = getopt_long(argc, argv, "d:f:o:r:", long_opts, &opt_i)) != -1) {
+    while ((c = getopt_long(argc, argv, "D:d::f:ho:r::v", long_opts, &opt_i)) != -1) {
 	switch (c) {
-	case 'd': dump = optarg; break;
+	case 'D': dump = optarg; break;
+	case 'd': defining = 1; defines = optarg; break;
 	case 'f': feed = optarg; break;
 	case 'o': output = optarg; break;
 	case 'r': feed_rule = optarg; break;
-	case '?': usage(); break;
+	case 'v': version(); break;
+	case 'h': usage(); break;
+	case '?': exit(1); break;
 	default: assert(0);
 	}
     }
     if (argc - optind != 1) usage();
     input = argv[optind];
-    if (!output) output = munge(input);
+    if (!output) output = munge(input, ".c");
+    if (defining && !defines) defines = munge(output, ".h");
 }

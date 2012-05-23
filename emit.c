@@ -769,3 +769,22 @@ void emit(struct s_node *g) {
     node(g);
     fflush(stdout);
 }
+
+void header(struct s_node *g) {
+    char *yy = g->text;
+    char *preamble = g->first->text;
+    char *type = g->first->next->first->text;
+    if (preamble) puts(preamble);
+
+    printf("#include <sys/types.h>\n"); /* for off_t */
+    printf("struct pacc_parser;\n");
+    printf("extern void %s_input(struct pacc_parser, char, char, off_t l);\n",
+	yy);
+    printf("extern void %s_destroy(struct pacc_parser *);\n", yy);
+    printf("extern int %s_parse(struct pacc_parser *);\n", yy);
+    printf("extern %s %s_result(struct pacc_parser *);\n", type, yy);
+    printf("extern void %s_error(struct pacc_parser *);\n", yy);
+    printf("extern int %s_wrap(const char *, char *, off_t, %s *result);\n",
+	yy, type);
+    fflush(stdout);
+}
