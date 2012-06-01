@@ -4,7 +4,7 @@ LDFLAGS = -g
 
 all: pacc sane
 
-OBJS = arg.o cook.o emit.o error.o load.o main.o preen.o sugar.o syntax.o template.o
+OBJS = arg.o cook.o emit.o error.o load.o main.o preen.o sugar.o syntax.o template.o utf8.o
 
 OBJS0 = $(OBJS) pacc0.o
 
@@ -60,6 +60,8 @@ sugar.o: sugar.c sugar.h syntax.h
 syntax.o: syntax.c syntax.h
 
 template.o: template.h
+
+utf8.o: utf8.h
 
 %.d: %.c
 	sed '/^#/d' $^ > $@

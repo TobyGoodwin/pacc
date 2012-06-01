@@ -264,14 +264,15 @@ static void literal(struct s_node *n) {
 
 /* currently assumes 1 char == 1 byte (i.e. ASCII encoding) */
 static void any_emit(__attribute__((unused)) struct s_node *n) {
-    c_strln("if (col < _pacc->input_length)"); c_open();
-    c_strln("status = parsed; ++col;");
+    c_strln("_pacc_utf8_state = UTF8_ACCEPT; do "); c_open();
+    c_strln("if (_pacc_utf8_state == UTF8_REJECT) panic(\"invalid UTF-8 input\");");
+    c_strln("if (col == _pacc->input_length) status = no_parse;");
     c_close();
-    c_strln("else status = no_parse;");
-    //printf("if (col < _pacc->input_length) {\n");
-    //printf("    status = parsed;\n");
-    //printf("    ++col;\n");
-    //printf("} else status = no_parse;\n");
+    c_strln("while (decode(&_pacc_utf8_state, &_pacc_utf_cp, _pacc->string[col++]));");
+//    c_strln("if (col < _pacc->input_length)"); c_open();
+//    c_strln("status = parsed; ++col;");
+//    c_close();
+//    c_strln("else status = no_parse;");
 }
 
 static void rule_pre(struct s_node *n) {
