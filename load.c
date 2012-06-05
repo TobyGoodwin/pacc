@@ -16,6 +16,10 @@ char *load(const char *n, off_t *size) {
     if (fstat(0, &sb) == -1) fatal3x("cannot stat `", n, "'");
 
     *size = sb.st_size;
+
+    /* It is an error to mmap nothing. */
+    if (*size == 0) return "";
+
     addr = (char *)-1;
     addr = mmap(0, *size, PROT_READ, MAP_SHARED, 0, 0);
 

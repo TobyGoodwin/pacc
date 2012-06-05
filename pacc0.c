@@ -775,10 +775,11 @@ int pacc_wrap(
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Defn"; p->first = q; p->next = r; r = p;
 
-    /* Defns ← d:Defn ds:Defns { cons(d, ds) } / ε { 0 } */
+    /* Defns ← d:Defn ds:Defns { cons(d, ds) } / d:Defn → d */
 
-    p = s_new(expr); p->text = "0"; q = p;
-    p = s_new(seq); p->first = q; t = p;
+    p = s_both(expr, "d", s_text(ident, "d"));
+    p = cons(s_both(bind, "d", s_text(call, "Defn")), p);
+    t = s_kid(seq, p);
 
     p = s_new(ident); p->text = "ds"; i = p;
     p = s_new(ident); p->text = "d"; p->next = i; i = p;

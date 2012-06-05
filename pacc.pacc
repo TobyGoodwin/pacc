@@ -12,7 +12,7 @@ Grammar :: struct s_node *
 
 Defns
     ← d:Defn ds:Defns { cons(d, ds) }
-    / ε { 0 }
+    / d:Defn → d
 
 Defn
     ← n:Name t:TypeOptional lArrow r:Rule0 _ →

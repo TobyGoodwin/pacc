@@ -76,4 +76,4 @@ clean:
 	rm -f pacc0 pacc1 pacc2 pacc3 pacc
 	rm -f $(OBJS)
 	rm -f pacc0.o pacc1.o pacc2.o pacc3.o
-	rm -f pacc1.c pacc2.c pacc3.c template.c
+	rm -f pacc1.c pacc2.c pacc3.c pacc2.d pacc3.d template.c
