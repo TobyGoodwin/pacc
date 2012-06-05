@@ -8,8 +8,8 @@ noparse '𝄞4' S 1
 noparse '$x' Amount 2
 */
 
-/* This test verifies the workaround for the lack of UTF-8 support in
- * character classes. See http://paccrat.org/entry/2012-06-04
+/* This test will FAIL till pacc actually supports UTF-8 in character
+ * classes. See http://paccrat.org/entry/2012-06-04
  */
 
 S :: int ← Currency a:Amount → a
