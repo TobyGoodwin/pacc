@@ -31,7 +31,7 @@ script_from() {
     # Also, I was surprised that '{d;q}' means exactly the same as 'd'.
 
     t=`mktemp`
-    sed -n '/\*\//q;2,$p' $target > $t
+    sed -n '/\*\//q;2,$p' $1 > $t
     cat $t
     if test -s $t; then
 	. $t

@@ -65,8 +65,8 @@ static void _pacc_save_core(long c, off_t col) {
 
 /* a pacc parser */
 struct pacc_parser {
-    unsigned char *name;
-    unsigned char *string;
+    char *name;
+    char *string;
     off_t input_length;
     PACC_TYPE value;
     struct intermed **m_bkt;
@@ -79,7 +79,7 @@ struct pacc_parser {
     unsigned char *stack_alloc; /* last slot in stack */
 
     /* A dynamic array of error strings */
-    unsigned char **err;
+    char **err;
     size_t err_alloc;
     size_t err_valid;
     /* The highest column to have associated error */

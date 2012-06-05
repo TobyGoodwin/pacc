@@ -31,4 +31,11 @@ nocc() {
 export -f nocc
 
 target=$1
-script_from $target
+case $target in
+bad/empty0.pacc)
+    script=bad/empty0.script ;;
+*) 
+    script=$target ;;
+esac
+
+script_from $script

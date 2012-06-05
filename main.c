@@ -19,13 +19,12 @@ int main(int argc, char **argv) {
 
 //if (arg_defines()) puts(arg_defines());
 //exit(0);
-#if 0
-if (arg_feed()) {
-fprintf(stderr, "we will be feeding, fn = %s, rule = %s\n", arg_feed(), arg_feed_rule());
-} else {
-fprintf(stderr, "not feeding\n");
-}
-#endif
+//if (arg_feed()) {
+//fprintf(stderr, "we will be feeding, rule = %s\n", arg_feed());
+//exit(0);
+//} else {
+//fprintf(stderr, "not feeding\n");
+//}
 
     in = load(arg_input(), &size);
 

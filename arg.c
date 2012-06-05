@@ -37,8 +37,7 @@ static char *munge(const char *i, const char *suffix) {
 static const struct option long_opts[] = {
     { "dump-ast", required_argument, 0, 'D' },
     { "defines", optional_argument, 0, 'd' },
-    { "feed", required_argument, 0, 'f' },
-    { "feed-rule", optional_argument, 0, 'r' },
+    { "feed", optional_argument, 0, 'f' },
     { "output", required_argument, 0, 'o' },
     { "help", no_argument, 0, 'h' },
     { "version", no_argument, 0, 'v' },
@@ -64,15 +63,12 @@ char *arg_defines(void) {
     return defines;
 }
 
+static int feeding = 0;
 static char *feed = 0;
 char *arg_feed(void) {
+    if (!feeding) return 0;
+    if (!feed) return "__";
     return feed;
-}
-
-static char *feed_rule = 0;
-char *arg_feed_rule(void) {
-    if (!feed_rule) return "__";
-    return feed_rule;
 }
 
 static char *output = 0;
@@ -90,11 +86,10 @@ static void usage(void) {
     puts("  -D, --dump-ast=WHEN      dump the parse tree at various points");
     puts("");
     puts("Parser:");
-    puts("  -f, --feed                 produce two parsers for feeding");
-    puts("  -r, --feed-rule[=RULE]     rule to enable feeding");
+    puts("  -f, --feed[=RULE]          produce two parsers for feeding");
     puts("");
     puts("Output:");
-    puts("  -d, --define[=FILE]        also produce a header file");
+    puts("  -d, --defines[=FILE]       also produce a header file");
     puts("  -o, --output=FILE          write output to FILE");
     puts("");
     puts("Report bugs to <bug@paccrat.org>.");
@@ -102,7 +97,7 @@ static void usage(void) {
 }
 
 static void version(void) {
-    puts("pacc 0.0 (ninja)");
+    puts("pacc 0.0 (rōnin)");
     puts("Written by Tobias Jayne Goodwin <toby@paccrat.org>");
     puts("");
     puts("Copyright (C) 2012 Free Software Foundation, Inc.");
@@ -114,13 +109,12 @@ static void version(void) {
 void arg(int argc, char **argv) {
     int c, opt_i;
 
-    while ((c = getopt_long(argc, argv, "D:d::f:ho:r::v", long_opts, &opt_i)) != -1) {
+    while ((c = getopt_long(argc, argv, "D:d::f::ho:v", long_opts, &opt_i)) != -1) {
 	switch (c) {
 	case 'D': dump = optarg; break;
 	case 'd': defining = 1; defines = optarg; break;
-	case 'f': feed = optarg; break;
+	case 'f': feeding = 1; feed = optarg; break;
 	case 'o': output = optarg; break;
-	case 'r': feed_rule = optarg; break;
 	case 'v': version(); break;
 	case 'h': usage(); break;
 	case '?': exit(1); break;

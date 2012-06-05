@@ -55,6 +55,6 @@ struct s_node *cook(struct s_node *g) {
     strcpy(newname, g->text);
     strcat(newname, "_feed");
     g->text = newname;
-    feed_rule = arg_feed_rule();
+    feed_rule = arg_feed();
     return cook0(g, 0);
 }

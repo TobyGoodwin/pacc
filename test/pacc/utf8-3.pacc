@@ -1,0 +1,17 @@
+/*
+int
+parse '$1' 1
+parse '£2' 2
+parse '€3' 3
+noparse x4 S 1
+noparse '𝄞4' S 1
+noparse '$x' Amount 2
+*/
+
+/* This test verifies the workaround for the lack of UTF-8 support in
+ * character classes. See http://paccrat.org/entry/2012-06-04
+ */
+
+S :: int ← Currency a:Amount → a
+Amount ← [0-9] { *ref_ptr(ref()) - '0' }
+Currency ← [$£€]
