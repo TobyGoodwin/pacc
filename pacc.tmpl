@@ -361,6 +361,11 @@ int YY_parse(struct pacc_parser *_pacc) {
 
     col = 0;
     cur = _pacc_result(_pacc, col, start_rule_id);
+    /* pacc grammars are anchored on the right */
+    if ((cur->rule & 3) == parsed && cur->remainder != _pacc->input_length) {
+	error(_pacc, "end-of-input", cur->remainder);
+	cur->rule = (cur->rule & ~3) | no_parse;
+    }
     if (parsed && !evaluating && (cur->rule & 3) == parsed) {
 	unsigned char *stack_save;
 

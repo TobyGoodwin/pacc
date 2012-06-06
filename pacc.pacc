@@ -7,7 +7,7 @@
 }
 
 Grammar :: struct s_node *
-    ← _ p:Preamble ds:Defns End → 
+    ← _ p:Preamble ds:Defns → 
     { s_both(grammar, "", cons(p, ds)) }
 
 Defns
@@ -162,5 +162,3 @@ Plus ← "+" _
 Query ← "?" _
 Slash ← "/" _
 Star ← "*" _
-
-End ← !.

@@ -1,5 +1,5 @@
 /*
-nopacc 5:11 'expected NameStart:c:0'
+nopacc 5:10 'expected Defns, or end-of-input'
 */
 
 S ← ε "foo"

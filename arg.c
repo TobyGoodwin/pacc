@@ -98,7 +98,7 @@ static void usage(void) {
 
 static void version(void) {
     puts("pacc 0.0 (rōnin)");
-    puts("Written by Tobias Jayne Goodwin <toby@paccrat.org>");
+    puts("Written by Tobold Jayne Goodwin <toby@paccrat.org>");
     puts("");
     puts("Copyright (C) 2012 Free Software Foundation, Inc.");
     puts("This is free software; see the source for copying conditions.  There is NO");

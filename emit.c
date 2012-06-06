@@ -301,7 +301,7 @@ static void rule_post(struct s_node *n) {
     /* XXX: See test/pacc/err0.c. This is wrong. What is right? */
     c_str("if (_pacc->err_col == rule_col)"); c_open();
     c_strln("_pacc->err_valid = 0;");
-    c_str("error(_pacc, \""); c_str(n->text); c_strln("\", col);");
+    c_str("error(_pacc, \""); c_str(n->text); c_strln("\", rule_col);");
     c_close();
 
     c_close(); /* this closes the open in rule_pre() */ 

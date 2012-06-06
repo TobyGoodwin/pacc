@@ -2,7 +2,7 @@
 type int
 parse a9 9
 parse z3 3
-noparse zx A 3
+noparse zx P 1
 */
 
 #include <sys/types.h>

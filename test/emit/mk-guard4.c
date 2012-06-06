@@ -3,8 +3,8 @@ type chars
 parse a a
 parse q q
 parse z z
-noparse A A 2
-noparse % A 2
+noparse A P 1
+noparse % P 1
 */
 
 #include <sys/types.h>

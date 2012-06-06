@@ -1,0 +1,12 @@
+/*
+int
+parse 5 5
+noparse 5x end-of-input 2
+noparse x5 A 1
+*/
+
+/* pacc grammars are bound on the right too: the grammar
+ * must match the whole of the input
+ */
+
+A :: int <- "5" { 5 }

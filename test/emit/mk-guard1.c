@@ -1,7 +1,7 @@
 /*
 type int
 parse 5 5
-noparse 6 A 2
+noparse 6 P 1
 */
 
 #include <sys/types.h>
