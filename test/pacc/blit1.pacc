@@ -1,9 +1,9 @@
 /*
 chars
 parse qux a
-noparse fool Letter 5
+noparse fool P 1
 parse foobar c
-noparse baz Trip 4
+noparse baz P 1
 */
 
 # Bound literals: the RHS of a bound literal may be a rule, or anything.

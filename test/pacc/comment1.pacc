@@ -1,7 +1,7 @@
 /*
 chars
 parse ab ab
-noparse ax A 2
+noparse ax S 1
 */
 
 /* The point of this test is that the semantic predicate contains the

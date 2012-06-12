@@ -3,7 +3,7 @@ type chars
 parse a a
 parse aa aa
 parse aaaaa aaaaa
-parse aabaa aa
+noparse aabaa 'P, or end-of-input' 3
 */
 
 #include <sys/types.h>

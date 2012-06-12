@@ -1,0 +1,11 @@
+/*
+type int
+parse forty-four 44
+parse forty-five 45
+noparse x FortySomething 1
+noparse forty-flimble '"four", or "five"' 7
+*/
+
+/* Values in a nested alt */
+
+FortySomething ← "forty-" ("four" → { 44 } / "five" → { 45 })

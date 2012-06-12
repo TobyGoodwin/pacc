@@ -3,8 +3,12 @@ type chars
 noparse f '"o"' 2
 noparse fo '"o"' 3
 parse foo yes
-noparse food S 4
+noparse food S 1
 */
+
+/* This test dates back to before right-anchoring, but its good to check
+ * that !. works as expected, even though it's redundant.
+ */
 
 #include <sys/types.h>
 

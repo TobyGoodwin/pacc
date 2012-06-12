@@ -6,14 +6,11 @@ parse git git
 parse box box
 parse tug tug
 noparse sky Vowel 2
-noparse end Vowel 2
+noparse end Word 1
 */
 
 # This doesn't actually test anything very much, but it is I feel, a
 # very natural way to write this grammar as a PEG.
-
-# XXX "noparse end Vowel 2" seems wrong to me, but error handling is
-# still to be worked upon...
 
 Word :: char * ← Consonant Vowel Consonant { ref_str() }
 Vowel ← [aeiou]

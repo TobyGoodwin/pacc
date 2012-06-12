@@ -6,6 +6,7 @@ parse '€3' 3
 noparse x4 S 1
 noparse '𝄞4' S 1
 noparse '$x' Amount 2
+echo FIXME LATER
 */
 
 /* This test will FAIL till pacc actually supports UTF-8 in character

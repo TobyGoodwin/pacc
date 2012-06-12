@@ -3,7 +3,7 @@ chars
 noparse f S 1
 noparse fo S 1
 parse foo yes
-noparse food S 4
+noparse food S 1
 */
 
 # End of input:

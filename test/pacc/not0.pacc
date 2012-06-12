@@ -1,10 +1,10 @@
 /*
 chars
 parse a a
-parse ac a
-noparse ab A 2
+parse ac ac
+noparse ab A 1
 */
 
 # A single character with value:
 
-A :: char * ← "a" !( "b" ) { ref_str() }
+A :: char * ← "a" !( "b" ) .? { ref_str() }

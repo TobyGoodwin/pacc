@@ -1,7 +1,8 @@
 /*
 type int
 parse 5 5
-parse 6 0
+parse 55 55
+noparse 6 'P, or end-of-input' 1
 */
 
 /* XXX This is a previous version of bind4. Note that the expected

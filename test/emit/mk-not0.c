@@ -1,9 +1,11 @@
 /*
 type chars
-parse a a
-parse ac a
-noparse ab A 2
+parse ac ac
+noparse a '"b"' 2
+noparse ab A 1
 */
+
+/* XXX obviously we really don't mean: expected "b" */
 
 #include <sys/types.h>
 
@@ -14,11 +16,12 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
 
     /* A single character with value:
      *
-     * char *A ← 'a' !( 'b' ) { ref_str() }
+     * char *A ← 'a' !( 'b' ) . { ref_str() }
      *
      */
 
     p = new_node(expr); p->text = "ref_str()"; q = p;
+    q = cons(s_new(any), q);
     p = new_node(lit); p->text = "b"; s = p;
     p = new_node(seq); p->first = s; s = p;
     p = new_node(not); p->first = s; p->next = q; q = p;

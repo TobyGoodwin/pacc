@@ -3,8 +3,8 @@ int
 parse '$1' 1
 parse '£2' 2
 parse '€3' 3
-noparse x4 Currency:_pacc_bl120:0 2
-noparse '𝄞4' Currency:_pacc_bl120:0 5
+noparse x4 S 1
+noparse '𝄞4' S 1
 noparse '$x' Amount 2
 */
 

@@ -1,9 +1,9 @@
 /*
 chars
-parse ab a
+parse ab ab
 noparse ac '"b"' 2
 */
 
 # A single character with value:
 
-A :: char * ← "a" &( "b" ) { ref_str() }
+A :: char * ← "a" &( "b" ) . { ref_str() }

@@ -1,0 +1,11 @@
+/*
+type int
+parse one-hundred-and-forty-four 144
+parse one-hundred-and-fifty-four 154
+noparse x FewNums 1
+noparse one-hundred-and-flimble-four '"forty", or "fifty"' 17
+*/
+
+/* Values in a nested alt that is not at the end of a seq */
+
+FewNums ← "one-hundred-and-" ("forty" → { 144 } / "fifty" → { 154 }) "-four"
