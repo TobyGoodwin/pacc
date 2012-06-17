@@ -50,7 +50,7 @@ script_from() {
 }
 export -f script_from
 
-ts=${*:-bad/*.pacc emit/mk-*.c pacc/*.pacc}
+ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc pacc/*.pacc}
 
 for t in $ts; do
     export target=$t
