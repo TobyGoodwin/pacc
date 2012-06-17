@@ -1,7 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+/* XXX we include parse.h for PACC_TYPE_FORMAT but is that the best way
+ * to do it? */
+
 #include "parse.h"
+#include "parsefeed.h"
 
 int main(int argc, char **argv) {
     char *text = 0;

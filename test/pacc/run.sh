@@ -29,7 +29,7 @@ type() {
 	*) fail "bad type $1" ;;
     esac
     rm -f emitter emitter.o parse.c parse.o harness harness.o
-    make harness
+    make -C .. test/harness
 }
 export -f type
 

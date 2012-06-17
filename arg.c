@@ -7,28 +7,27 @@
 #include "assert.h"
 #include "error.h"
 
-/* The inventively named munge() returns a newly-allocated string
- * holding the basename of its input, with suffix replacing the existing
- * suffix (or appended if there was no suffix). For example,
- * munge("/foo/x.pacc", ".c") ==> "x.c".
+/* The function repsuf() returns a newly-allocated string holding a copy
+ * of its input, with suffix replacing the existing suffix (or appended
+ * if there was no suffix). For example, repsuf("/foo/x.pacc", ".c") ==>
+ * "/foo/x.c".
  */
-static char *munge(const char *i, const char *suffix) {
-    const char *b, *d, *p;
+static char *repsuf(const char *i, const char *suffix) {
+    const char *d, *p;
     char *r;
     size_t l;
 
     d = 0;
-    p = b = i;
+    p = i;
     while (*p) {
-	if (*p == '/') b = p + 1;
 	if (*p == '.') d = p;
 	++p;
     }
     if (!d) d = p;
-    l = d - b;
-    r = malloc(l + sizeof suffix);
+    l = d - i;
+    r = malloc(l + strlen(suffix) + 1);
     if (!r) nomem();
-    strncpy(r, b, l);
+    strncpy(r, i, l);
     r[l] = '\0';
     strcat(r, suffix);
     return r;
@@ -90,12 +89,12 @@ static void usage(void) {
     puts("  -D, --dump-ast=WHEN      dump the parse tree at various points");
     puts("");
     puts("Parser:");
-    puts("  -f, --feed                 produce two parsers for feeding");
-    puts("  -r, --feed-rule[=RULE]     rule to enable feeding");
+    puts("  -f, --feed=FILE          write extra feed parser to FILE");
+    puts("  -r, --feed-rule=RULE     end-of-input rule when feeding (default: __)");
     puts("");
     puts("Output:");
-    puts("  -d, --define[=FILE]        also produce a header file");
-    puts("  -o, --output=FILE          write output to FILE");
+    puts("  -d, --define[=FILE]      also produce a header file");
+    puts("  -o, --output=FILE        write output to FILE");
     puts("");
     puts("Report bugs to <bug@paccrat.org>.");
     exit(0);
@@ -129,6 +128,6 @@ void arg(int argc, char **argv) {
     }
     if (argc - optind != 1) usage();
     input = argv[optind];
-    if (!output) output = munge(input, ".c");
-    if (defining && !defines) defines = munge(output, ".h");
+    if (!output) output = repsuf(input, ".c");
+    if (defining && !defines) defines = repsuf(output, ".h");
 }

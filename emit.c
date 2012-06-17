@@ -770,21 +770,40 @@ void emit(struct s_node *g) {
     fflush(stdout);
 }
 
-void header(struct s_node *g) {
-    char *yy = g->text;
-    char *preamble = g->first->text;
-    char *type = g->first->next->first->text;
-    if (preamble) puts(preamble);
-
-    printf("#include <sys/types.h>\n"); /* for off_t */
-    printf("struct pacc_parser;\n");
-    printf("extern void %s_input(struct pacc_parser, char, char, off_t l);\n",
-	yy);
+static void h_lines(char *yy, char *type) {
+    printf("extern struct pacc_parser *%s_new(void);\n", yy);
+    printf("extern void %s_input(struct pacc_parser *, char *, char *, off_t l);\n", yy);
     printf("extern void %s_destroy(struct pacc_parser *);\n", yy);
     printf("extern int %s_parse(struct pacc_parser *);\n", yy);
     printf("extern %s %s_result(struct pacc_parser *);\n", type, yy);
     printf("extern void %s_error(struct pacc_parser *);\n", yy);
     printf("extern int %s_wrap(const char *, char *, off_t, %s *result);\n",
 	yy, type);
+}
+
+void header(struct s_node *g) {
+    size_t l;
+    char *newname;
+    char *yy = g->text;
+    char *preamble = g->first->text;
+    char *type = g->first->next->first->text;
+    
+    if (preamble) puts(preamble);
+
+    printf("#include <sys/types.h>\n"); /* for off_t */
+    printf("struct pacc_parser;\n");
+    h_lines(yy, type);
+
+    if (arg_feed()) {
+	/* XXX cut'n'paste from cook.c */
+	l = strlen(yy) + strlen("_feed") + 1;
+	newname = realloc(0, l);
+	if (!newname) nomem();
+	strcpy(newname, g->text);
+	strcat(newname, "_feed");
+	h_lines(newname, type);
+	free(newname);
+    }
+
     fflush(stdout);
 }

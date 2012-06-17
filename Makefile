@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Wextra
+CFLAGS = -g -Wall -Wextra -I.
 LDFLAGS = -g
 
 all: pacc
@@ -23,7 +23,7 @@ pacc2: $(OBJS) pacc2.o
 pacc2.c: pacc1 pacc.pacc
 	./pacc1 pacc.pacc -o $@
 
-pacc3: $(OBJS3) pacc3.o
+pacc3: $(OBJS) pacc3.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 pacc3.c: pacc2 pacc.pacc
@@ -58,7 +58,7 @@ utf8.o: utf8.h
 %.d: %.c
 	sed '/^#/d' $^ > $@
 
-.PHONY: sane check clean
+.PHONY: sane check clean test/clean
 sane: pacc2.d pacc3.d
 	diff $^
 
@@ -70,3 +70,31 @@ clean:
 	rm -f $(OBJS)
 	rm -f pacc0.o pacc1.o pacc2.o pacc3.o
 	rm -f pacc1.c pacc2.c pacc3.c pacc2.d pacc3.d template.c
+
+test/harness: test/harness.o test/parse.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+test/harness.o: test/parse.h
+
+test/parse.c test/parse.h: test/parse.pacc
+	./pacc $^
+
+test/emitter: $(OBJS) test/emitter.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+test/feeder: test/feeder.o test/parsefeed.o test/partial.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+test/feeder.o: test/parsefeed.h
+
+test/parsefeed.c test/parsefeed.h test/partial.c: test/parsefeed.pacc
+	./pacc -d -ftest/partial.c $^
+
+test/clean: 
+	@echo test/clean
+	@rm -f test/harness test/harness.o test/parse.o
+	@rm -f test/parse.c test/parse.h test/parse.pacc
+	@rm -f test/emitter test/emitter.o test/emitter.c
+	@rm -f test/feeder test/feeder.o test/parsefeed.o test/partial.o
+	@rm -f test/parsefeed.c test/parsefeed.h test/partial.c
+	@rm -f test/parsefeed.pacc
