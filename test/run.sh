@@ -2,6 +2,7 @@
 
 export passes=`mktemp`
 export fails=`mktemp`
+export expfails=`mktemp`
 
 fail() {
     echo FAIL: "$1"
@@ -14,6 +15,12 @@ pass() {
     echo -n . >> $passes
 }
 export -f pass
+
+XXX() {
+    echo expect fail
+    echo -n . >> $expfails
+}
+export -f XXX
 
 check() {
     if [ "$1" = "$2" ]; then
@@ -43,7 +50,7 @@ script_from() {
 }
 export -f script_from
 
-ts=${*:-bad/*.pacc emit/mk-*.c pacc/*.pacc java/java.pacc}
+ts=${*:-bad/*.pacc emit/mk-*.c pacc/*.pacc}
 
 for t in $ts; do
     export target=$t
@@ -53,5 +60,9 @@ for t in $ts; do
 done
 
 echo
-echo `stat '--printf=%s' $passes` passes
-echo `stat '--printf=%s' $fails` fails
+count() {
+    stat '--printf=%s' $1
+}
+echo $(count $passes) passes
+echo $(count $fails) fails,  expected $(count $expfails)
+rm -f $passes $fails $expfails

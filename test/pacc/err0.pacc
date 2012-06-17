@@ -1,7 +1,7 @@
 /*
 type int
 noparse xd 'expected "a", B, or see' 2
-echo FIXME LATER
+XXX
 */
 
 /* XXX this test is a fantasy: pacc has never reported 'expected "a", B,

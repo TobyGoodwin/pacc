@@ -1,11 +1,6 @@
 CC = gcc
 CFLAGS = -W -Wall -g -I..
 
-all: harness
-
-check:
-	sh run.sh
-
 clean:
 	rm -f harness harness.o parse.c
 
