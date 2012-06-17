@@ -1,26 +1,23 @@
 #! /bin/sh
 
-export passes=`mktemp`
-export fails=`mktemp`
-export expfails=`mktemp`
+passes=`mktemp`
+fails=`mktemp`
+expfails=`mktemp`
 
 fail() {
     echo FAIL: "$1"
     echo -n . >> $fails
 }
-export -f fail
 
 pass() {
     echo PASS: "$1"
     echo -n . >> $passes
 }
-export -f pass
 
 XXX() {
     echo expect fail
     echo -n . >> $expfails
 }
-export -f XXX
 
 check() {
     if [ "$1" = "$2" ]; then
@@ -29,7 +26,6 @@ check() {
 	fail "$target: $1 (expected $2)"
     fi
 }
-export -f check
 
 script_from() {
     # Extract a test script from a C-style comment in a test case. The
@@ -48,14 +44,13 @@ script_from() {
     fi
     rm $t
 }
-export -f script_from
 
 ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc pacc/*.pacc}
 
 for t in $ts; do
-    export target=$t
+    target=$t
     runner=`echo $target | sed 's,/.*,/run.sh,'`
-    $runner $target
+    . $runner
 done
 
 count() {

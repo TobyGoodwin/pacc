@@ -7,21 +7,18 @@ parse() {
     r=`./harness "$1" 2>&1`
     check "$r" "parsed with value $2"
 }
-export -f parse
 
 parse_exact() {
     echo ./harness "$1"
     r=`./harness "$1" 2>&1`
     check "$r" "$2"
 }
-export -f parse
 
 noparse() {
     echo ./harness "$1"
     r=`./harness "$1" 2>&1`
     check "$r" "arg:1:$3: expected $2"
 }
-export -f noparse
 
 type() {
     case $1 in
@@ -31,20 +28,16 @@ type() {
     rm -f emitter emitter.o parse.c parse.o harness harness.o
     make -C .. test/harness
 }
-export -f type
 
 # For hysterical raisins...
 chars() {
     type chars
 }
-export -f chars
 
 int() {
     type int
 }
-export -f int
 
-target=$1
 echo cp $target parse.pacc
 cp $target parse.pacc
 script_from $target

@@ -8,7 +8,6 @@ nopacc() {
     r=$($pacc parse.pacc 2>&1 && echo 'parsed bad grammar by mistake!')
     check "$r" "parse.pacc:$loc: $err"
 }
-export -f nopacc
 
 nopacc1() {
     err=$1
@@ -16,7 +15,6 @@ nopacc1() {
     r=$($pacc parse.pacc 2>&1 && echo 'parsed bad grammar by mistake!')
     check "$r" "$err"
 }
-export -f nopacc1
 
 nocc() {
     loc=$1 err=$2
@@ -25,9 +23,7 @@ nocc() {
     echo cc parse.c
     cc parse.c
 }
-export -f nocc
 
-target=$1
 case $target in
 bad/empty0.pacc)
     script=bad/empty0.script ;;
