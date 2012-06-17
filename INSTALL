@@ -1,9 +1,9 @@
-to build pacc, and perform the pacc3 basic sanity check: make
+Future releases of pacc will be autoconfiscated.
 
-to run the test suite: make check
+For this release:
 
-to run an individual test: cd test; ./run.sh emit/mk-class0.c
+- to build pacc, and perform the pacc3 basic sanity check: make
 
-to dump a tree, first run individual test, then:
-    for an emit test: ./emitter -d -o parse.c parse.pacc
-    for any other test: ../pacc2 -d parse.pacc
+- to run the test suite: make check
+
+- to run an individual test: cd test; ./run.sh emit/mk-class0.c

@@ -54,15 +54,16 @@ ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc pacc/*.pacc}
 
 for t in $ts; do
     export target=$t
-    export pacc=../pacc2
     runner=`echo $target | sed 's,/.*,/run.sh,'`
     $runner $target
 done
 
-echo
 count() {
     stat '--printf=%s' $1
 }
+
+echo
 echo $(count $passes) passes
 echo $(count $fails) fails,  expected $(count $expfails)
-rm -f $passes $fails $expfails
+rm $passes $fails $expfails
+make -C.. test/clean

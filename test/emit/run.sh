@@ -28,7 +28,7 @@ type() {
 	chars|int) echo cp parse.h-$1 parse.h; cp parse.h-$1 parse.h ;;
 	*) fail "bad type $1" ;;
     esac
-    rm -f emitter emitter.o parse.c parse.o harness harness.o
+    #rm -f emitter emitter.o parse.c parse.o harness harness.o
     make -C.. test/emitter
     echo ./emitter -o parse.c parse.pacc
     ./emitter -o parse.c parse.pacc
@@ -48,6 +48,7 @@ int() {
 export -f int
 
 target=$1
+make -C../test/clean
 echo x > parse.pacc
 echo cp $target emitter.c
 cp $target emitter.c

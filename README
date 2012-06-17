@@ -1,8 +1,25 @@
-pacc - a compiler compiler
+pacc 0.0 (rōnin)
+Written by Tobold Jayne Goodwin <toby@paccrat.org>
 
-pacc is a compiler compiler, somewhat like yacc (or bison). Its input is
-a description of a grammar, and its output is a C function that
-recognizes strings of that grammar. The significant technical difference
-is this: yacc reads a context-free grammar, and writes a LALR(1)
-parser; pacc reads a parsing expression grammar (PEG), and writes a
-packrat parser.
+Copyright (C) 2012 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+WARNING: Alpha release. This release is incomplete, buggy, and poorly
+documented! Furthermore, any interfaces are subject to change in future
+releases, and is is unlikely that backwards compatibility will be a high
+priority.
+
+Having said that, it generally seems to work pretty well!
+
+pacc is intended to become the parser-generator of choice for C for the
+early- to mid-21st century: widely portable, industrial strength,
+blazingly fast, parsimonious, and still elegant. So head on over to the
+INSTALL file, and found out how to build yourself a small slice of
+computer science history.
+
+For more information, visit http://paccrat.org/
+
+Toby
+Peterborough, UK
+2012-06-17

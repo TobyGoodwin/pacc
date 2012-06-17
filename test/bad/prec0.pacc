@@ -1,7 +1,6 @@
 /*
 nopacc 5:9 'expected Defns, or end-of-input'
 XXX
-XXX
 */
 
 S ← "a" ("b" → {5}) "c" → {7}
