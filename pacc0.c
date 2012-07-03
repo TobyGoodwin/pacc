@@ -11,15 +11,6 @@ int pacc_wrap(
     struct s_node *i, *p, *q, *r, *s, *t;
 
     /*
-	End ← !.
-    */
-
-    p = new_node(any); q = p;
-    p = new_node(not); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "End"; p->first = q; r = p;
-
-    /*
 	Star  ← "*" _
     */
 
@@ -27,7 +18,7 @@ int pacc_wrap(
     p = s_new(lit); p->text = "*"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "Star"; p->first = q; p->next = r; r = p;
+    p = s_new(rule); p->text = "Star"; p->first = q; r = p;
 
     /*
 	Slash ← "/" _
@@ -256,43 +247,23 @@ int pacc_wrap(
     p = s_new(rule); p->text = "TypeElement"; p->first = q; p->next = r; r = p;
 
     /*
-	NameCont
-	    ← c:Char &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
-    */
-
-    p = s_new(ident); p->text = "c"; s = p;
-    p = s_text(guard, "isalnum(ref_0(c)) || ref_0(c) == '_'"); p->first = s; q = p;
-    p = s_new(call); p->text = "Char"; s = p;
-    p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "NameCont"; p->first = q; p->next = r; r = p;
-
-    /*
-	NameStart :: void
-	    ← c:Char &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
-    */
-
-    p = s_new(ident); p->text = "c"; s = p;
-    p = s_text(guard, "isalpha(ref_0(c)) || ref_0(c) == '_'"); p->first = s; q = p;
-    p = s_new(call); p->text = "Char"; s = p;
-    p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "NameStart"; p->first = q; p->next = r; r = p;
-
-    /*
 	QuotedChar
+	    ← c:SimpleCharEscape → c
+	    / !"\\" x:. → { ref_dup(x) }
 	    ← SimpleCharEscape
 	    / !"\\" Char
     */
 
-    p = s_kid(not, s_text(lit, "\\\\"));
-    q = s_text(call, "Char");
-    p = s_kid(seq, cons(p, q));
-    p = cons(s_text(call, "SimpleCharEscape"), p);
-    p = s_kid(alt, p);
+    p = s_both(expr, "ref_dup(x)", s_text(ident, "x"));
+    p = cons(s_both(bind, "x", s_new(any)), p);
+    p = cons(s_kid(not, s_text(lit, "\\\\")), p);
     p = s_kid(seq, p);
+
+    q = s_both(expr, "c", s_text(ident, "c"));
+    q = cons(s_both(bind, "c", s_text(call, "SimpleCharEscape")), q);
+    q = s_kid(seq, q);
+
+    p = s_kid(alt, cons(q, p));
     p = cons(s_text(type, "char *"), p);
     p = s_both(rule, "QuotedChar", p);
     r = cons(p, r);
@@ -395,34 +366,26 @@ int pacc_wrap(
 
     /*
 	Name :: char *
-	    ← n:(NameStart NameCont*) _ { ref_dup(n) }
+	    ← n:([_A-Za-z] [_A-Za-z0-9]*) _ { ref_dup(n) }
     */
     p = s_both(expr, "ref_dup(n)", s_text(ident, "n"));
     p = cons(s_text(call, "_"), p);
-    q = s_both(rep, 0, s_kid(seq, s_text(call, "NameCont")));
-    q = cons(s_text(call, "NameStart"), q);
-    q = s_kid(seq, q);
+    q = cons(s_text(crange, ">0"), s_text(crange, "<9"));
+    q = cons(s_text(crange, ">a"), cons(s_text(crange, "<z"), q));
+    q = cons(s_text(crange, ">A"), cons(s_text(crange, "<Z"), q));
+    q = cons(s_text(crange, "=_"), q);
+    q = s_both(cclass, "", q);
+    q = s_both(rep, 0, q);
+    s = cons(s_text(crange, ">a"), s_text(crange, "<z"));
+    s = cons(s_text(crange, ">A"), cons(s_text(crange, "<Z"), s));
+    s = cons(s_text(crange, "=_"), s);
+    s = s_both(cclass, "", s);
+    q = s_kid(seq, cons(s, q));
     q = s_both(bind, "n", q);
     p = s_kid(seq, cons(q, p));
     p = cons(s_text(type, "char *"), p);
     p = s_both(rule, "Name", p);
     r = cons(p, r);
-
-#if 0
-    /*
-	Name :: char *
-	    ← NameStart NameCont* { match() } _
-    */
-
-    p = s_new(call); p->text = "_"; q = p;
-    p = s_new(expr); p->text = "match()"; p->next = q; q = p;
-    p = s_new(call); p->text = "NameCont"; s = p;
-    p = s_new(rep); p->first = s; p->next = q; q = p;
-    p = s_new(call); p->text = "NameStart"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "char *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "Name"; p->first = q; p->next = r; r = p;
-#endif
 
     /*
 	Preamble
@@ -556,6 +519,71 @@ int pacc_wrap(
     p = s_new(rule); p->text = "Result"; p->first = q; p->next = r; r = p;
 
     /*
+	CChar :: char *
+	    ← "\\]" { "]" } / ! "]" y:QuotedChar → y
+    */
+    p = s_both(expr, "y", s_text(ident, "y"));
+    p = cons(s_both(bind, "y", s_text(call, "QuotedChar")), p);
+    p = cons(s_kid(not, s_text(lit, "]")), p);
+    p = s_kid(seq, p);
+    q = s_text(expr, "\"]\"");
+    q = cons(s_text(lit, "\\\\]"), q);
+    q = s_kid(seq, q);
+    p = s_kid(alt, cons(q, p));
+    p = cons(s_text(type, "char *"), p);
+    p = s_both(rule, "CChar", p);
+    r = cons(p, r);
+
+    /*
+	CRange
+	    ← a:CChar "-" b:CChar { s_range2(a, b) }
+	    / a:CChar { s_range1(a) }
+    */
+    p = s_both(expr, "s_range1(a)", s_text(ident, "a"));
+    p = cons(s_both(bind, "a", s_text(call, "CChar")), p);
+    p = s_kid(seq, p);
+    q = cons(s_text(ident, "a"), s_text(ident, "b"));
+    q = s_both(expr, "s_range2(a, b)", q);
+    q = cons(s_both(bind, "b", s_text(call, "CChar")), q);
+    q = cons(s_text(lit, "-"), q);
+    q = cons(s_both(bind, "a", s_text(call, "CChar")), q);
+    q = s_kid(seq, q);
+    p = s_kid(alt, cons(q, p));
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = s_both(rule, "CRange", p);
+    r = cons(p, r);
+
+    /*
+	CRanges
+	    ← c:CRange cs:CRanges { append(c, cs) }
+	    / ε { 0 }
+    */
+    s = s_kid(seq, s_text(expr, "0"));
+    p = cons(s_text(ident, "c"), s_text(ident, "cs"));
+    p = s_both(expr, "append(c, cs)", p);
+    p = cons(s_both(bind, "cs", s_text(call, "CRanges")), p);
+    p = cons(s_both(bind, "c", s_text(call, "CRange")), p);
+    p = s_kid(seq, p);
+    p = s_kid(alt, cons(p, s));
+    p = s_both(rule, "CRanges", cons(s_text(type, "struct s_node *"), p));
+    r = cons(p, r);
+
+    /*
+	CClass
+	    ← "[" i:"^"? c:CRanges "]" _ { s_both(cclass, ref_dup(i), c) }
+    */
+    p = cons(s_text(ident, "i"), s_text(ident, "c"));
+    p = s_both(expr, "s_both(cclass, ref_dup(i), c)", p);
+    p = cons(s_text(call, "_"), p);
+    p = cons(s_text(lit, "]"), p);
+    p = cons(s_both(bind, "c", s_text(call, "CRanges")), p);
+    p = cons(s_both(bind, "i", s_both(rep, ",1", s_text(lit, "^"))), p);
+    p = cons(s_text(lit, "["), p);
+    p = s_kid(seq, p);
+    p = s_both(rule, "CClass", cons(s_text(type, "struct s_node *"), p));
+    r = cons(p, r);
+
+    /*
 	Rule6
 	    ← lParen r:Rule0 rParen → r
      */
@@ -574,12 +602,17 @@ int pacc_wrap(
 	    ← n:Name !lArrow !ColCol { s_text(call, n) }
 	    / Dot { s_new(any) }
 	    / l:StringLit { s_text(lit, l) }
+	    / c:CClass → c
 	    / r:Rule6 → r
      */
 
     p = s_both(expr, "r", s_text(ident, "r"));
     p = cons(s_both(bind, "r", s_text(call, "Rule6")), p);
     s = s_kid(seq, p);
+
+    p = s_both(expr, "c", s_text(ident, "c"));
+    p = cons(s_both(bind, "c", s_text(call, "CClass")), p);
+    s = cons(s_kid(seq, p), s);
 
     p = s_both(expr, "s_text(lit, l)", s_text(ident, "l"));
     p = cons(s_both(bind, "l", s_text(call, "StringLit")), p);
@@ -796,13 +829,12 @@ int pacc_wrap(
 
     /*
 	Grammar :: struct s_node *
-	    ← _ p:Preamble ds:Defns End →
-	    { s_both(grammar, "yy", cons(p, ds)) }
+	    ← _ p:Preamble ds:Defns
+	    → { s_both(grammar, "yy", cons(p, ds)) }
     */
     p = s_new(ident); p->text = "ds"; i = p;
     p = s_new(ident); p->text = "p"; p->next = i; i = p;
     p = s_both(expr, "s_both(grammar, \"\", cons(p, ds))", i); q = p;
-    p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "Defns"; s = p;
     p = s_new(bind); p->text = "ds"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Preamble"; s = p;

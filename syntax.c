@@ -171,6 +171,7 @@ static struct s_node *s_range(const char t, const char *v) {
     char *r;
     struct s_node *p = s_new(crange);
 
+    assert(v);
     r = malloc(1 + 2); /* XXX encoding */
     if (!r) nomem();
     strcpy(r + 1, v);

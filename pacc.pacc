@@ -54,8 +54,6 @@ Rule5
 Rule6
     ← lParen r:Rule0 rParen → r
 
-# XXX Problems here: there's no way to include "]" in a character class,
-# we don't handle \n, or any more elaborate escapes.
 CClass
     ← "[" i:"^"? c:CRanges "]" _ { s_both(cclass, ref_dup(i), c) }
 
@@ -103,7 +101,7 @@ Preamble
     / ε { s_text(preamble, 0) }
 
 Name :: char *
-    ← n:(NameStart NameCont*) _ { ref_dup(n) }
+    ← n:([_A-Za-z] [_A-Za-z0-9]*) _ { ref_dup(n) }
 
 TypeOptional
     ← ColCol TypeElement+ { s_stash_type(ref_str()) }
@@ -116,7 +114,7 @@ QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
 CharLit :: void
     ← "'" QuotedChar "'" _
 
-# XXX this needs to completely match the C:1999 definition, including
+# XXX this needs to completely match the C:2010 definition, including
 # octal, hex and universal escapes. 
 QuotedChar :: char *
     ← c:SimpleCharEscape → c
@@ -125,12 +123,6 @@ QuotedChar :: char *
 SimpleCharEscape
     ← "\\" a:("\'" / "\"" / "\?" / "\\"
     / "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
-
-NameStart :: void
-    ← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
-
-NameCont
-    ← c:. &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
 
 TypeElement
     ← Name _ / "*" _
