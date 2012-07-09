@@ -370,15 +370,15 @@ int pacc_wrap(
     */
     p = s_both(expr, "ref_dup(n)", s_text(ident, "n"));
     p = cons(s_text(call, "_"), p);
-    q = cons(s_text(crange, ">0"), s_text(crange, "<9"));
-    q = cons(s_text(crange, ">a"), cons(s_text(crange, "<z"), q));
-    q = cons(s_text(crange, ">A"), cons(s_text(crange, "<Z"), q));
-    q = cons(s_text(crange, "=_"), q);
+    q = cons(s_num(ccge, '0'), s_num(ccle, '9'));
+    q = cons(s_num(ccge, 'a'), cons(s_num(ccle, 'z'), q));
+    q = cons(s_num(ccge, 'A'), cons(s_num(ccle, 'Z'), q));
+    q = cons(s_num(cceq, '_'), q);
     q = s_both(cclass, "", q);
     q = s_both(rep, 0, q);
-    s = cons(s_text(crange, ">a"), s_text(crange, "<z"));
-    s = cons(s_text(crange, ">A"), cons(s_text(crange, "<Z"), s));
-    s = cons(s_text(crange, "=_"), s);
+    s = cons(s_num(ccge, 'a'), s_num(ccle, 'z'));
+    s = cons(s_num(ccge, 'A'), cons(s_num(ccle, 'Z'), s));
+    s = cons(s_num(cceq, '_'), s);
     s = s_both(cclass, "", s);
     q = s_kid(seq, cons(s, q));
     q = s_both(bind, "n", q);

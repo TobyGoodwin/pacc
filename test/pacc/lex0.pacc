@@ -1,0 +1,21 @@
+/*
+int
+parse 5.5 25
+parse 5.6 30
+parse 6.5 30
+parse 6.6 36
+noparse x P 1
+noparse 5.x A 3
+noparse 6.x A 3
+parse 5+5 10
+parse 5+6 11
+parse 6+5 11
+parse 6+6 12
+noparse 5+x A 3
+noparse 6+x A 3
+noparse 5.+ A 3
+*/
+
+# Same as val6.pacc, but all on one line
+
+P <- a:A "." b:A { a * b } / e:A "+" f:A { e + f } A <- "5" { 5 } / b:B -> b B <- "6" { 6 }

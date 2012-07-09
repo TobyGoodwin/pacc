@@ -1,14 +1,14 @@
 #ifndef PACC_SYNTAX_H
 #define PACC_SYNTAX_H 1
 enum s_type {
-    grammar, rule,	/* scaffolding */
-    type, alt, seq,	/* fundamentals */
-    and, not,		/* syntactic predicates */
-    expr, bind, coords,	/* expressions */
-    guard, ident,	/* semantic predicate */
-    call, lit, any,	/* matchers */
-    cclass, crange,	/* character classes */
-    rep, 		/* sugar */
+    grammar, rule,		/* scaffolding */
+    type, alt, seq,		/* fundamentals */
+    and, not,			/* syntactic predicates */
+    expr, bind, coords,		/* expressions */
+    guard, ident,		/* semantic predicate */
+    call, lit, any,		/* matchers */
+    cclass, cceq, ccge, ccle,	/* character classes */
+    rep, 			/* sugar */
     preamble,
     s_type_max
 };
@@ -21,6 +21,7 @@ struct s_node {
     union {
 	char *text;
 	int *pair;
+	int number;
     };
     unsigned reached : 1;
 };
@@ -29,6 +30,7 @@ struct s_node {
 extern struct s_node *create(void);
 
 extern struct s_node *s_new(enum s_type);
+extern struct s_node *s_num(enum s_type, int);
 extern struct s_node *s_text(enum s_type, char *);
 extern struct s_node *s_coords(int *);
 extern struct s_node *s_child(struct s_node *, struct s_node *);

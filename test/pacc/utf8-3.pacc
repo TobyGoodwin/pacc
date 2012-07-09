@@ -2,9 +2,7 @@
 int
 parse '$1' 1
 parse '£2' 2
-XXX
 parse '€3' 3
-XXX
 noparse x4 S 1
 noparse '𝄞4' S 1
 noparse '$x' Amount 2

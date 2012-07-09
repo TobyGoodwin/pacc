@@ -58,7 +58,7 @@ preen.o: preen.h syntax.h
 
 sugar.o: sugar.h syntax.h
 
-syntax.o: syntax.h
+syntax.o: error.h syntax.h utf8.h
 
 template.o: template.h
 

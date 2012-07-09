@@ -691,33 +691,55 @@ static void alt_post(struct s_node *n) {
 
 static void cclass_pre(struct s_node *n) {
     debug_pre("cclass", n);
-    c_open();
-    c_strln("int c = _pacc->string[col];"); /* XXX encoding XXX also, couldn't there be just one c for the whole engine? nasty to start a new block each time*/
+    c_strln("_pacc_utf8_state = UTF8_ACCEPT; _pacc_any_i = 0;");
+    c_strln("do "); c_open();
+    c_strln("if (_pacc_utf8_state == UTF8_REJECT) panic(\"invalid UTF-8 input\");");
+    c_str("if (col + _pacc_any_i == _pacc->input_length)"); c_open();
+    c_strln("status = no_parse; break;"); c_close();
+    c_close();
+    c_strln("while (decode(&_pacc_utf8_state, &_pacc_utf_cp, (unsigned char)_pacc->string[col + _pacc_any_i++]));");
     c_str(" if (");
     if (n->text[0] == '^') c_str("!(");
 }
 
+static void emit_cceq(struct s_node *n) {
+    c_str("_pacc_utf_cp=="); c_int(n->number);
+    if (n->next) c_str(" || ");
+}
+
+static void emit_ccge(struct s_node *n) {
+    assert(n->next && n->next->type == ccle);
+    c_str("(_pacc_utf_cp>="); c_int(n->number); c_str("&&");
+}
+
+static void emit_ccle(struct s_node *n) {
+    c_str("_pacc_utf_cp<="); c_int(n->number); c_str(")");
+    if (n->next) c_str(" || ");
+}
+
+#if 0
 static void emit_crange(struct s_node *n) {
     assert(n->text[0] == '>' || n->text[0] == '=' || n->text[0] == '<');
     assert(n->text[0] != '>' || (n->next && n->next->text[0] == '<'));
 
-    c_str("c"); c_char(n->text[0]); c_str("="); c_int(n->text[1]);
+    c_str("_pacc_utf_cp"); c_char(n->text[0]); c_str("="); c_int(n->text[1]);
     if (n->next) {
 	if (n->text[0] == '>') c_str("&&");
 	else c_str(" || ");
     }
 }
+#endif
 
 static void cclass_post(struct s_node *n) {
     if (n->text[0] == '^') c_str(")");
     c_str(")"); c_open();
     c_strln("status = parsed;");
-    c_strln("  col += "); c_int(1); c_semi(); /* XXX encoding */
+    c_strln("  col += _pacc_any_i;");
     c_close(); c_str("else"); c_open();
     //error(n->text, 1);
     c_str("error(_pacc, \"\\\""); c_str(n->text); c_strln("\\\"\", col);");
     c_strln("status = no_parse;");
-    c_close(); c_close();
+    c_close();
     debug_post("cclass", n);
 }
 
@@ -754,7 +776,8 @@ void emit(struct s_node *g) {
     pre[bind] = bind_pre; pre[expr] = emit_expr;
     pre[guard] = guard_pre;
     pre[call] = emit_call; pre[lit] = literal; pre[any] = any_emit;
-    pre[cclass] = cclass_pre; pre[crange] = emit_crange;
+    pre[cclass] = cclass_pre; pre[cceq] = emit_cceq;
+    pre[ccge] = emit_ccge; pre[ccle] = emit_ccle;
     pre[rep] = rep_pre;
 
     mid[alt] = alt_mid; mid[seq] = seq_mid;
