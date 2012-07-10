@@ -264,14 +264,11 @@ static void literal(struct s_node *n) {
 
 /* assumes utf-8 encoding */
 static void any_emit(__attribute__((unused)) struct s_node *n) {
-    c_strln("_pacc_utf8_state = UTF8_ACCEPT; _pacc_any_i = 0;");
-    c_strln("do "); c_open();
-    c_strln("if (_pacc_utf8_state == UTF8_REJECT) panic(\"invalid UTF-8 input\");");
-    c_str("if (col + _pacc_any_i == _pacc->input_length)"); c_open();
-    c_strln("status = no_parse; break;"); c_close();
-    c_close();
-    c_strln("while (decode(&_pacc_utf8_state, &_pacc_utf_cp, (unsigned char)_pacc->string[col + _pacc_any_i++]));");
-    c_strln("if (status == parsed) col += _pacc_any_i;");
+    c_str("if (col < _pacc->input_length)"); c_open();
+    c_strln("_pacc_any_i = _pacc_utf8_char(_pacc->string+col, _pacc->input_length - col, &_pacc_utf_cp);");
+    c_strln("if (!_pacc_any_i) panic(\"invalid UTF-8 input\");");
+    c_strln("status = parsed; col += _pacc_any_i;");
+    c_close(); c_strln(" else status = no_parse;");
 }
 
 static void rule_pre(struct s_node *n) {

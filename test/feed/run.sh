@@ -37,7 +37,7 @@ type() {
 	chars|int) echo cp parse.h-$1 parse.h; cp parse.h-$1 parse.h ;;
 	*) fail "bad type $1" ;;
     esac
-    make -C.. test/feeder || exit
+    make -C.. test/feeder
 }
 
 make -C.. test/clean

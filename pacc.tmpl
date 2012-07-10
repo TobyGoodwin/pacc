@@ -63,7 +63,7 @@ static void _pacc_save_core(long c, off_t col) {
 /* a pacc parser */
 struct pacc_parser {
     char *name;
-    char *string;
+    unsigned char *string;
     off_t input_length;
     PACC_TYPE value;
     struct intermed **m_bkt;
@@ -194,6 +194,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
+
+/* _pacc_utf8_char attempts to read a single UTF8 encoded character from
+ * the string p with length m. Its return value is the number of bytes
+ * in the character, 0 in case of error; *c holds the character read. */
+int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
+    uint32_t r, state = UTF8_ACCEPT;
+    int i;
+    do
+	if (state == UTF8_REJECT || i == m) return 0;
+    while (decode(&state, c, p[i++]));
+    return i;
+}
 
 static int _pacc_ref_streq(ref_t a, char *b, struct pacc_parser *p) {
     /* XXX this could be made quicker */
