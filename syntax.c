@@ -254,10 +254,12 @@ static void dump(struct s_node *p, int indent) {
     if (!p) return;
     for (i = 0; i < indent; ++i) fprintf(stderr, "  ");
     fprintf(stderr, "%s %ld: ", decode_type(p->type), p->id);
+    if (s_is_number(p->type))
+	fprintf(stderr, "%d", p->number);
     if (s_is_pair(p->type))
-	fprintf(stderr, "%d %d ", p->pair[0], p->pair[1]);
+	fprintf(stderr, "%d %d", p->pair[0], p->pair[1]);
     if (s_is_text(p->type))
-	fprintf(stderr, "%s ", p->text);
+	fprintf(stderr, "%s", p->text ? p->text : "(null)");
     fprintf(stderr, "\n");
 
     if (s_has_children(p->type))

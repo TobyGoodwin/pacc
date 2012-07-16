@@ -198,8 +198,8 @@ static void grammar_post(__attribute__((unused)) struct s_node *n) {
 }
 
 static void debug_pre(char *type, struct s_node *n) {
-    c_str("Trace fprintf(stderr, \""); c_str(type); c_long(n->id);
-    c_strln(" @ col %ld?\\n\", col);");
+    c_str("Trace fprintf(stderr, \""); c_str(type); c_str(" ");
+    c_long(n->id); c_strln(" @ col %ld?\\n\", col);");
 }
 
 static void debug_post(char *type, struct s_node *n) {
@@ -264,11 +264,13 @@ static void literal(struct s_node *n) {
 
 /* assumes utf-8 encoding */
 static void any_emit(__attribute__((unused)) struct s_node *n) {
+    debug_pre("any", n);
     c_str("if (col < _pacc->input_length)"); c_open();
     c_strln("_pacc_any_i = _pacc_utf8_char(_pacc->string+col, _pacc->input_length - col, &_pacc_utf_cp);");
     c_strln("if (!_pacc_any_i) panic(\"invalid UTF-8 input\");");
     c_strln("status = parsed; col += _pacc_any_i;");
     c_close(); c_strln(" else status = no_parse;");
+    debug_post("any", n);
 }
 
 static void rule_pre(struct s_node *n) {
@@ -688,14 +690,10 @@ static void alt_post(struct s_node *n) {
 
 static void cclass_pre(struct s_node *n) {
     debug_pre("cclass", n);
-    c_strln("_pacc_utf8_state = UTF8_ACCEPT; _pacc_any_i = 0;");
-    c_strln("do "); c_open();
-    c_strln("if (_pacc_utf8_state == UTF8_REJECT) panic(\"invalid UTF-8 input\");");
-    c_str("if (col + _pacc_any_i == _pacc->input_length)"); c_open();
-    c_strln("status = no_parse; break;"); c_close();
-    c_close();
-    c_strln("while (decode(&_pacc_utf8_state, &_pacc_utf_cp, (unsigned char)_pacc->string[col + _pacc_any_i++]));");
-    c_str(" if (");
+    c_str("if (col < _pacc->input_length)"); c_open();
+    c_strln("_pacc_any_i = _pacc_utf8_char(_pacc->string+col, _pacc->input_length - col, &_pacc_utf_cp);");
+    c_strln("if (!_pacc_any_i) panic(\"invalid UTF-8 input\");");
+    c_str("if (");
     if (n->text[0] == '^') c_str("!(");
 }
 
@@ -731,10 +729,14 @@ static void cclass_post(struct s_node *n) {
     if (n->text[0] == '^') c_str(")");
     c_str(")"); c_open();
     c_strln("status = parsed;");
-    c_strln("  col += _pacc_any_i;");
+    c_strln("col += _pacc_any_i;");
     c_close(); c_str("else"); c_open();
     //error(n->text, 1);
-    c_str("error(_pacc, \"\\\""); c_str(n->text); c_strln("\\\"\", col);");
+    c_str("error(_pacc, \"["); c_str(n->text); c_strln("]\", col);");
+    c_strln("status = no_parse;");
+    c_close(); c_close();
+    c_str("else"); c_open();
+    c_str("error(_pacc, \"["); c_str(n->text); c_strln("]\", col);");
     c_strln("status = no_parse;");
     c_close();
     debug_post("cclass", n);

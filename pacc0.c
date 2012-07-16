@@ -569,18 +569,28 @@ int pacc_wrap(
     r = cons(p, r);
 
     /*
-	CClass
-	    ← "[" i:"^"? c:CRanges "]" _ { s_both(cclass, ref_dup(i), c) }
+	CClass1
+	    ← "^" c:CRanges → { s_both(cclass, ref_str(), c) }
     */
-    p = cons(s_text(ident, "i"), s_text(ident, "c"));
-    p = s_both(expr, "s_both(cclass, ref_dup(i), c)", p);
+    p = s_text(ident, "c");
+    p = s_both(expr, "s_both(cclass, ref_str(), c)", p);
+    p = cons(s_both(bind, "c", s_text(call, "CRanges")), p);
+    p = cons(s_both(rep, ",1", s_text(lit, "^")), p);
+    p = s_kid(seq, p);
+    p = s_both(rule, "CClass1", cons(s_text(type, "struct s_node *"), p));
+    r = cons(p, r);
+
+    /*
+	CClass0
+	    ← "[" c:CClass1 "]" _ → c
+    */
+    p = s_both(expr, "c", s_text(ident, "c"));
     p = cons(s_text(call, "_"), p);
     p = cons(s_text(lit, "]"), p);
-    p = cons(s_both(bind, "c", s_text(call, "CRanges")), p);
-    p = cons(s_both(bind, "i", s_both(rep, ",1", s_text(lit, "^"))), p);
+    p = cons(s_both(bind, "c", s_text(call, "CClass1")), p);
     p = cons(s_text(lit, "["), p);
     p = s_kid(seq, p);
-    p = s_both(rule, "CClass", cons(s_text(type, "struct s_node *"), p));
+    p = s_both(rule, "CClass0", cons(s_text(type, "struct s_node *"), p));
     r = cons(p, r);
 
     /*
@@ -602,7 +612,7 @@ int pacc_wrap(
 	    ← n:Name !lArrow !ColCol { s_text(call, n) }
 	    / Dot { s_new(any) }
 	    / l:StringLit { s_text(lit, l) }
-	    / c:CClass → c
+	    / c:CClass0 → c
 	    / r:Rule6 → r
      */
 
@@ -611,7 +621,7 @@ int pacc_wrap(
     s = s_kid(seq, p);
 
     p = s_both(expr, "c", s_text(ident, "c"));
-    p = cons(s_both(bind, "c", s_text(call, "CClass")), p);
+    p = cons(s_both(bind, "c", s_text(call, "CClass0")), p);
     s = cons(s_kid(seq, p), s);
 
     p = s_both(expr, "s_text(lit, l)", s_text(ident, "l"));

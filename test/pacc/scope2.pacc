@@ -1,0 +1,13 @@
+/*
+chars
+parse ab b
+parse ac c
+noparse ad P:a:0 2
+*/
+
+# Separate names can be bound in nested scopes.
+
+P :: char * ← A a:(b:B &{ *b == 'b' } / "c") → { ref_dup(a) }
+
+A ← "a" { ref_str() }
+B ← "b" { ref_str() }

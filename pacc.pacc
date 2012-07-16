@@ -48,14 +48,17 @@ Rule5
     ← n:Name !lArrow !ColCol { s_text(call, n) }
     / Dot { s_new(any) }
     / l:StringLit { s_text(lit, l) }
-    / c:CClass → c
+    / c:CClass0 → c
     / r:Rule6 → r
 
 Rule6
     ← lParen r:Rule0 rParen → r
 
-CClass
-    ← "[" i:"^"? c:CRanges "]" _ { s_both(cclass, ref_dup(i), c) }
+CClass0
+    ← "[" c:CClass1 "]" _ → c
+
+CClass1
+    ← "^"? c:CRanges → { s_both(cclass, ref_str(), c) }
 
 CRanges
     ← c:CRange cs:CRanges { append(c, cs) }

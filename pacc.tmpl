@@ -198,7 +198,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* _pacc_utf8_char attempts to read a single UTF8 encoded character from
  * the string p with length m. Its return value is the number of bytes
  * in the character, 0 in case of error; *c holds the character read. */
-int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
+static int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
     uint32_t r, state = UTF8_ACCEPT;
     int i;
     do
