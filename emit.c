@@ -66,6 +66,7 @@ static void c_int(int i) { printf("%d", i); }
 static void c_long(long l) { printf("%ld", l); }
 static void c_open(void) { ++indent; c_strln(" {"); }
 static void c_close(void) { --indent; c_strln("}"); }
+static void c_closet(void) { --indent; c_str("} "); }
 
 static void associate(char *n, struct s_node *s) {
     if (a_ptr == a_alloc) {
@@ -268,8 +269,8 @@ static void any_emit(__attribute__((unused)) struct s_node *n) {
     c_str("if (col < _pacc->input_length)"); c_open();
     c_strln("_pacc_any_i = _pacc_utf8_char(_pacc->string+col, _pacc->input_length - col, &_pacc_utf_cp);");
     c_strln("if (!_pacc_any_i) panic(\"invalid UTF-8 input\");");
-    c_strln("status = parsed; col += _pacc_any_i;");
-    c_close(); c_strln(" else status = no_parse;");
+    c_strln("col += _pacc_any_i;");
+    c_closet(); c_strln("else status = no_parse;");
     debug_post("any", n);
 }
 
@@ -621,22 +622,7 @@ static void emit_call(struct s_node *n) {
      * binding.
      */
     if (!associating) associate(0, 0); 
-    //printf("_pacc_save_core(%ld, thr_%s, col);\n", n->first->id, binding ? "bound" : "rule");
-    //printf("_pacc_save_core(%ld, col);\n", n->first->id);
     c_str("_pacc_save_core("); c_long(n->first->id); c_strln(", col);");
-    //printf("_pacc_save_col(col);\n");
-    //printf("_pacc_Push(rule_col);\n"); /* XXX this is not callee saves */
-    //printf("_pacc_Push(cont);\n");
-    //printf("cont = %ld;\n", n->id);
-    //printf("st = %ld; /* call %s */\n", n->first->id, n->text);
-    //printf("goto top;\n");
-    //printf("case %ld: /* return from %s */\n", n->id, n->text);
-    //printf("last = cur;\n");
-    //printf("_pacc_Pop(cont);\n");
-    //printf("status = last->rule & 3;\n");
-    //printf("col = last->remainder;\n");
-    //printf("_pacc_Pop(rule_col);\n");
-    //printf("cur = _pacc_result(_pacc, rule_col, %d);\n", cur_rule);
     c_strln("_pacc_Push(rule_col);"); /* XXX this is not callee saves */
     c_strln("_pacc_Push(cont);");
     c_str("cont = "); c_long(n->id); c_semi();
@@ -645,10 +631,9 @@ static void emit_call(struct s_node *n) {
     c_strln("goto top;");
     c_str("case "); c_long(n->id); c_str(": /* return from ");
     c_str(n->text); c_strln(" */");
-    c_strln("last = cur;");
     c_strln("_pacc_Pop(cont);");
-    c_strln("status = last->rule & 3;");
-    c_strln("col = last->remainder;");
+    c_strln("status = cur->rule & 3;");
+    c_strln("col = cur->remainder;");
     c_strln("_pacc_Pop(rule_col);");
     c_str("cur = _pacc_result(_pacc, rule_col, "); c_int(cur_rule->id);
     c_strln(");");

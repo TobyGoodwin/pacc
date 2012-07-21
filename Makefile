@@ -102,9 +102,9 @@ test/parsefeed.c test/parsefeed.h test/partial.c: test/parsefeed.pacc
 
 test/clean: 
 	@echo test/clean
-	@rm -f test/harness test/harness.o test/parse.o
-	@rm -f test/parse.c test/parse.h test/parse.pacc
-	@rm -f test/emitter test/emitter.o test/emitter.c
-	@rm -f test/feeder test/feeder.o test/parsefeed.o test/partial.o
-	@rm -f test/parsefeed.c test/parsefeed.h test/partial.c
-	@rm -f test/parsefeed.pacc
+#	@rm -f test/harness test/harness.o test/parse.o
+#	@rm -f test/parse.c test/parse.h test/parse.pacc
+#	@rm -f test/emitter test/emitter.o test/emitter.c
+#	@rm -f test/feeder test/feeder.o test/parsefeed.o test/partial.o
+#	@rm -f test/parsefeed.c test/parsefeed.h test/partial.c
+#	@rm -f test/parsefeed.pacc
