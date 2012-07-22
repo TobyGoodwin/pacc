@@ -1,6 +1,6 @@
 RELEASE = pacc-0.0
 
-CC = gcc
+CC = c99
 CFLAGS = -g -Wall -Wextra -I.
 LDFLAGS = -g
 
@@ -44,19 +44,19 @@ pacc: pacc2 sane
 template.c: pacc.tmpl template.sh
 	sh template.sh > $@
 
-arg.o: arg.h
+arg.o: arg.h error.h
 
-cook.o: cook.h arg.h syntax.h
+cook.o: cook.h arg.h error.h syntax.h
 
 emit.o: emit.h error.h syntax.h template.h
 
 error.o: error.h
 
-load.o: load.h
+load.o: load.h error.h
 
-preen.o: preen.h syntax.h
+preen.o: preen.h error.h syntax.h
 
-sugar.o: sugar.h syntax.h
+sugar.o: sugar.h error.h syntax.h
 
 syntax.o: error.h syntax.h utf8.h
 
@@ -74,7 +74,7 @@ sane: pacc2.d pacc3.d
 check: pacc
 	cd test && sh run.sh
 
-clean:
+clean: test/clean
 	@echo clean
 	@rm -f pacc0 pacc1 pacc2 pacc3 pacc
 	@rm -f $(OBJS)
@@ -102,9 +102,9 @@ test/parsefeed.c test/parsefeed.h test/partial.c: test/parsefeed.pacc
 
 test/clean: 
 	@echo test/clean
-#	@rm -f test/harness test/harness.o test/parse.o
-#	@rm -f test/parse.c test/parse.h test/parse.pacc
-#	@rm -f test/emitter test/emitter.o test/emitter.c
-#	@rm -f test/feeder test/feeder.o test/parsefeed.o test/partial.o
-#	@rm -f test/parsefeed.c test/parsefeed.h test/partial.c
-#	@rm -f test/parsefeed.pacc
+	@rm -f test/harness test/harness.o test/parse.o
+	@rm -f test/parse.c test/parse.h test/parse.pacc
+	@rm -f test/emitter test/emitter.o test/emitter.c
+	@rm -f test/feeder test/feeder.o test/parsefeed.o test/partial.o
+	@rm -f test/parsefeed.c test/parsefeed.h test/partial.c
+	@rm -f test/parsefeed.pacc

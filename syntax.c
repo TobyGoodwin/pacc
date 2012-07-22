@@ -33,7 +33,8 @@ struct s_node *s_text(enum s_type t, char *n) {
 
 struct s_node *s_coords(int *c) {
     struct s_node *r = s_new(coords);
-    r->pair = c;
+    r->pair[0] = c[0];
+    r->pair[1] = c[1];
     return r;
 }
 

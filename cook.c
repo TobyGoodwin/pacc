@@ -5,6 +5,7 @@
 
 #include "arg.h"
 #include "cook.h"
+#include "error.h"
 #include "syntax.h"
 
 /* cook() prepares a grammar for feeding */

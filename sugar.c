@@ -1,3 +1,6 @@
+/* We need _BSD_SOURCE for strdup() */
+#define _BSD_SOURCE 1
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

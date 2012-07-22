@@ -26,21 +26,20 @@ enum status {
     no_parse, parsed, evaluated, uncomputed
 };
 
-/* XXX probably want to reconsider this; see Journal 2010-02-10 */
-typedef off_t *ref_t;
+typedef size_t *ref_t;
 
 #EMIT_DECLARATIONS
 
 struct intermed {
     /* Where in the matrix are we? Note that the bottom two bits of rule
      * also encode a status. */
-    long rule; off_t col;
-    off_t remainder; /* unparsed string */
+    long rule; size_t col;
+    size_t remainder; /* unparsed string */
     long expr_id; /* id of the expression to evaluate, yielding... */
     union YY_union value; /* ... the semantic value XXX needs to use g_name */
     struct {
 	long call_id; /* a call */
-	off_t col; /* a column */
+	size_t col; /* a column */
     } *evlis;
     size_t ev_alloc;
     size_t ev_valid;
@@ -48,7 +47,7 @@ struct intermed {
 
 static struct intermed *cur;
 
-static void _pacc_save_core(long c, off_t col) {
+static void _pacc_save_core(long c, size_t col) {
     Trace fprintf(stderr, "_pacc_save_core(%ld, %ld)\n", c, col);
     if (cur->ev_valid == cur->ev_alloc) {
 	cur->ev_alloc = cur->ev_alloc * 2 + 1;
@@ -60,11 +59,16 @@ static void _pacc_save_core(long c, off_t col) {
     ++cur->ev_valid;
 }
 
+struct _pacc_coord {
+    size_t n;
+    int c[2];
+};
+
 /* a pacc parser */
 struct pacc_parser {
     char *name;
     unsigned char *string;
-    off_t input_length;
+    size_t input_length;
     PACC_TYPE value;
     struct intermed **m_bkt;
     unsigned int m_bkt_cnt;
@@ -75,12 +79,17 @@ struct pacc_parser {
     unsigned char *sp; /* next slot in stack */
     unsigned char *stack_alloc; /* last slot in stack */
 
-    /* A dynamic array of error strings */
+    /* Dynamic array of error strings */
     char **err;
     size_t err_alloc;
     size_t err_valid;
     /* The highest column to have associated error */
-    off_t err_col;
+    size_t err_col;
+
+    /* Dynamic array of co-ordinates */
+    struct _pacc_coord *coord;
+    size_t coord_alloc;
+    size_t coord_valid;
 };
 
 static void _pacc_push(void *x, size_t s, struct pacc_parser *p) {
@@ -118,12 +127,14 @@ static void *_pacc_pop(size_t s, struct pacc_parser *p) {
 #define ref_streq(a, b) (_pacc_ref_streq((a), (b), _pacc))
 
 static char *_pacc_ref_dup(ref_t a, struct pacc_parser *p) {
-    char *r;
-    off_t l;
+    char *restrict r;
+    const char *restrict s;
+    size_t l;
 
     l = a[1] - a[0];
     r = realloc(0, l + 1); if (!r) nomem();
-    strncpy(r, p->string + a[0], l);
+    s = (char *)p->string + a[0];
+    strncpy(r, s, l);
     r[l] = '\0';
     return r;
 }
@@ -199,7 +210,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * the string p with length m. Its return value is the number of bytes
  * in the character, 0 in case of error; *c holds the character read. */
 static int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
-    uint32_t r, state = UTF8_ACCEPT;
+    uint32_t state = UTF8_ACCEPT;
     int i;
     do
 	if (state == UTF8_REJECT || i == m) return 0;
@@ -244,13 +255,12 @@ struct pacc_parser *YY_new(void) {
     p->m_chain_max = 0;
     p->sp = 0;
     p->stack = p->stack_alloc = 0;
-    p->err = 0;
-    p->err_alloc = 0;
-    p->err_valid = 0;
+    p->err = p->err_alloc = p->err_valid = 0;
+    p->coord = p->coord_alloc = p->coord_valid = 0;
     return p;
 }
 
-void YY_input(struct pacc_parser *p, char *n, char *s, off_t l) {
+void YY_input(struct pacc_parser *p, char *n, char *s, size_t l) {
     unsigned int i;
 
     p->name = n;
@@ -274,7 +284,7 @@ void YY_destroy(struct pacc_parser *p) {
 }
 
 /* hash chains */
-static struct intermed *_pacc_result(struct pacc_parser *p, off_t col, long rule) {
+static struct intermed *_pacc_result(struct pacc_parser *p, size_t col, long rule) {
     unsigned char i;
     unsigned int h;
     struct intermed *bkt, *r;
@@ -306,7 +316,7 @@ static struct intermed *_pacc_result(struct pacc_parser *p, off_t col, long rule
     return r;
 }
 
-static void error(struct pacc_parser *_pacc, char *what, off_t col) {
+static void error(struct pacc_parser *_pacc, char *what, size_t col) {
     int doit, append;
 //Trace fprintf(stderr, "error(Grammar, 0) at col %ld\n", col);
     append = doit = 1;
@@ -331,25 +341,53 @@ static void error(struct pacc_parser *_pacc, char *what, off_t col) {
 }
 
 /* Given a parser p, and a column col, return the "coordinates" in a
- * newly allocated pair of ints.  coord[0] is the line number, and
- * coord[1] is the column within the line.  XXX till this isn't
- * memoized, we're no longer linear. */
-static int *_pacc_coords(struct pacc_parser *p, off_t col) {
-    int c, nl, start, *coords;
+ * pair of ints: coord[0] is the line number, and coord[1] is the column
+ * within the line, both 1-based. */
+static int *_pacc_coords(struct pacc_parser *p, size_t col) {
+    int i, nl, start, *coords;
+    int hi, lo;
+    struct _pacc_coord *c, *cs = p->coord;
 
-    coords = realloc(0, 2 * sizeof(int)); if (!coords) nomem();
-    nl = 1; /* line numbering is 1-based, natch */
+fprintf(stderr, "before:\n");
+for (i = 0; i < p->coord_valid; ++i)
+    fprintf(stderr, "%ld: (%d, %d)\n", cs[i].n, cs[i].c[0], cs[i].c[1]);
+
+    lo = 0; hi = p->coord_valid;
+    while (lo < hi) {
+	int mid = (lo + hi) / 2;
+	if (cs[mid].n < col) lo = mid + 1;
+	else if (cs[mid].n > col) hi = mid;
+	else return cs[mid].c;
+    }
+
+    if (p->coord_valid + 1 > p->coord_alloc) {
+    	struct _pacc_coord *n;
+	p->coord_alloc = p->coord_alloc * 2 + 1;
+	n = realloc(p->coord, p->coord_alloc * sizeof *n);
+	if (!n) nomem();
+	cs = p->coord = n;
+    }
+    memmove(cs + lo + 1, cs + lo, (p->coord_valid - lo) * sizeof *cs);
+    ++p->coord_valid;
+
+    c = cs + lo; c->n = col;
+    if (lo > 0) { nl = cs[lo - 1].c[0]; i = cs[lo - 1].n; }
+    else { nl = 1; /* line numbering is 1-based, natch */ i = 0; }
     start = -1;
-    for (c = 0; c < col; ++c) {
-	if (p->string[c] == '\n') {
+    for (; i < col; ++i) {
+	if (p->string[i] == '\n') {
 	    ++nl;
-	    start = c;
+	    start = i;
 	}
     }
-    coords[0] = nl;
+    c->c[0] = nl;
     /* column numbering is also 1-based; start points to \n */
-    coords[1] = c - start;
-    return coords;
+    c->c[1] = i - start;
+fprintf(stderr, "after:\n");
+for (i = 0; i < p->coord_valid; ++i)
+    fprintf(stderr, "%ld: (%d, %d)\n", cs[i].n, cs[i].c[0], cs[i].c[1]);
+fprintf(stderr, "\n");
+    return c->c;
 }
 /* The userland version */
 #define pacc_coords _pacc_coords(_pacc, col)
@@ -357,13 +395,13 @@ static int *_pacc_coords(struct pacc_parser *p, off_t col) {
 int YY_parse(struct pacc_parser *_pacc) {
     enum status status;
     int cont, st, _pacc_any_i;
-    off_t col, rule_col;
+    size_t col, rule_col;
     int evaluating;
     col = 0;
     cont = -1;
     evaluating = 0;
     size_t pos, _pacc_ev_i;
-    uint32_t _pacc_utf8_state, _pacc_utf_cp;
+    uint32_t _pacc_utf_cp;
 
 #EMIT_ENGINE
 
@@ -485,7 +523,7 @@ void YY_error(struct pacc_parser *p) {
     //printf("(column %ld)\n", _pacc->err_col);
 }
 
-int YY_wrap(char *name, char *addr, off_t l, PACC_TYPE *result) {
+int YY_wrap(char *name, char *addr, size_t l, PACC_TYPE *result) {
     int parsed;
     struct pacc_parser *p;
 

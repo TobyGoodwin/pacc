@@ -20,7 +20,7 @@ struct s_node {
     struct s_node *next; /* sibling */
     union {
 	char *text;
-	int *pair;
+	int pair[2];
 	int number;
     };
     unsigned reached : 1;

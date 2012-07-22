@@ -1,10 +1,10 @@
+#include <assert.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "arg.h"
-#include "assert.h"
 #include "error.h"
 
 /* The function repsuf() returns a newly-allocated string holding a copy
@@ -18,11 +18,8 @@ static char *repsuf(const char *i, const char *suffix) {
     size_t l;
 
     d = 0;
-    p = i;
-    while (*p) {
+    for (p = i; *p; ++p) 
 	if (*p == '.') d = p;
-	++p;
-    }
     if (!d) d = p;
     l = d - i;
     r = malloc(l + strlen(suffix) + 1);

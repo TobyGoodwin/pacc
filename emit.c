@@ -61,7 +61,7 @@ static void c_raw(char *s) {
 }
 
 static void c_semi(void) { c_strln(";"); }
-static void c_char(char i) { printf("%c", i); }
+/* static void c_char(char i) { printf("%c", i); } */
 static void c_int(int i) { printf("%d", i); }
 static void c_long(long l) { printf("%ld", l); }
 static void c_open(void) { ++indent; c_strln(" {"); }
@@ -429,6 +429,8 @@ static void declarations(struct s_node *n) {
 #endif
 
     for (p = n->first; p; p = p->next) {
+	if (p->type == coords) continue;
+	assert(p->type == ident);
 	/* Search for the name. Start from the end, so scopes nest. */
 	for (i = a_ptr - 1; i >= 0; --i)
 	    if (a_stack[i].value && strcmp(a_stack[i].name, p->text) == 0)
@@ -458,6 +460,8 @@ static void bindings(struct s_node *n) {
     for (p = n->first; p; p = p->next) {
 	int i, p0, p1;
 
+	if (p->type == coords) continue;
+	assert(p->type == ident);
 /*
 	for (i = 0; i < a_ptr; ++i)
 	    fprintf(stderr, "var %s @ pos %d\n", a_stack[i].name, i);

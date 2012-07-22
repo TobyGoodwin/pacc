@@ -61,4 +61,4 @@ echo
 echo $(count $passes) passes
 echo $(count $fails) fails,  expected $(count $expfails)
 rm $passes $fails $expfails
-make -C.. test/clean
+#make -C.. test/clean
