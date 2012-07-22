@@ -1,0 +1,15 @@
+/*
+type int
+parse xz 2
+parse xxz 3
+parse xy 2
+parse xxy 3
+*/
+
+/* it's a bit contrived, but this does actually manage to exercise the
+ * memmove() code in _pacc_coords()
+ */
+
+S ← [xy]* c:C → c / [x]* d:D → d
+C ← &{ pacc_coords[1], 1 } "z" → { pacc_coords[1] }
+D ← &{ pacc_coords[1], 1 } "y" → { pacc_coords[1] }

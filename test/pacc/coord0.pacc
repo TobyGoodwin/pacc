@@ -1,0 +1,9 @@
+/*
+type int
+parse 5 1
+parse x5 2
+parse 98765 5
+*/
+
+S ← (!"5" .)* c:C → c
+C ← "5" → { pacc_coords[1] }
