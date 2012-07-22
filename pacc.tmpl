@@ -348,10 +348,7 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     int hi, lo;
     struct _pacc_coord *c, *cs = p->coord;
 
-fprintf(stderr, "before:\n");
-for (i = 0; i < p->coord_valid; ++i)
-    fprintf(stderr, "%ld: (%d, %d)\n", cs[i].n, cs[i].c[0], cs[i].c[1]);
-
+    /* binary search*/
     lo = 0; hi = p->coord_valid;
     while (lo < hi) {
 	int mid = (lo + hi) / 2;
@@ -360,6 +357,7 @@ for (i = 0; i < p->coord_valid; ++i)
 	else return cs[mid].c;
     }
 
+    /* increase list if necessary */
     if (p->coord_valid + 1 > p->coord_alloc) {
     	struct _pacc_coord *n;
 	p->coord_alloc = p->coord_alloc * 2 + 1;
@@ -367,9 +365,12 @@ for (i = 0; i < p->coord_valid; ++i)
 	if (!n) nomem();
 	cs = p->coord = n;
     }
+
+    /* move hole to the right place */
     memmove(cs + lo + 1, cs + lo, (p->coord_valid - lo) * sizeof *cs);
     ++p->coord_valid;
 
+    /* find the coordinates */
     c = cs + lo; c->n = col;
     if (lo > 0) { nl = cs[lo - 1].c[0]; i = cs[lo - 1].n; }
     else { nl = 1; /* line numbering is 1-based, natch */ i = 0; }
@@ -380,13 +381,11 @@ for (i = 0; i < p->coord_valid; ++i)
 	    start = i;
 	}
     }
+
+    /* memoize them */
     c->c[0] = nl;
     /* column numbering is also 1-based; start points to \n */
     c->c[1] = i - start;
-fprintf(stderr, "after:\n");
-for (i = 0; i < p->coord_valid; ++i)
-    fprintf(stderr, "%ld: (%d, %d)\n", cs[i].n, cs[i].c[0], cs[i].c[1]);
-fprintf(stderr, "\n");
     return c->c;
 }
 /* The userland version */
