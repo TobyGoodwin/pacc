@@ -3,6 +3,10 @@ type int
 parse 5 1
 parse x5 2
 parse 98765 5
+parse £5 2
+parse €5 2
+parse 𝄞5 2
+parse 12£4€6𝄞85 9
 */
 
 S ← (!"5" .)* c:C → c
