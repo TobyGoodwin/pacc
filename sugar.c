@@ -197,7 +197,7 @@ static void derep(struct s_node *n, const char *name, int c) {
     x0[l] = '*'; xx = strdup(x0); if (!xx) nomem();
     free(x0);
 
-    p = s_text(type, "int" /* XXX: void */); p->next = n->first; q = p;
+    p = s_text(type, "void"); p->next = n->first; q = p;
     p = s_text(rule, x1); p->first = q;
     p->next = rules; rules = p;
 
@@ -208,7 +208,7 @@ static void derep(struct s_node *n, const char *name, int c) {
 	p = s_text(call, x1); p->next = q; q = p;
 	p = s_new(seq); p->first = q; p->next = s; q = p;
 	p = s_new(alt); p->first = q; q = p;
-	p = s_text(type, "int" /* XXX: void */); p->next = q; q = p;
+	p = s_text(type, "void"); p->next = q; q = p;
 	p = s_text(rule, xx); p->first = q;
 	p->next = rules; rules = p;
     } else if (strcmp(n->text, "1,") == 0) {
@@ -219,7 +219,7 @@ static void derep(struct s_node *n, const char *name, int c) {
 	p = s_text(call, x1); p->next = q; q = p;
 	p = s_new(seq); p->first = q; p->next = s; q = p;
 	p = s_new(alt); p->first = q; q = p;
-	p = s_text(type, "int" /* XXX: void */); p->next = q; q = p;
+	p = s_text(type, "void"); p->next = q; q = p;
 	p = s_text(rule, xx); p->first = q;
 	p->next = rules; rules = p;
     } else if (strcmp(n->text, ",1") == 0) {
@@ -228,7 +228,7 @@ static void derep(struct s_node *n, const char *name, int c) {
 	p = s_text(call, x1); q = p;
 	p = s_new(seq); p->first = q; p->next = s; q = p;
 	p = s_new(alt); p->first = q; q = p;
-	p = s_text(type, "int" /* XXX: void */); p->next = q; q = p;
+	p = s_text(type, "void"); p->next = q; q = p;
 	p = s_text(rule, xx); p->first = q;
 	p->next = rules; rules = p;
     }

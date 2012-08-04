@@ -8,6 +8,6 @@ parse 'a  b' 'a  b'
 # Nested repetition:
 
 Atoms :: char * ← ( Atom Space ) * → { ref_str() }
-Atom ← Letter +
+Atom :: void ← Letter +
 Letter ← "a" / "b" / "c"
 Space ← " " *

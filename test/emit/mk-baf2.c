@@ -24,8 +24,8 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
      * int Multitive <- p:Primary '*' m:Multitive { p * m } / Primary
      * int Primary <- '(' a:Additive ')' -> a / Decimal
      * int Decimal ← Digits1 { atoi(ref_str()) }
-     * int Digits1 ← Digit Digits1 / Digit
-     * int Digit <- '0' / '1' / ... / '9'
+     * Digits1 :: void ← Digit Digits1 / Digit
+     * Digit <- '0' / '1' / ... / '9'
      */
 
     /* int Digit <- '0' / '1' / ... / '9' */
@@ -51,17 +51,17 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_new(seq); p->first = q; p->next = s; s = p;
 
     p = s_new(alt); p->first = s; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Digit"; p->first = q; r = p;
 
-    /* int Digits1 ← Digit Digits1 / Digit */
+    /* Digits1 :: void ← Digit Digits1 / Digit */
     p = s_new(call); p->text = "Digit"; s = p;
     p = s_kid(seq, p); s = p;
     p = s_new(call); p->text = "Digits1"; q = p;
     p = s_new(call); p->text = "Digit"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = s; q = p;
     p = s_new(alt); p->first = q; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Digits1"; p->first = q; p->next = r; r = p;
 
     /* int Decimal ← Digits1 { atoi(ref_str()) } */

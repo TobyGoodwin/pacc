@@ -4,6 +4,8 @@
 
 #include "syntax.h"
 
+typedef const unsigned char *range_t;
+
 }
 
 Grammar :: struct s_node *
@@ -65,8 +67,8 @@ CRanges
     / ε { 0 }
 
 CRange
-    ← a:CChar "-" b:CChar { s_range2(a, b) }
-    / a:CChar { s_range1(a) }
+    ← a:CChar "-" b:CChar { s_range2((range_t)a, (range_t)b) }
+    / a:CChar { s_range1((range_t)a) }
 
 CChar :: char *
     ← "\\]" { "]" } / ! "]" y:QuotedChar → y
@@ -127,7 +129,7 @@ SimpleCharEscape
     ← "\\" a:("\'" / "\"" / "\?" / "\\"
     / "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
 
-TypeElement
+TypeElement :: void
     ← Name _ / "*" _
 
 Comment

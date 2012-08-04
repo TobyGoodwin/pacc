@@ -39,7 +39,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_new(call); p->text = "Char"; s = p;
     p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "NameCont"; p->first = q; p->next = r; r = p;
 
     /*
@@ -52,7 +52,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_new(call); p->text = "Char"; s = p;
     p = s_new(bind); p->text = "c"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "NameStart"; p->first = q; p->next = r; r = p;
 
     /* Char :: ref_t ← . { ref() } */

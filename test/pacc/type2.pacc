@@ -9,4 +9,4 @@ noparse aabaa 'P, or end-of-input' 3
 # Type char * with call and ref_str macro:
 
 P :: char * <- A P { ref_str() } / ε
-A <- "a"
+A :: void <- "a"

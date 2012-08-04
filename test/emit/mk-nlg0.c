@@ -22,7 +22,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
      * Ford (communication on PEG mailing list 2009-03-20).
      *
      * S ← A* { ref_str() }
-     * A ← a S b / a S c / a
+     * A :: void ← a S b / a S c / a
      *
      */
 
@@ -40,7 +40,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = new_node(seq); p->first = q; p->next = s; s = p;
 
     p = new_node(alt); p->first = s; q = p;
-    p = new_node(type); p->text = "int"; p->next = q; q = p;
+    p = new_node(type); p->text = "void"; p->next = q; q = p;
     p = new_node(rule); p->text = "A"; p->first = q; r = p;
 
     p = s_kid(seq, s_text(call, "A")); q = p;

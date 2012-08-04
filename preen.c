@@ -74,8 +74,30 @@ static void check_recursion(struct s_node *g) {
     }
 }
 
+static void check_expression(struct s_node *g) {
+    struct s_node *r;
+    for (r = g->first->next; r; r = r->next) {
+	int p;
+
+	assert(r->type == rule);
+	p = path_max(r, expr);
+	//fprintf(stderr, "rule %ld %s of type %s: pathmax(expr) %d\n", r->id, r->text, r->first->text, p);
+	if (strcmp(r->first->text, "void") == 0) {
+	    if (p > 0)
+		fatal3("expression in void rule `", r->text, "'");
+	} else {
+	    if (p < 1)
+		fatal3("no expressions in non-void rule `", r->text, "'");
+	    if (p > 1)
+		fatal3("multiple expressions in rule `", r->text, "'");
+	}
+
+    }
+}
+
 void preen(struct s_node *g) {
     if (!g->text || g->text[0] == '\0') g->text = "pacc";
     resolve(g, g, 0);
     check_recursion(g);
+    check_expression(g);
 }

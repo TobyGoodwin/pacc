@@ -41,8 +41,8 @@ extern struct s_node *s_retype(enum s_type, struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);
 extern struct s_node *append(struct s_node *, struct s_node *);
 extern struct s_node *s_set_cons(struct s_node *, struct s_node *);
-extern struct s_node *s_range1(const char *);
-extern struct s_node *s_range2(const char *, const char *);
+extern struct s_node *s_range1(const unsigned char *);
+extern struct s_node *s_range2(const unsigned char *, const unsigned char *);
 #define new_node(t) s_new(t)
 
 extern struct s_node *s_alt(struct s_node *, struct s_node *);
@@ -53,6 +53,7 @@ extern char *s_stashed_type(void);
 extern void desugar(struct s_node *);
 
 /* examining trees */
+extern int path_max(struct s_node *, enum s_type);
 extern void s_dump(struct s_node *);
 extern int s_has_children(enum s_type);
 extern int s_is_text(enum s_type);

@@ -10,4 +10,4 @@ parse xyyyyyyyyyyx xyyyyyyyyyyx
 # The + operator:
 
 S :: char * <- "x" Y "x" → { ref_str() }
-Y ← "y" +
+Y :: void ← "y" +

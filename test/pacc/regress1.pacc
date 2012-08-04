@@ -11,4 +11,4 @@ parse 5 5
 # "parsed", and never shifted it to "evaluated".
 
 P ← a:A { 5 }
-A ← "5"
+A :: void ← "5"

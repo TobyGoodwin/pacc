@@ -19,12 +19,12 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
      * "parsed", and never shifted it to "evaluated".
      *
      *     P ← a:A { 5 }
-     *     A ← "5"
+     *     A :: void ← "5"
      */
 
     p = s_text(lit, "5"); q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_text(type, "int"); p->next = q; q = p;
+    p = s_text(type, "void"); p->next = q; q = p;
     p = s_text(rule, "A"); p->first = q; r = p;
 
     p = s_text(ident, "a"); q = p;

@@ -17,7 +17,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "*"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Star"; p->first = q; r = p;
 
     /*
@@ -27,7 +27,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "/"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Slash"; p->first = q; p->next = r; r = p;
 
     /*
@@ -37,7 +37,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "?"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Query"; p->first = q; p->next = r; r = p;
 
     /*
@@ -47,7 +47,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "+"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Plus"; p->first = q; p->next = r; r = p;
 
     /*
@@ -57,7 +57,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = ")"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "rParen"; p->first = q; p->next = r; r = p;
 
     /*
@@ -67,7 +67,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "("; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "lParen"; p->first = q; p->next = r; r = p;
 
     /*
@@ -77,7 +77,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "!"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Not"; p->first = q; p->next = r; r = p;
 
     /*
@@ -87,7 +87,7 @@ int pacc_wrap(
     p = s_text(call, "_");
     p = cons(s_text(lit, "ε"), p);
     p = s_kid(seq, p);
-    p = cons(s_text(type, "int" /* XXX: void */), p);
+    p = cons(s_text(type, "void"), p);
     r = cons(s_both(rule, "Epsilon", p), r);
 
     /*
@@ -97,7 +97,7 @@ int pacc_wrap(
     p = s_text(call, "_");
     p = cons(s_text(lit, "."), p);
     p = s_kid(seq, p);
-    p = cons(s_text(type, "int" /* XXX: void */), p);
+    p = cons(s_text(type, "void"), p);
     r = cons(s_both(rule, "Dot", p), r);
 
     /*
@@ -107,7 +107,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "::"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "ColCol"; p->first = q; p->next = r; r = p;
 
     /*
@@ -117,7 +117,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = ":"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Colon"; p->first = q; p->next = r; r = p;
 
     /*
@@ -129,7 +129,7 @@ int pacc_wrap(
     p = s_new(lit); p->text = "←"; p->next = t; t = p;
     p = s_new(alt); p->first = t; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "lArrow"; p->first = q; p->next = r; r = p;
 
     /*
@@ -141,7 +141,7 @@ int pacc_wrap(
     p = s_new(lit); p->text = "→"; p->next = t; t = p;
     p = s_new(alt); p->first = t; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "rArrow"; p->first = q; p->next = r; r = p;
 
     /*
@@ -151,7 +151,7 @@ int pacc_wrap(
     p = s_new(call); p->text = "_"; q = p;
     p = s_new(lit); p->text = "&"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "And"; p->first = q; p->next = r; r = p;
 
     /*
@@ -164,36 +164,9 @@ int pacc_wrap(
     p = cons(s_kid(seq, s_text(lit, "\\t")), p);
     p = cons(s_kid(seq, s_text(lit, " ")), p);
     p = s_kid(seq, s_both(rep, 0, s_kid(seq, s_kid(alt, p))));
-    p = cons(s_text(type, "int" /* XXX: void */), p);
+    p = cons(s_text(type, "void"), p);
     p = s_both(rule, "_", p);
     r = cons(p, r);
-
-#if 0
-    p = s_new(call); p->text = "Comment"; q = p;
-    p = s_text(lit,p->text = "\\n"; p->next = q; q = p;
-    p = s_new(lit); p->text = "\\t"; p->next = q; q = p;
-    p = s_new(lit); p->text = " "; p->next = q; q = p;
-    p = s_new(alt); p->first = q; q = p;
-    p = s_new(rep); p->first = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "_"; p->first = q; p->next = r; r = p;
-#endif
-
-#if 0
-    /* Comment ← "#" (c:Char &{ *c != '\n' })* "\n" */
-    p = s_new(lit); p->text = "\\n"; s = p;
-    p = s_new(ident); p->text = "c"; i = p;
-    p = s_new(guard); p->text = "*c != '\\n'" /* XXX: '\n' */; p->first = i; q = p;
-    p = s_new(call); p->text = "Char"; i = p;
-    p = s_new(bind); p->text = "c"; p->first = i; p->next = q; q = p;
-    p = s_kid(seq, p);
-    p = s_both(rep, "", p); p->next = s; q = p;
-    p = s_new(lit); p->text = "#"; p->next = q; q = p;
-    p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "Comment"; p->first = q; p->next = r; r = p;
-#endif
 
     /*
 	C_Comment
@@ -210,7 +183,7 @@ int pacc_wrap(
     p = s_both(rep, 0, p);
     p = s_kid(seq, cons(s_text(lit, "//"), cons(p, s_text(lit, "\\n"))));
     p = s_kid(alt, cons(p, t));
-    p = cons(s_text(type, "int" /* XXX void */), p);
+    p = cons(s_text(type, "void"), p);
     p = s_both(rule, "C_Comment", p);
     r = cons(p, r);
 
@@ -225,7 +198,7 @@ int pacc_wrap(
     p = s_both(rep, 0, p);
     p = s_kid(seq, cons(s_text(lit, "#"), cons(p, s_text(lit, "\\n"))));
     p = s_kid(alt, cons(p, t));
-    p = cons(s_text(type, "int" /* XXX void */), p);
+    p = cons(s_text(type, "void"), p);
     p = s_both(rule, "Comment", p);
     r = cons(p, r);
 
@@ -243,15 +216,13 @@ int pacc_wrap(
     p = s_new(seq); p->first = q; p->next = t; t = p;
 
     p = s_new(alt); p->first = t; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "TypeElement"; p->first = q; p->next = r; r = p;
 
     /*
 	QuotedChar
 	    ← c:SimpleCharEscape → c
 	    / !"\\" x:. → { ref_dup(x) }
-	    ← SimpleCharEscape
-	    / !"\\" Char
     */
 
     p = s_both(expr, "ref_dup(x)", s_text(ident, "x"));
@@ -270,24 +241,26 @@ int pacc_wrap(
 
     /*
 	SimpleCharEscape
-	    ← "\\\'" / "\\\"" / "\\\?" / "\\\\"
-	    / "\\a" / "\\b" / "\\f" / "\\n" / "\\r" / "\\t" / "\\v"
+	    ← "\\" a:("\'" / "\"" / "\?" / "\\"
+	    / "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
     */
 
-    p = s_text(lit, "\\\\v");
-    p = cons(s_text(lit, "\\\\t"), p);
-    p = cons(s_text(lit, "\\\\r"), p);
-    p = cons(s_text(lit, "\\\\n"), p);
-    p = cons(s_text(lit, "\\\\f"), p);
-    p = cons(s_text(lit, "\\\\b"), p);
-    p = cons(s_text(lit, "\\\\a"), p);
-    p = cons(s_text(lit, "\\\\\\\\"), p);
-    p = cons(s_text(lit, "\\\\\\\?"), p);
-    p = cons(s_text(lit, "\\\\\\\""), p);
-    p = cons(s_text(lit, "\\\\\\\'"), p);
-    p = s_kid(alt, p);
+    p = s_both(expr, "ref_dup(a)", s_text(ident, "a"));
+    q = s_kid(seq, s_text(lit, "v"));
+    q = cons(s_kid(seq, s_text(lit, "t")), q);
+    q = cons(s_kid(seq, s_text(lit, "r")), q);
+    q = cons(s_kid(seq, s_text(lit, "n")), q);
+    q = cons(s_kid(seq, s_text(lit, "f")), q);
+    q = cons(s_kid(seq, s_text(lit, "b")), q);
+    q = cons(s_kid(seq, s_text(lit, "a")), q);
+    q = cons(s_kid(seq, s_text(lit, "?")), q);
+    q = cons(s_kid(seq, s_text(lit, "\\\\")), q);
+    q = cons(s_kid(seq, s_text(lit, "\\\"")), q);
+    q = cons(s_kid(seq, s_text(lit, "'")), q);
+    q = s_both(bind, "a", s_kid(alt, q));
+    p = cons(s_text(lit, "\\\\"), cons(q, p));
     p = s_kid(seq, p);
-    p = cons(s_text(type, "char *"), p);
+    p = cons(s_text(type, "ref_t"), p);
     p = s_both(rule, "SimpleCharEscape", p);
     r = cons(p, r);
 
@@ -301,7 +274,7 @@ int pacc_wrap(
     p = cons(s_text(call, "QuotedChar"), p);
     p = cons(s_text(lit, "'"), p);
     p = s_kid(seq, p);
-    p = cons(s_text(type, "char *"), p);
+    p = cons(s_text(type, "void"), p);
     p = s_both(rule, "CharLit", p);
     r = cons(p, r);
 

@@ -2,7 +2,7 @@
 chars
 parse 'fred' 'fred'
 parse 'fred ' 'fred'
-noparse 'fred barney' End 6
+noparse 'fred barney' '_:*:0, or end-of-input' 6
 */
 
 # Not entirely sure what regression this is testing, but here goes...
@@ -11,11 +11,9 @@ noparse 'fred barney' End 6
 #include <ctype.h>
 }
 
-Start :: char * <- n:Name End { ref_dup(n) }
+Start :: char * <- n:Name { ref_dup(n) }
 Name ← n:(NameStart NameCont*) _ -> n
 
-# rest should be void
-NameStart :: int ← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
+NameStart :: void ← c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
 NameCont ← c:. &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
 _ ← " " *
-End ← !.

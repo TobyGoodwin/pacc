@@ -9,4 +9,4 @@ noparse food S 1
 # End of input:
 
 S :: char * ← "foo" End { "yes" }
-End ← !.
+End :: void ← !.

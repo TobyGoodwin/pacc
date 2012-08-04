@@ -17,14 +17,14 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     /* The ? operator:
      *
      * char *S <- 'x' Y 'x' → { ref_str() }
-     * Y ← 'y' ?
+     * Y :: void ← 'y' ?
      *
      */
 
     p = new_node(lit); p->text = "y"; s = p;
     p = s_text(rep, ",1"); p->first = s; q = p;
     p = new_node(seq); p->first = q; q = p;
-    p = new_node(type); p->text = "char *"; p->next = q; q = p;
+    p = new_node(type); p->text = "void"; p->next = q; q = p;
     p = new_node(rule); p->text = "Y"; p->first = q; r = p;
     
     p = new_node(expr); p->text = "ref_str()"; q = p;

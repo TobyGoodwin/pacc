@@ -97,9 +97,6 @@ char *s_stash_type(char *type) {
 	--s;
     }
 
-    /* XXX we need to handle void correctly */
-    if (strcmp(type, "void") == 0) type = "int";
-
     t = type;
     return type;
 }
@@ -180,12 +177,6 @@ static struct s_node *s_range(enum s_type t, const unsigned char *v) {
     struct s_node *p = s_new(t);
 
     assert(v);
-#if 0
-    r = malloc(1 + 2); /* XXX encoding */
-    if (!r) nomem();
-    strcpy(r + 1, v);
-    r[0] = t;
-#endif
     s = UTF8_ACCEPT;
     do {
 	if (s == UTF8_REJECT || !*v) fatal1("invalid UTF-8 input");
@@ -194,11 +185,11 @@ static struct s_node *s_range(enum s_type t, const unsigned char *v) {
     return p;
 }
 
-struct s_node *s_range1(const char *v) {
+struct s_node *s_range1(const unsigned char *v) {
     return s_range(cceq, v);
 }
 
-struct s_node *s_range2(const char *u, const char *v) {
+struct s_node *s_range2(const unsigned char *u, const unsigned char *v) {
     return cons(s_range(ccge, u), s_range(ccle, v));
 }
 
@@ -247,6 +238,23 @@ int s_is_text(enum s_type t) {
     return t == bind || t == call || t == cclass || 
 	t == expr || t == grammar || t == guard || t == ident ||
 	t == lit || t == preamble || t == rep || t == rule || t == type;
+}
+
+int path_max(struct s_node *n, enum s_type t) {
+    int r = 0;
+    struct s_node *p;
+
+    if (n->type == alt)
+	for (p = n->first; p; p = p->next) {
+	    int m = path_max(p, t);
+	    if (m > r) r = m;
+	}
+    else if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    r += path_max(p, t);
+    if (n->type == t)
+	++r;
+    return r;
 }
 
 static void dump(struct s_node *p, int indent) {

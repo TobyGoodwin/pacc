@@ -7,4 +7,4 @@ parse non 0
 noparse ja S 1
 */
 
-S ← yes {1} / no {0} yes ← "yes" / "oui" no ← "non" / "no"
+S ← yes {1} / no {0} yes ← "yes" {1} / "oui" {1} no ← "non" {0} / "no" {0}

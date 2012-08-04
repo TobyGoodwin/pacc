@@ -12,4 +12,4 @@ noparse x Amount 2
 /* The above symbols include 1, 2, 3, and 4-byte UTF-8 encodings. */
 S :: int ← Currency a:Amount → a
 Amount ← [0-9] { *ref_ptr(ref()) - '0' }
-Currency ← .
+Currency :: void ← .

@@ -255,8 +255,10 @@ struct pacc_parser *YY_new(void) {
     p->m_chain_max = 0;
     p->sp = 0;
     p->stack = p->stack_alloc = 0;
-    p->err = p->err_alloc = p->err_valid = 0;
-    p->coord = p->coord_alloc = p->coord_valid = 0;
+    p->err = 0;
+    p->err_alloc = p->err_valid = 0;
+    p->coord = 0;
+    p->coord_alloc = p->coord_valid = 0;
     return p;
 }
 
@@ -264,7 +266,7 @@ void YY_input(struct pacc_parser *p, char *n, char *s, size_t l) {
     unsigned int i;
 
     p->name = n;
-    p->string = s;
+    p->string = (unsigned char *)s;
     p->input_length = l;
     _pacc_set_bkt_cnt(p);
     p->m_bkt = realloc(0, sizeof(struct intermed *) * p->m_bkt_cnt);
@@ -344,7 +346,7 @@ static void error(struct pacc_parser *_pacc, char *what, size_t col) {
  * pair of ints: coord[0] is the line number, and coord[1] is the column
  * within the line, both 1-based. */
 static int *_pacc_coords(struct pacc_parser *p, size_t col) {
-    int i, nl, x, y, *coords;
+    int i, x, y;
     int hi, lo;
     struct _pacc_coord *c, *cs = p->coord;
 

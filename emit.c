@@ -108,6 +108,8 @@ static int t_max, t_alloc;
 
 static int type_list(char *t) {
     int i;
+
+    if (strcmp(t, "void") == 0) return 0;
     for (i = 0; i < t_max; ++i) {
 	if (strcmp(t, t_list[i]) == 0) return i;
     }
@@ -160,17 +162,6 @@ static void grammar_pre(struct s_node *n) {
 	c_str(t_list[i]); c_str(" u"); c_int(i); c_semi();
     }
 
-#if 0
-    c_str(n->first->next->first->text); c_strln(" u0;");
-    for (p = n->first; p; p = p->next) {
-	if (p->type != rule) continue;
-	/* XXX obviously, we need to weed out duplicates, "void", etc. */
-	type_list(p->first->text);
-	//c_str(p->first->text); c_str(" u"); c_long(p->id); c_semi();
-	c_str(p->first->text);
-	c_str(" u"); type_list(p->first->text); c_semi();
-    }
-#endif
     c_close(); c_semi();
 
     /* XXX just for debugging */
@@ -228,7 +219,7 @@ static void literal(struct s_node *n) {
 	    ++p;
 	    assert(*p);
 	    switch (*p) {
-		case '\'': case '\"': case '\?': case '\\':
+		case '\'': case '"': case '?': case '\\':
 		case 'a': case 'b': case 'f': case 'n':
 		case 'r': case 't': case 'v':
 		    break;

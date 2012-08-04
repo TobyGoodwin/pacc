@@ -14,4 +14,4 @@ noparse '$x' Amount 2
 
 S :: int ← Currency a:Amount → a
 Amount ← [0-9] { *ref_ptr(ref()) - '0' }
-Currency ← [$£€]
+Currency :: void ← [$£€]

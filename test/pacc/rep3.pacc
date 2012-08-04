@@ -10,4 +10,4 @@ noparse xyyyyyyyyyyx '"x"' 3
 # The ? operator:
 
 S :: char * <- "x" Y "x" → { ref_str() }
-Y ← "y" ?
+Y :: void ← "y" ?

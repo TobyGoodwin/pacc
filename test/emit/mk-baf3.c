@@ -26,8 +26,8 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
      * Multitive <- p:Primary Times m:Multitive { p * m } / Primary
      * Primary <- Left a:Additive Right -> a / Decimal
      * Decimal ← Digits1 { atoi(ref_str()) } Space
-     * Digits1 ← Digit Digits1 / Digit
-     * Digit <- '0' / '1' / ... / '9'
+     * Digits1 :: void ← Digit Digits1 / Digit
+     * Digit :: void <- '0' / '1' / ... / '9'
      * void Left ← '(' Space
      * Right ← ')' Space
      * Plus ← '+' Space
@@ -39,7 +39,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     /* void End ← ! . */
     p = s_new(any); q = p;
     p = s_new(not); p->first = q; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "End"; p->first = q; r = p;
 
     /* void Space ← ' ' Space / ε */
@@ -48,38 +48,38 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_new(lit); p->text = " "; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = s; q = p;
     p = s_new(alt); p->first = q;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Space"; p->first = q; p->next = r; r = p;
 
     /* void Times ← '*' Space */
     p = s_new(call); p->text = "Space"; q = p;
     p = s_new(lit); p->text = "*"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Times"; p->first = q; p->next = r; r = p;
 
     /* void Plus ← '+' Space */
     p = s_new(call); p->text = "Space"; q = p;
     p = s_new(lit); p->text = "+"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Plus"; p->first = q; p->next = r; r = p;
 
     /* void Left ← '(' Space */
     p = s_new(call); p->text = "Space"; q = p;
     p = s_new(lit); p->text = "("; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Left"; p->first = q; p->next = r; r = p;
 
     /* void Right ← ')' Space */
     p = s_new(call); p->text = "Space"; q = p;
     p = s_new(lit); p->text = ")"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Right"; p->first = q; p->next = r; r = p;
 
-    /* int Digit <- '0' / '1' / ... / '9' */
+    /* Digit <- '0' / '1' / ... / '9' */
     p = s_new(lit); p->text = "9"; q = p;
     p = s_new(seq); p->first = q; s = p;
     p = s_new(lit); p->text = "8"; q = p;
@@ -102,17 +102,17 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_new(seq); p->first = q; p->next = s; s = p;
 
     p = s_new(alt); p->first = s; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Digit"; p->first = q; p->next = r; r = p;
 
-    /* int Digits1 ← Digit Digits1 / Digit */
+    /* Digits1 :: void ← Digit Digits1 / Digit */
     p = s_new(call); p->text = "Digit"; s = p;
     p = s_kid(seq, s); s = p;
     p = s_new(call); p->text = "Digits1"; q = p;
     p = s_new(call); p->text = "Digit"; p->next = q; q = p;
     p = s_new(seq); p->first = q; p->next = s; q = p;
     p = s_new(alt); p->first = q; q = p;
-    p = s_new(type); p->text = "int"; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "Digits1"; p->first = q; p->next = r; r = p;
 
     /* int Decimal ← Digits1 { atoi(ref_str()) } Space */

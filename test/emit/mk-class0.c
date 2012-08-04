@@ -18,7 +18,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
 
     /*
 	Word :: char * ← Consonant Vowel Consonant { ref_str() }
-	Vowel ← [aeiou]
+	Vowel :: void ← [aeiou]
 	Consonant ← [b-df-hj-np-tv-z]
      */
 
@@ -35,7 +35,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_both(cclass, "[b-df-hj-np-tv-z]", p);
 
     p = s_kid(seq, p);
-    p = s_both(rule, "Consonant", cons(s_text(type, "char *"), p));
+    p = s_both(rule, "Consonant", cons(s_text(type, "void"), p));
     r = p;
 
     p = s_text(cceq, 'u');
@@ -46,7 +46,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_both(cclass, "[aeiou]", p);
 
     p = s_kid(seq, p);
-    p = s_both(rule, "Vowel", cons(s_text(type, "char *"), p));
+    p = s_both(rule, "Vowel", cons(s_text(type, "void"), p));
     r = cons(p, r);
 
     p = s_text(expr, "ref_str()");
