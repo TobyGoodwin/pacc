@@ -211,7 +211,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * in the character, 0 in case of error; *c holds the character read. */
 static int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
     uint32_t state = UTF8_ACCEPT;
-    int i;
+    int i = 0;
     do
 	if (state == UTF8_REJECT || i == m) return 0;
     while (decode(&state, c, p[i++]));
@@ -375,11 +375,15 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     if (lo > 0) { nl = cs[lo - 1].c[0]; i = cs[lo - 1].n; }
     else { nl = 1; /* line numbering is 1-based, natch */ i = 0; }
     start = -1;
-    for (; i < col; ++i) {
-	if (p->string[i] == '\n') {
+    while (i < col) {
+	uint32_t c;
+	int l = _pacc_utf8_char(p->string + i, p->input_length - i, &c);
+	if (!l) panic("invalid UTF-8 input");
+	if (c == '\n') {
 	    ++nl;
 	    start = i;
 	}
+	i += l;
     }
 
     /* memoize them */
