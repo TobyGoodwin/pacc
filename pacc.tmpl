@@ -344,7 +344,7 @@ static void error(struct pacc_parser *_pacc, char *what, size_t col) {
  * pair of ints: coord[0] is the line number, and coord[1] is the column
  * within the line, both 1-based. */
 static int *_pacc_coords(struct pacc_parser *p, size_t col) {
-    int i, nl, start, *coords;
+    int i, nl, x, y, *coords;
     int hi, lo;
     struct _pacc_coord *c, *cs = p->coord;
 
@@ -372,24 +372,22 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
 
     /* find the coordinates */
     c = cs + lo; c->n = col;
-    if (lo > 0) { nl = cs[lo - 1].c[0]; i = cs[lo - 1].n; }
-    else { nl = 1; /* line numbering is 1-based, natch */ i = 0; }
-    start = -1;
+    if (lo > 0) { y = cs[lo - 1].c[0]; i = cs[lo - 1].n; }
+    else { y = 1; /* line numbering is 1-based, natch */ i = 0; }
+    x = 1;
     while (i < col) {
 	uint32_t c;
 	int l = _pacc_utf8_char(p->string + i, p->input_length - i, &c);
 	if (!l) panic("invalid UTF-8 input");
-	if (c == '\n') {
-	    ++nl;
-	    start = i;
-	}
 	i += l;
+	++x;
+	if (c == '\n') { ++y; x = 1; }
     }
 
     /* memoize them */
-    c->c[0] = nl;
+    c->c[0] = y;
     /* column numbering is also 1-based; start points to \n */
-    c->c[1] = i - start;
+    c->c[1] = x;
     return c->c;
 }
 /* The userland version */

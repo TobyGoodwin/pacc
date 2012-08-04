@@ -1,5 +1,5 @@
 /*
-nopacc 5:9 'expected Defns, or end-of-input'
+nopacc 5:6 'expected Defns, or end-of-input'
 */
 
 S ← ε*

@@ -1,5 +1,5 @@
 /*
-nopacc 7:21 'expected Defns, or end-of-input'
+nopacc 7:17 'expected Defns, or end-of-input'
 */
 
 /* Results may once again appear only at the end of a sequence. */
