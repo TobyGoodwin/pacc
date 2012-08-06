@@ -10,5 +10,5 @@ noparse end Word 1
 */
 
 Word :: char * ← Consonant Vowel Consonant { ref_str() }
-Vowel ← [aeiou]
+Vowel :: void ← [aeiou]
 Consonant ← [b-df-hj-np-tv-z]

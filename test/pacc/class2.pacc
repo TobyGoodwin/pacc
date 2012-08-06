@@ -14,5 +14,5 @@ noparse end Word 1
 # a little odd.
 
 Word :: char * ← Consonant Vowel Consonant { ref_str() }
-Vowel ← [aeiou]
+Vowel :: void ← [aeiou]
 Consonant ← &[a-z] [^aeiou]

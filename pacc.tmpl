@@ -221,7 +221,7 @@ static int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
 static int _pacc_ref_streq(ref_t a, char *b, struct pacc_parser *p) {
     /* XXX this could be made quicker */
     if (strlen(b) != (size_t)(a[1] - a[0])) return 0;
-    return strncmp(p->string + a[0], b, a[1] - a[0]) == 0; 
+    return strncmp((const char *)p->string + a[0], b, a[1] - a[0]) == 0; 
 }
 
 /* Find the largest available prime which is smaller than the target
@@ -346,8 +346,8 @@ static void error(struct pacc_parser *_pacc, char *what, size_t col) {
  * pair of ints: coord[0] is the line number, and coord[1] is the column
  * within the line, both 1-based. */
 static int *_pacc_coords(struct pacc_parser *p, size_t col) {
-    int i, x, y;
-    int hi, lo;
+    unsigned int i;
+    int x, y, hi, lo;
     struct _pacc_coord *c, *cs = p->coord;
 
     /* binary search*/

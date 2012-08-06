@@ -13,9 +13,9 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
 
     /* Mixed types:
      *
-     * int Decimal ← d:Digits1 { atoi(ref_ptr(d)) }
-     * ref_t Digits1 ← Digit Digits1 { ref() } / Digit { ref() }
-     * void Digit ← '0' / '1' / ... / '9'
+     * Decimal :: int ← d:Digits1 { atoi(ref_ptr(d)) }
+     * Digits1 :: ref_t ← Digit Digits1 { ref() } / Digit { ref() }
+     * Digit :: void ← '0' / '1' / ... / '9'
      *
      */
 
@@ -42,7 +42,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = new_node(seq); p->first = q; p->next = s; s = p;
 
     p = new_node(alt); p->first = s; q = p;
-    p = new_node(type); p->text = "int"; p->next = q; q = p;
+    p = new_node(type); p->text = "void"; p->next = q; q = p;
     p = new_node(rule); p->text = "Digit"; p->first = q; r = p;
 
     /* char *Digits1 ← Digit Digits1 { ref() } / Digit { ref() } */

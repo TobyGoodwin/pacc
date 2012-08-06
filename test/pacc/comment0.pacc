@@ -16,7 +16,7 @@ of
 thing
 */
 
-A <- "a" // That was an A!
+A :: void <- "a" // That was an A!
 
 /*
 A <- "x"

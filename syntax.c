@@ -240,6 +240,12 @@ int s_is_text(enum s_type t) {
 	t == lit || t == preamble || t == rep || t == rule || t == type;
 }
 
+/* A path is the route that the parser can take through a rule,
+ * branching at alt nodes. Given a node type, path_max() and path_min()
+ * return the maximum and minimum number of nodes of that type
+ * encountered on all possible paths through a rule.
+ */
+
 int path_max(struct s_node *n, enum s_type t) {
     int r = 0;
     struct s_node *p;
@@ -252,8 +258,25 @@ int path_max(struct s_node *n, enum s_type t) {
     else if (s_has_children(n->type))
 	for (p = n->first; p; p = p->next)
 	    r += path_max(p, t);
-    if (n->type == t)
-	++r;
+    if (n->type == t) r = 1;
+    return r;
+}
+
+int path_min(struct s_node *n, enum s_type t) {
+    int r = -1;
+    struct s_node *p;
+
+    if (n->type == alt)
+	for (p = n->first; p; p = p->next) {
+	    int m = path_min(p, t);
+	    if (r == -1 || m < r) r = m;
+	}
+    else if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    if (r == -1) r = path_min(p, t);
+	    else r += path_min(p, t);
+    if (n->type == t) r = 1;
+    r = r == -1 ? 0 : r;
     return r;
 }
 

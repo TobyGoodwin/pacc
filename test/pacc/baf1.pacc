@@ -15,5 +15,5 @@ noparse x Additive 1
 Additive <- m:Multitive "+" a:Additive { m + a } / m:Multitive -> m
 Multitive <- p:Primary "*" m:Multitive { p * m } / p:Primary -> p
 Primary <- "(" a:Additive ")" -> a / d:Decimal -> d
-Decimal :: int <- Digit { *ref_ptr(ref()) - '0' }
-Digit <- "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9"
+Decimal <- Digit { *ref_ptr(ref()) - '0' }
+Digit :: void <- "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9"

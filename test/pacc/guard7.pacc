@@ -6,6 +6,6 @@ noparse '{ no' '"}"' 5
 */
 
 Start :: char * ← RawCode { ref_str() }
-RawCode :: int ← "{" ( c:Char &{ ref_0(c) != '}' } )* "}" _
+RawCode :: void ← "{" ( c:Char &{ ref_0(c) != '}' } )* "}" _
 Char :: ref_t ← . { ref() }
 _ :: void ← (" " / "\n" ) *

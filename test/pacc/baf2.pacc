@@ -18,5 +18,5 @@ Additive <- m:Multitive "+" a:Additive { m + a } / m:Multitive -> m
 Multitive <- p:Primary "*" m:Multitive { p * m } / p:Primary -> p
 Primary <- "(" a:Additive ")" -> a / d:Decimal -> d
 Decimal ← Digits1 { atoi(ref_ptr(ref())) }
-Digits1 ← Digit Digits1 / Digit
+Digits1 :: void ← Digit Digits1 / Digit
 Digit <- "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9"

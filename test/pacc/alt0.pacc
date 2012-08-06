@@ -8,4 +8,4 @@ noparse qux P 1
 # A simple alternative
 
 P :: char * ← A { ref_str() }
-A ← "foo" / "bar"
+A :: void ← "foo" / "bar"

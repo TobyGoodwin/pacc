@@ -13,5 +13,5 @@ noparse end Word 1
 # very natural way to write this grammar as a PEG.
 
 Word :: char * ← Consonant Vowel Consonant { ref_str() }
-Vowel ← [aeiou]
+Vowel :: void ← [aeiou]
 Consonant ← !Vowel [a-z]

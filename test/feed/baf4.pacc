@@ -16,10 +16,9 @@ Additive ← m:Multitive __ Plus __ a:Additive { m + a } / m:Multitive -> m
 Multitive ← p:Primary __ Times __ m:Multitive { p * m } / p:Primary -> p
 Primary ← Left __ a:Additive __ Right -> a / d:Decimal -> d
 Decimal ← Digit+ _ { atoi(ref_ptr(ref())) }
-Digit ← [0-9]
+Digit :: void ← [0-9]
 
-# rest should be void
-Left :: int ← "(" _
+Left ← "(" _
 Right ← ")" _
 Plus ← "+" _
 Times ← "*" _

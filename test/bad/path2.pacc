@@ -1,0 +1,7 @@
+/*
+nocc 'parse.c: In function ‘pacc_parse’:
+parse.c:456:16: error: variable or field ‘a’ declared void'
+*/
+
+P ← a:A { a }
+A :: void ← "5"

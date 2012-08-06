@@ -12,15 +12,6 @@ noparse {_no '"}"' 5
 int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s, *t;
 
-    /*
-	End ← !.
-    */
-
-    p = new_node(any); q = p;
-    p = new_node(not); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "End"; p->first = q; r = p;
-
     /* Char ← . { ref_str() } */
 
     p = s_new(expr); p->text = "ref_str()"; q = p;
@@ -59,10 +50,9 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
 
     /*
 	Start
-	    ← RawCode End { ref_str() }
+	    ← RawCode { ref_str() }
     */
     p = s_new(expr); p->text = "ref_str()"; q = p;
-    p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "RawCode"; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;

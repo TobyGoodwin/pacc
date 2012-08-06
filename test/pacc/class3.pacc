@@ -9,9 +9,9 @@ noparse -bcd Test 1
 
 # Testing "-" in character classes. We don't need or support escapes.
 
-Test ← None First Last After { ref_str() }
+Test :: char * ← None First Last After { ref_str() }
 
-None ← [abc]
+None :: void ← [abc]
 First ← [-abc]
 Last ← [abc-]
 After ← [a-c-d-f]

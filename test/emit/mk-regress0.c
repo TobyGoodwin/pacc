@@ -2,7 +2,7 @@
 type chars
 parse fred fred
 parse 'fred ' fred
-noparse 'fred barney' End 6
+noparse 'fred barney' '_:*:0, or end-of-input' 6
 */
 
 #include <sys/types.h>
@@ -12,21 +12,12 @@ noparse 'fred barney' End 6
 int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
     struct s_node *p, *q, *r, *s;
 
-    /*
-	End ← !.
-    */
-
-    p = new_node(any); q = p;
-    p = new_node(not); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
-    p = s_new(rule); p->text = "End"; p->first = q; r = p;
-
     /* _ ← " " * */
     p = s_new(lit); p->text = " "; q = p;
     //p = s_new(seq); p->first = q; q = p;
     p = s_new(rep); p->first = q; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "int" /* XXX: "void" */; p->next = q; q = p;
+    p = s_new(type); p->text = "void"; p->next = q; q = p;
     p = s_new(rule); p->text = "_"; p->first = q; p->next = r; r = p;
 
     /*
@@ -80,7 +71,6 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     /* start anywhere... */
     p = s_new(ident); p->text = "r"; s = p;
     p = s_new(expr); p->text = "r"; p->first = s; q = p;
-    p = s_new(call); p->text = "End"; p->next = q; q = p;
     p = s_new(call); p->text = "Name"; s = p;
     p = s_new(bind); p->text = "r"; p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;

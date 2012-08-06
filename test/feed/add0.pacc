@@ -13,5 +13,4 @@ end 2
 Sum :: int ← a:Digit __ b:Digit "\n" → { a + b }
 Digit ← [0-9]  → { *ref_ptr(ref()) - '0' }
 
-# rest should be void
-__ ← "\n" *
+__ :: void ← "\n" *

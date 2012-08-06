@@ -1,5 +1,6 @@
 /*
-nocc foo
+nocc 'parse.pacc: In function ‘pacc_parse’:
+parse.pacc:8:16: error: expected expression before ‘)’ token'
 */
 
 /* test that C errors are reported at the right place in the pacc file */

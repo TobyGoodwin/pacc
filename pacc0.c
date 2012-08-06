@@ -509,14 +509,14 @@ int pacc_wrap(
 
     /*
 	CRange
-	    ← a:CChar "-" b:CChar { s_range2(a, b) }
-	    / a:CChar { s_range1(a) }
+	    ← a:CChar "-" b:CChar { s_range2((range_t)a, (range_t)b) }
+	    / a:CChar { s_range1((range_t)a) }
     */
-    p = s_both(expr, "s_range1(a)", s_text(ident, "a"));
+    p = s_both(expr, "s_range1((range_t)a)", s_text(ident, "a"));
     p = cons(s_both(bind, "a", s_text(call, "CChar")), p);
     p = s_kid(seq, p);
     q = cons(s_text(ident, "a"), s_text(ident, "b"));
-    q = s_both(expr, "s_range2(a, b)", q);
+    q = s_both(expr, "s_range2((range_t)a, (range_t)b)", q);
     q = cons(s_both(bind, "b", s_text(call, "CChar")), q);
     q = cons(s_text(lit, "-"), q);
     q = cons(s_both(bind, "a", s_text(call, "CChar")), q);
@@ -827,7 +827,7 @@ int pacc_wrap(
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
 
-    r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\n"), r);
+    r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\ntypedef const unsigned char *range_t;\n"), r);
     p = s_both(grammar, "", r);
 
     *result = p;

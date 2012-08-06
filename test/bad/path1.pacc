@@ -1,0 +1,5 @@
+/*
+nopacc1 "pacc: fatal: multiple expressions in rule \`S'"
+*/
+
+S ← "a" ("b" → {5}) "c" → {7}

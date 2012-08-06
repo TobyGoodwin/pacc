@@ -10,4 +10,4 @@ noparse foofoofoo 'S:_pacc_bl103:0:*:0' 10
 
 S ← "foofoo":X* { ref_str() }
 
-X ← "foo"
+X :: void ← "foo"

@@ -16,7 +16,7 @@ noparse 37 Identifier 1
  * Identifier :: char * ← i:(IdentStart IdentCont*) .* { ref_dup(i) } 
  * void IdentStart ← c:Char &{ *c >= 'a' && *c <= 'z' }
  * void IdentCont ← IdentStart / d:Char &{ *d >= '0' && *d <= '9' }
- * char *Char ← . { ref_str() }
+ * *Char :: ref_t ← . { ref_str() }
  */
 
 int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) {
@@ -26,7 +26,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = new_node(expr); p->text = "ref_str()"; q = p;
     p = new_node(any); p->next = q; q = p;
     p = new_node(seq); p->first = q; q = p;
-    p = new_node(type); p->text = "void"; p->next = q; q = p;
+    p = new_node(type); p->text = "char *"; p->next = q; q = p;
     p = new_node(rule); p->text = "Char"; p->first = q; r = p;
 
     /* void IdentCont ← IdentStart / d:Char &{ *d >= '0' && *d <= '9' } */

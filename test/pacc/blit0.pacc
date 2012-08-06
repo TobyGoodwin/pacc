@@ -9,7 +9,8 @@ noparse 'five seven' 'Word:*:0' 11
 
 # Bound literals
 
-# XXX obviously "expected x.129 at column 10" is nonsense!
+# XXX obviously "expected x.129 at column 10" was nonsense!
+# but "expected Word:*:0 at column 11" isn't much better
 
 {
 #include <ctype.h>
@@ -21,4 +22,4 @@ Number ← "five":Word { 5 } / "six":Word { 6 }
 
 Word :: ref_t ← w:Letter+ " "* -> w
 
-Letter ← c:. &{ isalpha(ref_0(c)) }
+Letter ← c:. &{ isalpha(ref_0(c)) } → { ref() }

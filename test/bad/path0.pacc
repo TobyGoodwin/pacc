@@ -1,0 +1,5 @@
+/*
+nopacc1 "pacc: fatal: no expressions in non-void rule \`S'"
+*/
+
+S <- "foo"
