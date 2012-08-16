@@ -1,11 +1,7 @@
 {
-
 #include <ctype.h>
-
 #include "syntax.h"
-
 typedef const unsigned char *range_t;
-
 }
 
 Grammar :: struct s_node *
