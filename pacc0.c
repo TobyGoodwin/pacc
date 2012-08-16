@@ -827,7 +827,11 @@ int pacc_wrap(
     p = s_new(type); p->text = "struct s_node *"; p->next = q; q = p;
     p = s_new(rule); p->text = "Grammar"; p->first = q; p->next = r; r = p;
 
-    r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\ntypedef const unsigned char *range_t;\n"), r);
+    r = cons(s_text(preamble,
+"#include <ctype.h>\n"
+"#include \"syntax.h\"\n"
+"typedef const unsigned char *range_t;"
+	), r);
     p = s_both(grammar, "", r);
 
     *result = p;
