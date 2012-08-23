@@ -1,0 +1,27 @@
+/*
+chars
+parse foo bar
+parse qux qux
+*/
+
+/* http://paccrat.org/entry/2012-08-23
+
+What is the type of ``n`` in ``n:(Rule)``? One could argue that
+parentheses are only used for grouping things (differently from the
+usual precedence) and therefore shouldn't change the type of anything. I
+suspect that this is how **pacc** currently interprets it, although I
+haven't peered at ``pacc.pacc`` or tested it yet.
+
+On the other hand, since there's no reason to write redundant
+parentheses, we could make ``n:(Rule)`` mean that ``n`` has type
+``ref_t``, and is bound to whatever ``Rule`` matches. Another way to
+express this would be ``n:(Rule ε)``. This might occasionally be useful,
+so let's make it so.
+
+*/
+
+P :: char * ← f:F → f / q:(Q) → { ref_dup(q) }
+
+F ← "foo" { "bar" }
+
+Q ← "qux" { "baz" }

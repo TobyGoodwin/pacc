@@ -1,4 +1,4 @@
-RELEASE = pacc-0.0
+RELEASE = pacc-0.1
 
 CC = c99
 CFLAGS = -g -Wall -Wextra -I.
@@ -38,8 +38,9 @@ pacc3: $(OBJS) pacc3.o
 pacc3.c: pacc2 pacc.pacc
 	./pacc2 pacc.pacc -o $@
 
-pacc: pacc2 sane
-	cp pacc2 pacc
+pacc: pacc2.d pacc3.d
+	diff $^
+	cp pacc2 $@
 
 template.c: pacc.tmpl template.sh
 	sh template.sh > $@
@@ -67,9 +68,7 @@ utf8.o: utf8.h
 %.d: %.c
 	sed '/^#/d' $^ > $@
 
-.PHONY: sane check clean test/clean
-sane: pacc2.d pacc3.d
-	diff $^
+.PHONY: check clean test/clean
 
 check: pacc
 	cd test && sh run.sh

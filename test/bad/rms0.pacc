@@ -1,0 +1,14 @@
+/*
+nocc 'something'
+*/
+
+/* This is a slightly modified version of real user code. Obviously it's
+ * wrong to pass a char * to ref_dup(), but because it's a macro, nobody
+ * notices this. */
+
+block
+   <- n:word { printf("[%s]", ref_dup(n)) }
+
+word::char *
+   <- "fish" { ref_str() }
+

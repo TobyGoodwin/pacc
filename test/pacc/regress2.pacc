@@ -1,0 +1,10 @@
+/*
+int
+parse_exact fish '[fish]parsed with value 6'
+*/
+
+block
+   <- n:word { printf("[%s]", ref_ptr(n)) }
+
+word::ref_t
+   <- n:"fish" -> n
