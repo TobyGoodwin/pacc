@@ -35,7 +35,6 @@ script_from() {
 
     t=`mktemp`
     sed -n '/\*\//q;2,$p' $1 > $t
-    cat $t
     if test -s $t; then
 	. $t
     else

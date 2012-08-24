@@ -1,0 +1,10 @@
+/*
+chars
+parse 'b b' 'b b'
+parse 'x	x' 'x	x'
+noparse ctc Space 2
+*/
+
+Word :: char * ← Consonant Space Consonant { ref_str() }
+Consonant :: void ← [b-df-hj-np-tv-z]
+Space ← [ \t]
