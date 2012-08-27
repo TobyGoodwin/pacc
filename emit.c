@@ -574,17 +574,17 @@ static void cclass_pre(struct s_node *n) {
 }
 
 static void emit_cceq(struct s_node *n) {
-    c_str("_pacc_utf_cp=="); c_int(n->number);
+    c_str("_pacc_utf_cp=='"); c_str(n->text); c_str("'");
     if (n->next) c_str(" || ");
 }
 
 static void emit_ccge(struct s_node *n) {
     assert(n->next && n->next->type == ccle);
-    c_str("(_pacc_utf_cp>="); c_int(n->number); c_str("&&");
+    c_str("(_pacc_utf_cp>='"); c_str(n->text); c_str("'&&");
 }
 
 static void emit_ccle(struct s_node *n) {
-    c_str("_pacc_utf_cp<="); c_int(n->number); c_str(")");
+    c_str("_pacc_utf_cp<='"); c_str(n->text); c_str("')");
     if (n->next) c_str(" || ");
 }
 

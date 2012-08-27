@@ -122,8 +122,8 @@ QuotedChar :: char *
     / !"\\" x:. → { ref_dup(x) }
 
 SimpleCharEscape
-    ← "\\" a:("\'" / "\"" / "\?" / "\\"
-    / "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
+    ← "\\" c:("\'" / "\"" / "\?" / "\\") { ref_dup(c) }
+    / "\\" ("a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_str() }
 
 TypeElement :: void
     ← Name _ / "*" _

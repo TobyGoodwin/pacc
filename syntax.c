@@ -186,11 +186,11 @@ static struct s_node *s_range(enum s_type t, const unsigned char *v) {
 }
 
 struct s_node *s_range1(const unsigned char *v) {
-    return s_range(cceq, v);
+    return s_text(cceq, v);
 }
 
 struct s_node *s_range2(const unsigned char *u, const unsigned char *v) {
-    return cons(s_range(ccge, u), s_range(ccle, v));
+    return cons(s_text(ccge, u), s_text(ccle, v));
 }
 
 char *decode_type(enum s_type t) {
@@ -227,7 +227,7 @@ int s_has_children(enum s_type t) {
 }
 
 int s_is_number(enum s_type t) {
-    return t == cceq || t == ccge || t == ccle;
+    return 0;
 }
 
 int s_is_pair(enum s_type t) {
@@ -236,6 +236,7 @@ int s_is_pair(enum s_type t) {
 
 int s_is_text(enum s_type t) {
     return t == bind || t == call || t == cclass || 
+	t == cceq || t == ccge || t == ccle ||
 	t == expr || t == grammar || t == guard || t == ident ||
 	t == lit || t == preamble || t == rep || t == rule || t == type;
 }
