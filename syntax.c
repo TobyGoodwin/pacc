@@ -177,20 +177,40 @@ static struct s_node *s_range(enum s_type t, const unsigned char *v) {
     struct s_node *p = s_new(t);
 
     assert(v);
-    s = UTF8_ACCEPT;
-    do {
-	if (s == UTF8_REJECT || !*v) fatal1("invalid UTF-8 input");
-    } while (decode(&s, &c, *v++));
+    if (v[0] == '\\') {
+	/* pacc handles the self-evaluating backwhacks: \' \" \? */
+	switch (v[1]) {
+	case 'a': c =  7; break;
+	case 'b': c =  8; break;
+	case 'f': c = 12; break;
+	case 'n': c = 10; break;
+	case 'r': c = 13; break;
+	case 't': c =  9; break;
+	case 'v': c = 11; break;
+	case '\\': c = 92; break;
+	case '0': case '1': case '2': case '3':
+	case '4': case '5': case '6': case '7':
+	    c = strtol((const char * restrict)v + 1, 0, 8); break;
+	case 'x': case 'u': case 'U':
+	    c = strtol((const char * restrict)v + 2, 0, 16); break;
+	default: assert(0);
+	}
+    } else {
+	s = UTF8_ACCEPT;
+	do {
+	    if (s == UTF8_REJECT || !*v) fatal1("invalid UTF-8 input");
+	} while (decode(&s, &c, *v++));
+    }
     p->number = c;
     return p;
 }
 
 struct s_node *s_range1(const unsigned char *v) {
-    return s_text(cceq, v);
+    return s_range(cceq, v);
 }
 
 struct s_node *s_range2(const unsigned char *u, const unsigned char *v) {
-    return cons(s_text(ccge, u), s_text(ccle, v));
+    return cons(s_range(ccge, u), s_range(ccle, v));
 }
 
 char *decode_type(enum s_type t) {
@@ -227,7 +247,7 @@ int s_has_children(enum s_type t) {
 }
 
 int s_is_number(enum s_type t) {
-    return 0;
+    return t == cceq || t == ccge || t == ccle;
 }
 
 int s_is_pair(enum s_type t) {
@@ -236,7 +256,6 @@ int s_is_pair(enum s_type t) {
 
 int s_is_text(enum s_type t) {
     return t == bind || t == call || t == cclass || 
-	t == cceq || t == ccge || t == ccle ||
 	t == expr || t == grammar || t == guard || t == ident ||
 	t == lit || t == preamble || t == rep || t == rule || t == type;
 }

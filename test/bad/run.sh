@@ -18,11 +18,16 @@ nopacc1() {
 
 nocc() {
     err=$1
+    cflags=$2
     echo $pacc parse.pacc
     $pacc parse.pacc || fail 'pacc failed on nocc test'
     echo c99 parse.c
-    r=$(c99 parse.c 2>&1 && echo 'compiled bad grammar by mistake!')
+    r=$(c99 $cflags parse.c 2>&1 && echo 'compiled bad grammar by mistake!')
     check "$r" "$err"
+}
+
+noccwarn() {
+    nocc "$1" '-Werror'
 }
 
 case $target in

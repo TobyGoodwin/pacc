@@ -1,0 +1,23 @@
+/*
+chars
+parse foo foo
+parse 'foo bar' 'foo,bar'
+parse 'foo  bar' 'foo,bar'
+parse 'foo	bar' 'foo,bar'
+parse 'foo   456  	qux' 'foo,456,qux'
+*/
+
+{
+#include <string.h>
+
+char *allocat(char *a, char *b) {
+    char *x = malloc(strlen(a) + strlen(b) + 2);
+    if (!x) nomem();
+    strcpy(x, a); strcat(x, ","); strcat(x, b);
+    return x;
+}
+}
+
+Words :: char * ← w:Word Space* ws:Words { allocat(w, ws) } / w:Word → w
+Word ← (!Space .)+ → { ref_str() }
+Space :: void ← [ \t\v\r\n]

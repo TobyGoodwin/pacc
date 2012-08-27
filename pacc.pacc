@@ -115,17 +115,31 @@ QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
 CharLit :: void
     ← "'" QuotedChar "'" _
 
-# XXX this needs to completely match the C:2010 definition, including
-# octal, hex and universal escapes. 
 QuotedChar :: char *
-    ← c:SimpleCharEscape → c
-    / !"\\" x:. → { ref_dup(x) }
+    ← &"\\" c:Escape → c
+    / . → { ref_str() }
 
-SimpleCharEscape
-    ← "\\" c:("\'" / "\"" / "\?" / "\\") { ref_dup(c) }
-    / "\\" ("a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_str() }
+Escape
+    ← c:SimpleEscape → c
+    / c:OctalEscape → c
+    / c:HexEscape → c
+    / c:UniversalEscape → c
 
-TypeElement :: void
+SimpleEscape
+    ← "\\" c:("\'" / "\"" / "\?") { ref_dup(c) }
+    / "\\" ("a" / "b" / "f" / "n" / "r" / "t" / "v" / "\\") { ref_str() }
+
+OctalEscape ← "\\" [0-7][0-7]?[0-7]? { ref_str() }
+
+HexEscape ← "\\x" HexDigit HexDigit? { ref_str() }
+
+UniversalEscape ← ("\\u" HexQuad / "\\U" HexQuad HexQuad) { ref_str() }
+
+HexQuad :: void ← HexDigit HexDigit HexDigit HexDigit
+
+HexDigit ← [0-9A-Fa-f]
+
+TypeElement
     ← Name _ / "*" _
 
 Comment

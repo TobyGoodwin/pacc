@@ -1,0 +1,18 @@
+/*
+chars
+parse '$ab' '$ab'
+parse '£en' '£en'
+parse '€it' '€it'
+parse '𝄞ox' '𝄞ox'
+parse '$ug' '$ug'
+noparse '$ky' Vowel 2
+noparse 'and' Word 1
+*/
+
+# Testing other sorts of escapes (I know the musical clef isn't a
+# currency symbol)
+
+Word :: char * ← Currency Vowel Consonant { ref_str() }
+Currency :: void ← [\u0024\u00A3\u20ac\U0001d11e]
+Vowel ← [\141\x65i\x6f\165]
+Consonant ← &[a-z] !Vowel .
