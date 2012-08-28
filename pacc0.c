@@ -220,48 +220,18 @@ int pacc_wrap(
     p = s_new(rule); p->text = "TypeElement"; p->first = q; p->next = r; r = p;
 
     /*
-	QuotedChar
-	    ← c:SimpleCharEscape → c
-	    / !"\\" x:. → { ref_dup(x) }
+	QuotedChar ← (Escape / !"\\" . ) → { ref() }
     */
 
-    p = s_both(expr, "ref_dup(x)", s_text(ident, "x"));
-    p = cons(s_both(bind, "x", s_new(any)), p);
+    q = s_text(expr, "ref()");
+    p = s_new(any);
     p = cons(s_kid(not, s_text(lit, "\\\\")), p);
     p = s_kid(seq, p);
-
-    q = s_both(expr, "c", s_text(ident, "c"));
-    q = cons(s_both(bind, "c", s_text(call, "SimpleCharEscape")), q);
-    q = s_kid(seq, q);
-
-    p = s_kid(alt, cons(q, p));
-    p = cons(s_text(type, "char *"), p);
-    p = s_both(rule, "QuotedChar", p);
-    r = cons(p, r);
-
-    /*
-	SimpleCharEscape
-	    ← "\\" a:("\'" / "\"" / "\?" / "\\"
-	    / "a" / "b" / "f" / "n" / "r" / "t" / "v") { ref_dup(a) }
-    */
-
-    p = s_both(expr, "ref_dup(a)", s_text(ident, "a"));
-    q = s_kid(seq, s_text(lit, "v"));
-    q = cons(s_kid(seq, s_text(lit, "t")), q);
-    q = cons(s_kid(seq, s_text(lit, "r")), q);
-    q = cons(s_kid(seq, s_text(lit, "n")), q);
-    q = cons(s_kid(seq, s_text(lit, "f")), q);
-    q = cons(s_kid(seq, s_text(lit, "b")), q);
-    q = cons(s_kid(seq, s_text(lit, "a")), q);
-    q = cons(s_kid(seq, s_text(lit, "?")), q);
-    q = cons(s_kid(seq, s_text(lit, "\\\\")), q);
-    q = cons(s_kid(seq, s_text(lit, "\\\"")), q);
-    q = cons(s_kid(seq, s_text(lit, "'")), q);
-    q = s_both(bind, "a", s_kid(alt, q));
-    p = cons(s_text(lit, "\\\\"), cons(q, p));
+    p = cons(s_kid(seq, s_text(call, "Escape")), p);
+    p = cons(s_kid(alt, p), q);
     p = s_kid(seq, p);
     p = cons(s_text(type, "ref_t"), p);
-    p = s_both(rule, "SimpleCharEscape", p);
+    p = s_both(rule, "QuotedChar", p);
     r = cons(p, r);
 
     /*
@@ -279,25 +249,58 @@ int pacc_wrap(
     r = cons(p, r);
 
     /*
+	SimpleEscape
+	    ← "\\" ("a" / "b" / "f" / "n" / "r" / "t" / "v" /
+		    "\\" / "\'" / "\"" / "\?")
+    */
+
+    q = s_kid(seq, s_text(lit, "v"));
+    q = cons(s_kid(seq, s_text(lit, "t")), q);
+    q = cons(s_kid(seq, s_text(lit, "r")), q);
+    q = cons(s_kid(seq, s_text(lit, "n")), q);
+    q = cons(s_kid(seq, s_text(lit, "f")), q);
+    q = cons(s_kid(seq, s_text(lit, "b")), q);
+    q = cons(s_kid(seq, s_text(lit, "a")), q);
+    q = cons(s_kid(seq, s_text(lit, "?")), q);
+    q = cons(s_kid(seq, s_text(lit, "\\\\")), q);
+    q = cons(s_kid(seq, s_text(lit, "\\\"")), q);
+    q = cons(s_kid(seq, s_text(lit, "'")), q);
+    p = cons(s_text(lit, "\\\\"), s_kid(alt, q));
+    p = s_kid(seq, p);
+    p = cons(s_text(type, "void"), p);
+    p = s_both(rule, "SimpleEscape", p);
+    r = cons(p, r);
+
+    /*
+	Escape ← SimpleEscape (/ OctalEscape / HexEscape / UniversalEscape)
+    */
+    /* Exotic escapes are not used in pacc.pacc. */
+    p = s_kid(seq, s_text(call, "SimpleEscape"));
+    p = s_kid(alt, p);
+    p = cons(s_text(type, "void"), p);
+    p = s_both(rule, "Escape", p);
+    r = cons(p, r);
+
+    /*
 	QuotedChars ← (!"\"" QuotedChar)* { ref_str() }
     */
 
-    p = s_new(expr); p->text = "ref_str()"; t = p;
+    p = s_new(expr); p->text = "ref()"; t = p;
     p = s_new(call); p->text = "QuotedChar"; q = p;
     p = s_new(lit); p->text = "\\\""; s = p;
     p = s_new(not); p->first = s; p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(rep); p->first = q; p->next = t; q = p;
     p = s_new(seq); p->first = q; q = p;
-    p = s_new(type); p->text = "char *"; p->next = q; q = p;
+    p = s_new(type); p->text = "ref_t"; p->next = q; q = p;
     p = s_new(rule); p->text = "QuotedChars"; p->first = q; p->next = r; r = p;
 
     /*
-	StringLit ← "\"" q:QuotedChars "\"" _ → q
+	StringLit ← "\"" q:QuotedChars "\"" _ → { ref_dup(q) }
     */
 
     p = s_new(ident); p->text = "q"; i = p;
-    p = s_new(expr); p->text = "q"; p->first = i; q = p;
+    p = s_new(expr); p->text = "ref_dup(q)"; p->first = i; q = p;
     p = s_new(call); p->text = "_"; p->next = q; q = p;
     p = s_new(lit); p->text = "\\\""; p->next = q; q = p;
     p = s_new(call); p->text = "QuotedChars"; s = p;
@@ -493,9 +496,9 @@ int pacc_wrap(
 
     /*
 	CChar :: char *
-	    ← "\\]" { "]" } / ! "]" y:QuotedChar → y
+	    ← "\\]" { "]" } / ! "]" y:QuotedChar → { ref_dup(y) }
     */
-    p = s_both(expr, "y", s_text(ident, "y"));
+    p = s_both(expr, "ref_dup(y)", s_text(ident, "y"));
     p = cons(s_both(bind, "y", s_text(call, "QuotedChar")), p);
     p = cons(s_kid(not, s_text(lit, "]")), p);
     p = s_kid(seq, p);

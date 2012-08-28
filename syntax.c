@@ -178,7 +178,6 @@ static struct s_node *s_range(enum s_type t, const unsigned char *v) {
 
     assert(v);
     if (v[0] == '\\') {
-	/* pacc handles the self-evaluating backwhacks: \' \" \? */
 	switch (v[1]) {
 	case 'a': c =  7; break;
 	case 'b': c =  8; break;
@@ -187,6 +186,9 @@ static struct s_node *s_range(enum s_type t, const unsigned char *v) {
 	case 'r': c = 13; break;
 	case 't': c =  9; break;
 	case 'v': c = 11; break;
+	case '"': c = 34; break;
+	case '\'': c = 39; break;
+	case '?': c = 63; break;
 	case '\\': c = 92; break;
 	case '0': case '1': case '2': case '3':
 	case '4': case '5': case '6': case '7':
