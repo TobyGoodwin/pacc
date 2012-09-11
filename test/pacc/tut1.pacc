@@ -1,0 +1,10 @@
+/*
+int
+parse yes 1
+parse oui 1
+parse no 0
+noparse non end-of-input 3
+noparse foo Start 1
+*/
+
+Start <- "yes" {1} / "oui" {1} / "no" {0} / "non" {0}
