@@ -6,6 +6,7 @@ vim: syntax=c
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -490,7 +491,7 @@ PACC_TYPE YY_result(struct pacc_parser *p) {
     return p->value;
 }
 
-void YY_error(struct pacc_parser *p) {
+void YY_old_error(struct pacc_parser *p) {
     int *coords;
     size_t i;
 
@@ -523,6 +524,60 @@ void YY_error(struct pacc_parser *p) {
 	}
     }
     printf("\n");
+    //printf("(column %ld)\n", _pacc->err_col);
+}
+
+static void pr(char **buf, size_t *l, char *fmt, ...) {
+    size_t n;
+    va_list argp;
+
+    va_start(argp, fmt);
+    n = vsnprintf(0, 0, fmt, argp);
+    va_end(argp);
+
+    *buf = realloc(*buf, *l + n + 1);
+    if (!buf) nomem();
+
+    va_start(argp, fmt);
+    vsnprintf(*buf + *l, n + 1, fmt, argp);
+    va_end(argp);
+    *l += n;
+}
+
+char *YY_error(struct pacc_parser *p) {
+    int *coords;
+    size_t i, l = 0;
+    char *r = 0;
+
+    coords = _pacc_coords(p, p->err_col);
+    pr(&r, &l, "%s:%d:%d: ", p->name, coords[0], coords[1]);
+
+    /* XXX this, or something like it, is very handy, and needs to go
+     * in. But we're holding off for now as all failing test cases would
+     * need to be changed. */
+    //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
+
+    pr(&r, &l, "expected ");
+    for (i = 0; i < p->err_valid; ++i) {
+	char *s;
+	for (s = p->err[i]; *s; ++s) {
+	    if (isprint(*s)) pr(&r, &l, "%c", *s);
+	    else switch (*s) {
+		case '\n':
+		    pr(&r, &l, "\\n");
+		    break;
+		default:
+		    pr(&r, &l, "\\x%02x", *s);
+		    break;
+	    }
+	}
+
+	if (i + 1 < p->err_valid) {
+	    pr(&r, &l, ", ");
+	    if (i + 2 == p->err_valid) pr(&r, &l, "or ");
+	}
+    }
+    printf("%s\n", r);
     //printf("(column %ld)\n", _pacc->err_col);
 }
 
