@@ -211,7 +211,10 @@ struct s_node *s_range1(const unsigned char *v) {
     return s_range(cceq, v);
 }
 
-struct s_node *s_range2(const unsigned char *u, const unsigned char *v) {
+struct s_node *s_range2(const unsigned char *u, const unsigned char *v/*, int *c*/) {
+    //if (u >= v) {
+	//fatal1
+    //}
     return cons(s_range(ccge, u), s_range(ccle, v));
 }
 
