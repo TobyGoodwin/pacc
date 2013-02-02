@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "error.h"
+#include "pacc.h"
 #include "syntax.h"
 #include "utf8.h"
 
@@ -212,6 +213,8 @@ struct s_node *s_range1(const unsigned char *v) {
 }
 
 struct s_node *s_range2(const unsigned char *u, const unsigned char *v) {
+    if (u >= v) 
+	fatal1(pacc_pos("invalid range"));
     return cons(s_range(ccge, u), s_range(ccle, v));
 }
 

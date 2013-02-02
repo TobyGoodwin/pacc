@@ -661,9 +661,9 @@ static void h_lines(char *yy, char *type) {
     printf("extern void %s_destroy(struct pacc_parser *);\n", yy);
     printf("extern int %s_parse(struct pacc_parser *);\n", yy);
     printf("extern %s %s_result(struct pacc_parser *);\n", type, yy);
-    printf("extern void %s_error(struct pacc_parser *);\n", yy);
-    printf("extern int %s_wrap(const char *, char *, off_t, %s *result);\n",
-	yy, type);
+    printf("extern const char *%s_error(struct pacc_parser *);\n", yy);
+    printf("extern const char *%s_pos(struct pacc_parser *, const char *);\n", yy);
+    printf("extern int %s_wrap(const char *, char *, off_t, %s *result);\n", yy, type);
 }
 
 void header(struct s_node *g) {

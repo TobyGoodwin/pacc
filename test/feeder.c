@@ -33,7 +33,9 @@ int main(int argc, char **argv) {
 	    parsed = pacc_feed_parse(p1);
 
 	    if (!parsed) {
-		pacc_feed_error(p1);
+		char *e = pacc_feed_error(p1);
+		fprintf(stderr, "%s\n", e);
+		free(e);
 		return 1;
 	    }
 	    ++n;

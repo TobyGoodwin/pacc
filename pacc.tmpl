@@ -544,13 +544,20 @@ static void pr(char **buf, size_t *l, char *fmt, ...) {
     *l += n;
 }
 
-char *YY_error(struct pacc_parser *p) {
+char *YY_pos(struct pacc_parser *p, const char *s) {
     int *coords;
-    size_t i, l = 0;
+    size_t l = 0;
     char *r = 0;
 
     coords = _pacc_coords(p, p->err_col);
-    pr(&r, &l, "%s:%d:%d: ", p->name, coords[0], coords[1]);
+    pr(&r, &l, "%s:%d:%d: %s", p->name, coords[0], coords[1], s);
+
+    return r;
+}
+
+char *YY_error(struct pacc_parser *p) {
+    size_t i, l = 0;
+    char *r = 0;
 
     /* XXX this, or something like it, is very handy, and needs to go
      * in. But we're holding off for now as all failing test cases would
@@ -577,7 +584,8 @@ char *YY_error(struct pacc_parser *p) {
 	    if (i + 2 == p->err_valid) pr(&r, &l, "or ");
 	}
     }
-    printf("%s\n", r);
+    return YY_pos(p, r);
+    //printf("%s\n", r);
     //printf("(column %ld)\n", _pacc->err_col);
 }
 
@@ -590,7 +598,11 @@ int YY_wrap(char *name, char *addr, size_t l, PACC_TYPE *result) {
     YY_input(p, name, addr, l);
     parsed = YY_parse(p);
     if (parsed) *result = YY_result(p);
-    else YY_error(p);
+    else {
+	char *e = YY_error(p);
+	fprintf(stderr, "%s\n", e);
+	free(e);
+    }
 
     YY_destroy(p);
 
