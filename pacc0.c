@@ -3,7 +3,7 @@
 
 char *prefix = 0; /* XXX */
 
-extern const char *pacc_pos(struct pacc_parser *p, const char *s) {
+extern char *pacc_pos(struct pacc_parser *p, const char *s) {
     return 0;
 }
 

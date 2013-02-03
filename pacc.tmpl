@@ -544,7 +544,7 @@ static void pr(char **buf, size_t *l, char *fmt, ...) {
     *l += n;
 }
 
-const char *YY_pos(struct pacc_parser *p, const char *s) {
+char *YY_pos(struct pacc_parser *p, const char *s) {
     int *coords;
     size_t l = 0;
     char *r = 0;
@@ -555,7 +555,7 @@ const char *YY_pos(struct pacc_parser *p, const char *s) {
     return r;
 }
 
-const char *YY_error(struct pacc_parser *p) {
+char *YY_error(struct pacc_parser *p) {
     size_t i, l = 0;
     char *r = 0;
 
@@ -599,9 +599,9 @@ int YY_wrap(const char *name, char *addr, size_t l, PACC_TYPE *result) {
     parsed = YY_parse(p);
     if (parsed) *result = YY_result(p);
     else {
-	const char *e = YY_error(p);
+	char *e = YY_error(p);
 	fprintf(stderr, "%s\n", e);
-	free((void *)e);
+	free(e);
     }
 
     YY_destroy(p);
