@@ -1,5 +1,6 @@
 {
 #include <ctype.h>
+#include "pacc.h"
 #include "syntax.h"
 typedef const unsigned char *range_t;
 }
@@ -56,10 +57,12 @@ CClass1 ← "^"? c:CRanges → { s_both(cclass, ref_str(), c) }
 CRanges ← c:CRange cs:CRanges { append(c, cs) } / ε { 0 }
 
 CRange
-    ← a:CChar "-" b:CChar { s_range2((range_t)a, (range_t)b) }
-    / a:CChar { s_range1((range_t)a) }
+    ← a:CChar "-" b:CChar { s_range2(a, b, _pacc) }
+    / a:CChar { s_range1(a) }
 
-CChar :: char * ← "\\]" { "]" } / ! "]" y:QuotedChar → { ref_dup(y) }
+CChar :: const unsigned char *
+    ← "\\]" { (const unsigned char *)"]" }
+    / ! "]" y:QuotedChar → { (const unsigned char *)ref_dup(y) }
 
 Result :: struct s_node *
     ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }

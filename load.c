@@ -6,7 +6,7 @@
 
 #include "error.h"
 
-char *load(const char *n, off_t *size) {
+char *load(const char *n, size_t *size) {
     char *addr;
     struct stat sb;
 

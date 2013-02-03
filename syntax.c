@@ -212,10 +212,14 @@ struct s_node *s_range1(const unsigned char *v) {
     return s_range(cceq, v);
 }
 
-struct s_node *s_range2(const unsigned char *u, const unsigned char *v) {
-    if (u >= v) 
-	fatal1(pacc_pos("invalid range"));
-    return cons(s_range(ccge, u), s_range(ccle, v));
+struct s_node *s_range2(const unsigned char *u, const unsigned char *v,
+	void *pacc) {
+    struct s_node *p, *q;
+    p = s_range(ccge, u);
+    q = s_range(ccle, v);
+    //if (p->number >= q->number) 
+	//fatal1(pacc_pos(pacc, "invalid range"));
+    return cons(p, q);
 }
 
 char *decode_type(enum s_type t) {

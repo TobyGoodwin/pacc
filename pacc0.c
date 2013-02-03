@@ -3,10 +3,14 @@
 
 char *prefix = 0; /* XXX */
 
+extern const char *pacc_pos(struct pacc_parser *p, const char *s) {
+    return 0;
+}
+
 int pacc_wrap(
 	__attribute__((unused)) const char *ign0,
 	__attribute__((unused)) char *ign1,
-	__attribute__((unused)) off_t ign2,
+	__attribute__((unused)) size_t ign2,
 	struct s_node **result) {
     struct s_node *i, *p, *q, *r, *s, *t;
 
@@ -512,14 +516,14 @@ int pacc_wrap(
 
     /*
 	CRange
-	    ← a:CChar "-" b:CChar { s_range2((range_t)a, (range_t)b) }
-	    / a:CChar { s_range1((range_t)a) }
+	    ← a:CChar "-" b:CChar { s_range2(a, b, _pacc) }
+	    / a:CChar { s_range1(a) }
     */
-    p = s_both(expr, "s_range1((range_t)a)", s_text(ident, "a"));
+    p = s_both(expr, "s_range1(a)", s_text(ident, "a"));
     p = cons(s_both(bind, "a", s_text(call, "CChar")), p);
     p = s_kid(seq, p);
     q = cons(s_text(ident, "a"), s_text(ident, "b"));
-    q = s_both(expr, "s_range2((range_t)a, (range_t)b)", q);
+    q = s_both(expr, "s_range2(a, b, _pacc)", q);
     q = cons(s_both(bind, "b", s_text(call, "CChar")), q);
     q = cons(s_text(lit, "-"), q);
     q = cons(s_both(bind, "a", s_text(call, "CChar")), q);
@@ -832,8 +836,8 @@ int pacc_wrap(
 
     r = cons(s_text(preamble,
 "#include <ctype.h>\n"
+"#include \"pacc.h\"\n"
 "#include \"syntax.h\"\n"
-"typedef const unsigned char *range_t;"
 	), r);
     p = s_both(grammar, "", r);
 
