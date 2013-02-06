@@ -319,9 +319,10 @@ static struct intermed *_pacc_result(struct pacc_parser *p, size_t col, long rul
     return r;
 }
 
-static void error(struct pacc_parser *_pacc, char *what, size_t col) {
+static void _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
     int doit, append;
-//Trace fprintf(stderr, "error(Grammar, 0) at col %ld\n", col);
+
+    Trace fprintf(stderr, "_pacc_error(%s, %ld)\n", what, col);
     append = doit = 1;
     if (col > _pacc->err_col) append = 0;
     else if (col == _pacc->err_col) {
@@ -396,6 +397,15 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
 /* The userland version */
 #define pacc_coords _pacc_coords(_pacc, col)
 
+/* XXX tidy this up */
+char *pacc_pos(struct pacc_parser *, const char *);
+
+int _fail(struct pacc_parser *p, char *e) {
+    fprintf(stderr, YY_pos(p, e));
+    exit(1);
+}
+#define fail(e) _fail(_pacc, e)
+
 int YY_parse(struct pacc_parser *_pacc) {
     enum status status;
     int cont, st, _pacc_any_i;
@@ -413,7 +423,7 @@ int YY_parse(struct pacc_parser *_pacc) {
     cur = _pacc_result(_pacc, col, start_rule_id);
     /* pacc grammars are anchored on the right */
     if ((cur->rule & 3) == parsed && cur->remainder != _pacc->input_length) {
-	error(_pacc, "end-of-input", cur->remainder);
+	_pacc_error(_pacc, ".end-of-input", cur->remainder);
 	cur->rule = (cur->rule & ~3) | no_parse;
     }
     if (parsed && !evaluating && (cur->rule & 3) == parsed) {
@@ -564,10 +574,12 @@ char *YY_error(struct pacc_parser *p) {
      * need to be changed. */
     //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
 
-    pr(&r, &l, "expected ");
+    if (p->err_valid && p->err[0][0] == '.')
+	pr(&r, &l, "expected ");
     for (i = 0; i < p->err_valid; ++i) {
-	char *s;
-	for (s = p->err[i]; *s; ++s) {
+	char *s = p->err[i];
+	if (*s == '.') ++s;
+	for ( ; *s; ++s) {
 	    if (isprint(*s)) pr(&r, &l, "%c", *s);
 	    else switch (*s) {
 		case '\n':

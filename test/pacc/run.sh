@@ -2,22 +2,24 @@
 
 # This code does not handle spacy filenames, nor should it.
 
-parse() {
-    echo ./harness "$1"
-    r=`./harness "$1" 2>&1`
-    check "$r" "parsed with value $2"
-}
-
 parse_exact() {
     echo ./harness "$1"
     r=`./harness "$1" 2>&1`
     check "$r" "$2"
 }
 
-noparse() {
+parse() {
+    parse_exact "$1" "parsed with value $2"
+}
+
+noparse_exact() {
     echo ./harness "$1"
     r=`./harness "$1" 2>&1`
-    check "$r" "arg:1:$3: expected $2"
+    check "$r" "$2"
+}
+
+noparse() {
+    noparse_exact "$1" "arg:1:$3: expected $2"
 }
 
 type() {

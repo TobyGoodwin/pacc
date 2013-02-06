@@ -1,6 +1,6 @@
 /*
 nocc 'parse.c: In function ‘pacc_parse’:
-parse.c:457:16: error: variable or field ‘a’ declared void'
+parse.c:458:16: error: variable or field ‘a’ declared void'
 */
 
 P ← a:A { a }

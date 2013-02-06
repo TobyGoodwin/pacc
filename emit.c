@@ -254,7 +254,8 @@ static void literal(struct s_node *n) {
     c_strln("status = parsed;");
     c_str("col += "); c_int(l); c_semi();
     c_close(); c_str("else"); c_open();
-    c_str("error(_pacc, \"\\\""); c_str(n->text); c_strln("\\\"\", col);");
+    c_str("_pacc_error(_pacc, \".\\\""); c_str(n->text);
+    c_strln("\\\"\", col);");
     c_strln("status = no_parse;");
     c_close();
     debug_post("lit", n);
@@ -291,7 +292,7 @@ static void rule_post(struct s_node *n) {
     /* XXX: See test/pacc/err0.c. This is wrong. What is right? */
     c_str("if (_pacc->err_col == rule_col)"); c_open();
     c_strln("_pacc->err_valid = 0;");
-    c_str("error(_pacc, \""); c_str(n->text); c_strln("\", rule_col);");
+    c_str("_pacc_error(_pacc, \"."); c_str(n->text); c_strln("\", rule_col);");
     c_close();
 
     c_close(); /* this closes the open in rule_pre() */ 
@@ -502,7 +503,7 @@ static void guard_pre(struct s_node *n) {
 
 /* obviously, the tricky part of a guard is the bindings! */
 static void guard_post(struct s_node *n) {
-    c_strln("status ="); c_code(n); c_strln(" ? parsed : no_parse;");
+    c_strln("if (!"); c_code(n); c_strln(") status = no_parse;");
     debug_post("guard", n);
     c_close();
 }
@@ -595,11 +596,11 @@ static void cclass_post(struct s_node *n) {
     c_strln("col += _pacc_any_i;");
     c_close(); c_str("else"); c_open();
     //error(n->text, 1);
-    c_str("error(_pacc, \"["); c_str(n->text); c_strln("]\", col);");
+    c_str("_pacc_error(_pacc, \".["); c_str(n->text); c_strln("]\", col);");
     c_strln("status = no_parse;");
     c_close(); c_close();
     c_str("else"); c_open();
-    c_str("error(_pacc, \"["); c_str(n->text); c_strln("]\", col);");
+    c_str("_pacc_error(_pacc, \".["); c_str(n->text); c_strln("]\", col);");
     c_strln("status = no_parse;");
     c_close();
     debug_post("cclass", n);
