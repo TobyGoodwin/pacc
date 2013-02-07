@@ -1,5 +1,5 @@
 /*
-nopacc 8:1 'invalid range'
+nopacc 5:20 'expected CChar'
 */
 
 Bad :: char * ← [z-a] → { "foo" }

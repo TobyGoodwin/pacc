@@ -52,17 +52,29 @@ Rule5
 
 CClass0 ← "[" c:CClass1 "]" _ → c
 
-CClass1 ← "^"? c:CRanges → { s_both(cclass, ref_str(), c) }
+CClass1 ← "^"? c:CClass2 → { s_both(cclass, ref_str(), c) }
 
-CRanges ← c:CRange cs:CRanges { append(c, cs) } / ε { 0 }
+CClass2
+    ← c:CHyphen cs:CRanges { append(c, cs) }
+    / cs:CRanges c:CHyphen { append(c, cs) }
+    / cs:CRanges → cs
+
+# Should be able to improve this by rearranging slightly so we make the range
+# node and then compare a->number < b->number
+
+CRanges
+    ← c:CRange &{ !c->next || (c->number < c->next->number) } cs:CRanges { append(c, cs) }
+    / ε { 0 }
 
 CRange
     ← a:CChar "-" b:CChar { s_range2(a, b, _pacc) }
-    / a:CChar { s_range1(a) }
+    / !"-" a:CChar { s_range1(a) }
 
 CChar :: const unsigned char *
     ← "\\]" { (const unsigned char *)"]" }
     / ! "]" y:QuotedChar → { (const unsigned char *)ref_dup(y) }
+
+CHyphen ← "-" { s_range1("-") }
 
 Result :: struct s_node *
     ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }
