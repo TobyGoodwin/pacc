@@ -2,6 +2,4 @@
 nopacc 8:1 'invalid range'
 */
 
-/* XXX the position reported is always the end of the input */
-
 Bad :: char * ← [z-a] → { "foo" }

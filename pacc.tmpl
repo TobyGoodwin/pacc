@@ -319,7 +319,7 @@ static struct intermed *_pacc_result(struct pacc_parser *p, size_t col, long rul
     return r;
 }
 
-static void _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
+static int _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
     int doit, append;
 
     Trace fprintf(stderr, "_pacc_error(%s, %ld)\n", what, col);
@@ -342,6 +342,7 @@ static void _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
         _pacc->err[_pacc->err_valid - 1] = what;
         _pacc->err_col = col;
     }
+    return 0; /* for the fail() macro */
 }
 
 /* Given a parser p, and a column col, return the "coordinates" in a
@@ -397,14 +398,69 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
 /* The userland version */
 #define pacc_coords _pacc_coords(_pacc, col)
 
-/* XXX tidy this up */
-char *pacc_pos(struct pacc_parser *, const char *);
+static void pr(char **buf, size_t *l, char *fmt, ...) {
+    size_t n;
+    va_list argp;
 
-int _fail(struct pacc_parser *p, char *e) {
-    fprintf(stderr, YY_pos(p, e));
-    exit(1);
+    va_start(argp, fmt);
+    n = vsnprintf(0, 0, fmt, argp);
+    va_end(argp);
+
+    *buf = realloc(*buf, *l + n + 1);
+    if (!buf) nomem();
+
+    va_start(argp, fmt);
+    vsnprintf(*buf + *l, n + 1, fmt, argp);
+    va_end(argp);
+    *l += n;
 }
-#define fail(e) _fail(_pacc, e)
+
+char *YY_pos(struct pacc_parser *p, const char *s) {
+    int *coords;
+    size_t l = 0;
+    char *r = 0;
+
+    coords = _pacc_coords(p, p->err_col);
+    pr(&r, &l, "%s:%d:%d: %s", p->name, coords[0], coords[1], s);
+
+    return r;
+}
+
+char *YY_error(struct pacc_parser *p) {
+    size_t i, l = 0;
+    char *r = 0;
+
+    /* XXX this, or something like it, is very handy, and needs to go
+     * in. But we're holding off for now as all failing test cases would
+     * need to be changed. */
+    //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
+
+    if (p->err_valid && p->err[0][0] == '.')
+	pr(&r, &l, "expected ");
+    for (i = 0; i < p->err_valid; ++i) {
+	char *s = p->err[i];
+	if (*s == '.') ++s;
+	for ( ; *s; ++s) {
+	    if (isprint(*s)) pr(&r, &l, "%c", *s);
+	    else switch (*s) {
+		case '\n':
+		    pr(&r, &l, "\\n");
+		    break;
+		default:
+		    pr(&r, &l, "\\x%02x", *s);
+		    break;
+	    }
+	}
+
+	if (i + 1 < p->err_valid) {
+	    pr(&r, &l, ", ");
+	    if (i + 2 == p->err_valid) pr(&r, &l, "or ");
+	}
+    }
+    return YY_pos(p, r);
+    //printf("%s\n", r);
+    //printf("(column %ld)\n", _pacc->err_col);
+}
 
 int YY_parse(struct pacc_parser *_pacc) {
     enum status status;
@@ -534,70 +590,6 @@ void YY_old_error(struct pacc_parser *p) {
 	}
     }
     printf("\n");
-    //printf("(column %ld)\n", _pacc->err_col);
-}
-
-static void pr(char **buf, size_t *l, char *fmt, ...) {
-    size_t n;
-    va_list argp;
-
-    va_start(argp, fmt);
-    n = vsnprintf(0, 0, fmt, argp);
-    va_end(argp);
-
-    *buf = realloc(*buf, *l + n + 1);
-    if (!buf) nomem();
-
-    va_start(argp, fmt);
-    vsnprintf(*buf + *l, n + 1, fmt, argp);
-    va_end(argp);
-    *l += n;
-}
-
-char *YY_pos(struct pacc_parser *p, const char *s) {
-    int *coords;
-    size_t l = 0;
-    char *r = 0;
-
-    coords = _pacc_coords(p, p->err_col);
-    pr(&r, &l, "%s:%d:%d: %s", p->name, coords[0], coords[1], s);
-
-    return r;
-}
-
-char *YY_error(struct pacc_parser *p) {
-    size_t i, l = 0;
-    char *r = 0;
-
-    /* XXX this, or something like it, is very handy, and needs to go
-     * in. But we're holding off for now as all failing test cases would
-     * need to be changed. */
-    //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
-
-    if (p->err_valid && p->err[0][0] == '.')
-	pr(&r, &l, "expected ");
-    for (i = 0; i < p->err_valid; ++i) {
-	char *s = p->err[i];
-	if (*s == '.') ++s;
-	for ( ; *s; ++s) {
-	    if (isprint(*s)) pr(&r, &l, "%c", *s);
-	    else switch (*s) {
-		case '\n':
-		    pr(&r, &l, "\\n");
-		    break;
-		default:
-		    pr(&r, &l, "\\x%02x", *s);
-		    break;
-	    }
-	}
-
-	if (i + 1 < p->err_valid) {
-	    pr(&r, &l, ", ");
-	    if (i + 2 == p->err_valid) pr(&r, &l, "or ");
-	}
-    }
-    return YY_pos(p, r);
-    //printf("%s\n", r);
     //printf("(column %ld)\n", _pacc->err_col);
 }
 

@@ -1,0 +1,5 @@
+/*
+nopacc 8:1 'invalid range'
+*/
+
+Bad :: char * ← [a-c-x-z] → { "foo" }

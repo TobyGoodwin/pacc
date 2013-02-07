@@ -1,8 +1,8 @@
 /*
 type chars
-parse ab yes
-noparse_exact ba 'arg:1:1: invalid range'
+parse abcd yes
+noparse_exact bacd 'arg:1:3: invalid range'
 */
 
-S ← a:Letter b:Letter ( &{ a < b } / &{ fail("invalid range") } )  → { "yes" }
+S ← a:Letter b:Letter &{ a < b || fail("invalid range") } "cd" → { "yes" }
 Letter :: char ← [a-z] { ref_0(ref()) }
