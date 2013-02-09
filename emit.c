@@ -503,7 +503,10 @@ static void guard_pre(struct s_node *n) {
 
 /* obviously, the tricky part of a guard is the bindings! */
 static void guard_post(struct s_node *n) {
+    /* XXX doesn't work, why not?
     c_strln("if (!"); c_code(n); c_strln(") status = no_parse;");
+    */
+    c_strln("status = ("); c_code(n); c_strln(") ? parsed : no_parse;");
     debug_post("guard", n);
     c_close();
 }

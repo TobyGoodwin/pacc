@@ -59,6 +59,7 @@ static void deblit(struct s_node *n, const char *ign0, int ign1) {
 
     free(n->text);
     n->first = p;
+    /* XXX this makes a nested seq */
     s_retype(seq, n);
 }
 
