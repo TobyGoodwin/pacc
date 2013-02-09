@@ -1,5 +1,5 @@
 /*
-nopacc 5:20 'expected CChar'
+nopacc 5:20 'expected CCNode, "-", or "]"'
 */
 
 Bad :: char * ← [z-a] → { "foo" }

@@ -499,62 +499,116 @@ int pacc_wrap(
     p = s_new(rule); p->text = "Result"; p->first = q; p->next = r; r = p;
 
     /*
-	CChar :: char *
-	    ← "\\]" { "]" } / ! "]" y:QuotedChar → { ref_dup(y) }
+       CCHyphen ← "-" { s_ccnode("-") }
     */
-    p = s_both(expr, "ref_dup(y)", s_text(ident, "y"));
+
+    p = s_text(expr, "s_ccnode(\"-\")");
+    p = cons(s_text(lit, "-"), p);
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = s_both(rule, "CCHyphen", p);
+    r = cons(p, r);
+
+    /*
+	CCChar :: const unsigned char *
+	    ← "\\]" { (const unsigned char *)"]" }
+	    / ! "]" y:QuotedChar → { (const unsigned char *)ref_dup(y) }
+    */
+    p = s_both(expr, "(const unsigned char *)ref_dup(y)", s_text(ident, "y"));
     p = cons(s_both(bind, "y", s_text(call, "QuotedChar")), p);
     p = cons(s_kid(not, s_text(lit, "]")), p);
     p = s_kid(seq, p);
-    q = s_text(expr, "\"]\"");
+    q = s_text(expr, "(const unsigned char *)\"]\"");
     q = cons(s_text(lit, "\\\\]"), q);
     q = s_kid(seq, q);
     p = s_kid(alt, cons(q, p));
-    p = cons(s_text(type, "char *"), p);
-    p = s_both(rule, "CChar", p);
+    p = cons(s_text(type, "const unsigned char *"), p);
+    p = s_both(rule, "CCChar", p);
     r = cons(p, r);
 
     /*
-	CRange
-	    ← a:CChar "-" b:CChar { s_range2(a, b, _pacc) }
-	    / a:CChar { s_range1(a) }
+	CCNode ← c:CCChar { s_ccnode(c) }
     */
-    p = s_both(expr, "s_range1(a)", s_text(ident, "a"));
-    p = cons(s_both(bind, "a", s_text(call, "CChar")), p);
+
+    p = s_both(expr, "s_ccnode(c)", s_text(ident, "c"));
+    p = cons(s_both(bind, "c", s_text(call, "CCChar")), p);
     p = s_kid(seq, p);
+    p = cons(s_text(type, "struct s_node *"), p);
+    p = s_both(rule, "CCNode", p);
+    r = cons(p, r);
+
+    /*
+	CCRange
+	    ← a:CCNode "-" b:CCNode &{ a->number < b->number } → { s_ccrange(a, b) }
+	    / !"-" n:CCNode → n
+    */
+
+    p = s_both(expr, "n", s_text(ident, "n"));
+    p = cons(s_both(bind, "n", s_text(call, "CCNode")), p);
+    p = cons(s_kid(not, s_text(lit, "-")), p);
+    p = s_kid(seq, p);
+
     q = cons(s_text(ident, "a"), s_text(ident, "b"));
-    q = s_both(expr, "s_range2(a, b, _pacc)", q);
-    q = cons(s_both(bind, "b", s_text(call, "CChar")), q);
+    q = s_both(expr, "s_ccrange(a, b)", q);
+    s = cons(s_text(ident, "a"), s_text(ident, "b"));
+    q = cons(s_both(guard, "a->number < b->number", s), q);
+    q = cons(s_both(bind, "b", s_text(call, "CCNode")), q);
     q = cons(s_text(lit, "-"), q);
-    q = cons(s_both(bind, "a", s_text(call, "CChar")), q);
+    q = cons(s_both(bind, "a", s_text(call, "CCNode")), q);
     q = s_kid(seq, q);
+
     p = s_kid(alt, cons(q, p));
     p = cons(s_text(type, "struct s_node *"), p);
-    p = s_both(rule, "CRange", p);
+    p = s_both(rule, "CCRange", p);
     r = cons(p, r);
 
     /*
-	CRanges
-	    ← c:CRange cs:CRanges { append(c, cs) }
+	CCRanges
+	    ← c:CCRange cs:CCRanges { append(c, cs) }
 	    / ε { 0 }
     */
     s = s_kid(seq, s_text(expr, "0"));
     p = cons(s_text(ident, "c"), s_text(ident, "cs"));
     p = s_both(expr, "append(c, cs)", p);
-    p = cons(s_both(bind, "cs", s_text(call, "CRanges")), p);
-    p = cons(s_both(bind, "c", s_text(call, "CRange")), p);
+    p = cons(s_both(bind, "cs", s_text(call, "CCRanges")), p);
+    p = cons(s_both(bind, "c", s_text(call, "CCRange")), p);
     p = s_kid(seq, p);
     p = s_kid(alt, cons(p, s));
-    p = s_both(rule, "CRanges", cons(s_text(type, "struct s_node *"), p));
+    p = s_both(rule, "CCRanges", cons(s_text(type, "struct s_node *"), p));
     r = cons(p, r);
 
     /*
-	CClass1
-	    ← "^" c:CRanges → { s_both(cclass, ref_str(), c) }
+	CClass2
+	    ← c:CCHyphen cs:CCRanges { append(c, cs) }
+	    / cs:CCRanges c:CCHyphen { append(c, cs) }
+	    / cs:CCRanges → cs
+    */
+
+    p = s_both(expr, "cs", s_text(ident, "cs"));
+    p = cons(s_both(bind, "cs", s_text(call, "CCRanges")), p);
+    p = s_kid(seq, p);
+
+    q = cons(s_text(ident, "c"), s_text(ident, "cs"));
+    q = s_both(expr, "append(c, cs)", q);
+    q = cons(s_both(bind, "c", s_text(call, "CCHyphen")), q);
+    q = cons(s_both(bind, "cs", s_text(call, "CCRanges")), q);
+    p = cons(s_kid(seq, q), p);
+
+    q = cons(s_text(ident, "c"), s_text(ident, "cs"));
+    q = s_both(expr, "append(c, cs)", q);
+    q = cons(s_both(bind, "cs", s_text(call, "CCRanges")), q);
+    q = cons(s_both(bind, "c", s_text(call, "CCHyphen")), q);
+    p = cons(s_kid(seq, q), p);
+
+    p = s_kid(alt, p);
+    p = s_both(rule, "CClass2", cons(s_text(type, "struct s_node *"), p));
+    r = cons(p, r);
+
+    /*
+	CClass1 ← "^"? c:CClass2 → { s_both(cclass, ref_str(), c) }
     */
     p = s_text(ident, "c");
     p = s_both(expr, "s_both(cclass, ref_str(), c)", p);
-    p = cons(s_both(bind, "c", s_text(call, "CRanges")), p);
+    p = cons(s_both(bind, "c", s_text(call, "CClass2")), p);
     p = cons(s_both(rep, ",1", s_text(lit, "^")), p);
     p = s_kid(seq, p);
     p = s_both(rule, "CClass1", cons(s_text(type, "struct s_node *"), p));

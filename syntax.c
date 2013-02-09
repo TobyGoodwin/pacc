@@ -173,9 +173,9 @@ struct s_node *s_set_cons(struct s_node *i, struct s_node *l) {
     return cons(i, l);
 }
 
-static struct s_node *s_range(enum s_type t, const unsigned char *v) {
+struct s_node *s_ccnode(const unsigned char *v) {
     uint32_t c, s;
-    struct s_node *p = s_new(t);
+    struct s_node *p = s_new(cceq);
 
     assert(v);
     if (v[0] == '\\') {
@@ -208,18 +208,8 @@ static struct s_node *s_range(enum s_type t, const unsigned char *v) {
     return p;
 }
 
-struct s_node *s_range1(const unsigned char *v) {
-    return s_range(cceq, v);
-}
-
-struct s_node *s_range2(const unsigned char *u, const unsigned char *v,
-	void *pacc) {
-    struct s_node *p, *q;
-    p = s_range(ccge, u);
-    q = s_range(ccle, v);
-    //if (p->number >= q->number) 
-	//fatal1(pacc_pos(pacc, "invalid range"));
-    return cons(p, q);
+struct s_node *s_ccrange(struct s_node *u, struct s_node *v) {
+    return cons(s_retype(ccge, u), s_retype(ccle, v));
 }
 
 char *decode_type(enum s_type t) {

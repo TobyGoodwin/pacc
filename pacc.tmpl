@@ -482,7 +482,7 @@ int YY_parse(struct pacc_parser *_pacc) {
 	_pacc_error(_pacc, ".end-of-input", cur->remainder);
 	cur->rule = (cur->rule & ~3) | no_parse;
     }
-    if (parsed && !evaluating && (cur->rule & 3) == parsed) {
+    if (!evaluating && (cur->rule & 3) == parsed) {
 	unsigned char *stack_save;
 
 	Trace fprintf(stderr, "PARSED! Time to start eval...\n");

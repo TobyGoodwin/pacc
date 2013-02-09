@@ -55,26 +55,28 @@ CClass0 ← "[" c:CClass1 "]" _ → c
 CClass1 ← "^"? c:CClass2 → { s_both(cclass, ref_str(), c) }
 
 CClass2
-    ← c:CHyphen cs:CRanges { append(c, cs) }
-    / cs:CRanges c:CHyphen { append(c, cs) }
-    / cs:CRanges → cs
+    ← c:CCHyphen cs:CCRanges { append(c, cs) }
+    / cs:CCRanges c:CCHyphen { append(c, cs) }
+    / cs:CCRanges → cs
 
 # Should be able to improve this by rearranging slightly so we make the range
 # node and then compare a->number < b->number
 
-CRanges
-    ← c:CRange &{ !c->next || (c->number < c->next->number) } cs:CRanges { append(c, cs) }
+CCRanges
+    ← c:CCRange cs:CCRanges { append(c, cs) }
     / ε { 0 }
 
-CRange
-    ← a:CChar "-" b:CChar { s_range2(a, b, _pacc) }
-    / !"-" a:CChar { s_range1(a) }
+CCRange
+    ← a:CCNode "-" b:CCNode &{ a->number < b->number } → { s_ccrange(a, b) }
+    / !"-" n:CCNode → n
 
-CChar :: const unsigned char *
+CCNode ← c:CCChar { s_ccnode(c) }
+
+CCChar :: const unsigned char *
     ← "\\]" { (const unsigned char *)"]" }
     / ! "]" y:QuotedChar → { (const unsigned char *)ref_dup(y) }
 
-CHyphen ← "-" { s_range1("-") }
+CCHyphen ← "-" { s_ccnode("-") }
 
 Result :: struct s_node *
     ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }

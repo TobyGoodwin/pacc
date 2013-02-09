@@ -1,10 +1,13 @@
 /*
-int
+type int
 parse 5 5
 parse 50 50
 parse 55 55
+XXX
 parse 555 555
 */
+
+# this doesn't actually work - is there any way to do it?
 
 Decimal ← t:Digit u:Decimal → { t * 10 + u } / d:Digit → d
 #Decimal ← ε → 0 / t:Decimal u:Digit → { t * 10 + u }

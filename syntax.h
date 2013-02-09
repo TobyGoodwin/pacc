@@ -41,9 +41,8 @@ extern struct s_node *s_retype(enum s_type, struct s_node *);
 extern struct s_node *cons(struct s_node *, struct s_node *);
 extern struct s_node *append(struct s_node *, struct s_node *);
 extern struct s_node *s_set_cons(struct s_node *, struct s_node *);
-extern struct s_node *s_range1(const unsigned char *);
-extern struct s_node *s_range2(const unsigned char *, const unsigned char *,
-	void *);
+extern struct s_node *s_ccnode(const unsigned char *);
+extern struct s_node *s_ccrange(struct s_node *, struct s_node *);
 #define new_node(t) s_new(t)
 
 extern struct s_node *s_alt(struct s_node *, struct s_node *);
