@@ -76,9 +76,9 @@ CCChar :: const unsigned char *
     ← "\\]" { (const unsigned char *)"]" }
     / ! "]" y:QuotedChar → { (const unsigned char *)ref_dup(y) }
 
-CCHyphen ← "-" { s_ccnode("-") }
+CCHyphen :: struct s_node * ← "-" { s_ccnode((const unsigned char *)"-") }
 
-Result :: struct s_node *
+Result
     ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }
     / rArrow n:Number { s_text(expr, n) }
     / rArrow? c:Code → c

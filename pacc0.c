@@ -499,10 +499,11 @@ int pacc_wrap(
     p = s_new(rule); p->text = "Result"; p->first = q; p->next = r; r = p;
 
     /*
-       CCHyphen ← "-" { s_ccnode("-") }
+	CCHyphen :: struct s_node *
+	    ← "-" { s_ccnode((const unsigned char *)"-") }
     */
 
-    p = s_text(expr, "s_ccnode(\"-\")");
+    p = s_text(expr, "s_ccnode((const unsigned char *)\"-\")");
     p = cons(s_text(lit, "-"), p);
     p = cons(s_text(type, "struct s_node *"), p);
     p = s_both(rule, "CCHyphen", p);

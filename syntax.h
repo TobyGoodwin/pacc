@@ -54,6 +54,7 @@ extern void desugar(struct s_node *);
 
 /* examining trees */
 extern int path_max(struct s_node *, enum s_type);
+extern int path_min(struct s_node *, enum s_type);
 extern void s_dump(struct s_node *);
 extern int s_has_children(enum s_type);
 extern int s_is_text(enum s_type);
