@@ -50,14 +50,6 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = new_node(type); p->text = "void"; p->next = q; q = p;
     p = new_node(rule); p->text = "IdentStart"; p->first = q; p->next = r; r = p;
 
-    p = new_node(seq); s = p;
-    p = new_node(call); p->text = "IdentConts0"; q = p;
-    p = new_node(call); p->text = "IdentCont"; p->next = q; q = p;
-    p = new_node(seq); p->first = q; p->next = s; q = p;
-    p = new_node(alt); p->first = q; q = p;
-    p = new_node(type); p->text = "void"; p->next = q; q = p;
-    p = new_node(rule); p->text = "IdentConts0"; p->first = q; p->next = r; r = p;
-
     /* Identifier :: char * ← i:(IdentStart IdentCont*) .* { ref_dup(i) } */
     p = s_both(expr, "ref_dup(i)", s_text(ident, "i"));
     p = cons(s_both(rep, 0, s_new(any)), p);

@@ -26,17 +26,48 @@ static void resolve(struct s_node *g, struct s_node *n, struct s_node *from) {
 	    resolve(g, p, from);
 }
 
+/* Starting from the start rule, we should sooner or later call every rule in
+ * the grammar. */
+static void reached(struct s_node *n) {
+    struct s_node *p;
+
+    if (n->type == rule)
+	n->reached = 1;
+    if (n->type == call && !n->first->reached)
+	reached(n->first);
+    if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    reached(p);
+}
+
+static void check_reached(struct s_node *g) {
+    struct s_node *p;
+
+    for (p = g->first->next; p; p = p->next) {
+	assert(p->type == rule);
+	p->reached = 0;
+    }
+
+    reached(g->first->next);
+
+    for (p = g->first->next; p; p = p->next) {
+	assert(p->type == rule);
+	if (!p->reached)
+	    fatal3("rule `", p->text, "' not reached");
+	p->reached = 0;
+    }
+}
+
+/* Every path through a rule must consume some input before that rule is called
+ * again, otherwise we have a left recursion. */
 static int consumes(struct s_node *n) {
     struct s_node *p;
     int r;
-    //fprintf(stderr, "considering %ld\n", n->id);
+
     switch (n->type) {
 	case rule:
-	    if (n->reached) {
+	    if (n->reached)
 		fatal3("left recursion in rule `", n->text, "'");
-		//fprintf(stderr, "left recursion in rule `%s'\n", n->text);
-		//return 0;
-	    }
 	    r = 0;
 	    n->reached = 1;
 	    for (p = n->first; p; p = p->next)
@@ -69,11 +100,12 @@ static void check_recursion(struct s_node *g) {
 
     for (p = g->first->next; p; p = p->next) {
 	assert(p->type == rule);
-//	fprintf(stderr, "%ld ", p->id);
 	consumes(p);
     }
 }
 
+/* Every path through a non-void rule must include exactly 1 expression. No
+ * path through a void rule can include any expressions. */
 static void check_expression(struct s_node *g) {
     struct s_node *r;
     for (r = g->first->next; r; r = r->next) {
@@ -81,7 +113,6 @@ static void check_expression(struct s_node *g) {
 
 	assert(r->type == rule);
 	p = path_max(r, expr);
-	//fprintf(stderr, "rule %ld %s of type %s: pathmax(expr) %d\n", r->id, r->text, r->first->text, p);
 	if (strcmp(r->first->text, "void") == 0) {
 	    if (p > 0)
 		fatal3("expression in void rule `", r->text, "'");
@@ -99,6 +130,7 @@ static void check_expression(struct s_node *g) {
 void preen(struct s_node *g) {
     if (!g->text || g->text[0] == '\0') g->text = "pacc";
     resolve(g, g, 0);
+    check_reached(g);
     check_recursion(g);
     check_expression(g);
 }

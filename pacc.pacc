@@ -59,9 +59,6 @@ CClass2
     / cs:CCRanges c:CCHyphen { append(c, cs) }
     / cs:CCRanges → cs
 
-# Should be able to improve this by rearranging slightly so we make the range
-# node and then compare a->number < b->number
-
 CCRanges
     ← c:CCRange cs:CCRanges { append(c, cs) }
     / ε { 0 }
