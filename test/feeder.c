@@ -23,18 +23,18 @@ int main(int argc, char **argv) {
 	strcat(text, "\n");
     //fprintf(stderr, "text is now >%s<\n", text);
 
-	pacc_input(p0, "arg", text, len);
+	pacc_input(p0, text, len);
 	parsed = pacc_parse(p0);
 	if (parsed) {
 	    printf("parsed with value " PACC_TYPE_FORMAT "\n", pacc_result(p0));
 	    return 0;
 	} else {
-	    pacc_feed_input(p1, "arg", text, len);
+	    pacc_feed_input(p1, text, len);
 	    parsed = pacc_feed_parse(p1);
 
 	    if (!parsed) {
 		char *e = pacc_feed_error(p1);
-		fprintf(stderr, "%s\n", e);
+		fprintf(stderr, "arg:%s\n", e);
 		free(e);
 		return 1;
 	    }

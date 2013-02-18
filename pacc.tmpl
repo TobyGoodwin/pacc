@@ -67,7 +67,6 @@ struct _pacc_coord {
 
 /* a pacc parser */
 struct pacc_parser {
-    const char *name;
     unsigned char *string;
     size_t input_length;
     PACC_TYPE value;
@@ -263,10 +262,9 @@ struct pacc_parser *YY_new(void) {
     return p;
 }
 
-void YY_input(struct pacc_parser *p, const char *n, char *s, size_t l) {
+void YY_input(struct pacc_parser *p, char *s, size_t l) {
     unsigned int i;
 
-    p->name = n;
     p->string = (unsigned char *)s;
     p->input_length = l;
     _pacc_set_bkt_cnt(p);
@@ -421,7 +419,7 @@ char *YY_pos(struct pacc_parser *p, const char *s) {
     char *r = 0;
 
     coords = _pacc_coords(p, p->err_col);
-    pr(&r, &l, "%s:%d:%d: %s", p->name, coords[0], coords[1], s);
+    pr(&r, &l, "%d:%d: %s", coords[0], coords[1], s);
 
     return r;
 }
@@ -557,54 +555,18 @@ PACC_TYPE YY_result(struct pacc_parser *p) {
     return p->value;
 }
 
-void YY_old_error(struct pacc_parser *p) {
-    int *coords;
-    size_t i;
-
-    coords = _pacc_coords(p, p->err_col);
-    printf("%s:%d:%d: ", p->name, coords[0], coords[1]);
-
-    /* XXX this, or something like it, is very handy, and needs to go
-     * in. But we're holding off for now as all failing test cases would
-     * need to be changed. */
-    //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
-
-    printf("expected ");
-    for (i = 0; i < p->err_valid; ++i) {
-	char *s;
-	for (s = p->err[i]; *s; ++s) {
-	    if (isprint(*s)) putchar(*s);
-	    else switch (*s) {
-		case '\n':
-		    puts("\\n");
-		    break;
-		default:
-		    printf("\\x%02x", *s);
-		    break;
-	    }
-	}
-
-	if (i + 1 < p->err_valid) {
-	    printf(", ");
-	    if (i + 2 == p->err_valid) printf("or ");
-	}
-    }
-    printf("\n");
-    //printf("(column %ld)\n", _pacc->err_col);
-}
-
 int YY_wrap(const char *name, char *addr, size_t l, PACC_TYPE *result) {
     int parsed;
     struct pacc_parser *p;
 
     p = YY_new();
 
-    YY_input(p, name, addr, l);
+    YY_input(p, addr, l);
     parsed = YY_parse(p);
     if (parsed) *result = YY_result(p);
     else {
 	char *e = YY_error(p);
-	fprintf(stderr, "%s\n", e);
+	fprintf(stderr, "%s:%s\n", name, e);
 	free(e);
     }
 

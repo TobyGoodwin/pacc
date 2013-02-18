@@ -661,7 +661,7 @@ void emit(struct s_node *g) {
 
 static void h_lines(char *yy, char *type) {
     printf("extern struct pacc_parser *%s_new(void);\n", yy);
-    printf("extern void %s_input(struct pacc_parser *, char *, char *, off_t l);\n", yy);
+    printf("extern void %s_input(struct pacc_parser *, char *, off_t l);\n", yy);
     printf("extern void %s_destroy(struct pacc_parser *);\n", yy);
     printf("extern int %s_parse(struct pacc_parser *);\n", yy);
     printf("extern %s %s_result(struct pacc_parser *);\n", type, yy);
