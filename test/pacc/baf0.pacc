@@ -1,5 +1,5 @@
 /*
-int
+type int
 parse 5 5
 parse 2+3 5
 parse '2*3' 6

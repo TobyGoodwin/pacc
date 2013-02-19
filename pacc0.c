@@ -875,11 +875,11 @@ int pacc_wrap(
     /*
 	Grammar :: struct s_node *
 	    ← _ p:Preamble ds:Defns
-	    → { s_both(grammar, "yy", cons(p, ds)) }
+	    → { s_kid(grammar, cons(p, ds)) }
     */
     p = s_new(ident); p->text = "ds"; i = p;
     p = s_new(ident); p->text = "p"; p->next = i; i = p;
-    p = s_both(expr, "s_both(grammar, \"\", cons(p, ds))", i); q = p;
+    p = s_both(expr, "s_kid(grammar, cons(p, ds))", i); q = p;
     p = s_new(call); p->text = "Defns"; s = p;
     p = s_new(bind); p->text = "ds"; p->first = s; p->next = q; q = p;
     p = s_new(call); p->text = "Preamble"; s = p;
@@ -894,7 +894,7 @@ int pacc_wrap(
 "#include \"pacc.h\"\n"
 "#include \"syntax.h\"\n"
 	), r);
-    p = s_both(grammar, "", r);
+    p = s_kid(grammar, r);
 
     *result = p;
     return 1;

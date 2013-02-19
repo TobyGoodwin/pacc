@@ -62,7 +62,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     r = cons(p, r);
 
     r = cons(s_text(preamble, 0), r);
-    p = new_node(grammar); p->text = "pacc"; p->first = r;
+    p = s_kid(grammar, r);
 
     *result = p;
     return 1;

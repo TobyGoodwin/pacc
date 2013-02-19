@@ -27,7 +27,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_both(rule, "A", p);
 
     p = cons(s_text(preamble, 0), p);
-    p = s_both(grammar, "pacc", p);
+    p = s_kid(grammar, p);
 
     *result = p;
     return 1;

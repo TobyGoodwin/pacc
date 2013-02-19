@@ -78,7 +78,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_new(rule); p->text = "Start"; p->first = q; p->next = r; r = p;
 
     r = cons(s_text(preamble, "#include <ctype.h>\n#include \"syntax.h\"\n"), r);
-    p = s_new(grammar); p->text = "pacc"; p->first = r;
+    p = s_kid(grammar, r);
 
     *result = p;
     return 1;

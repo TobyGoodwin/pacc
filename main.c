@@ -17,18 +17,6 @@ int main(int argc, char **argv) {
 
     arg(argc, argv);
 
-//if (arg_defines()) puts(arg_defines());
-//exit(0);
-#if 0
-if (arg_feed()) {
-fprintf(stderr, "we will be feeding, fn = %s, rule = %s\n",
-    arg_feed(), arg_feed_rule());
-exit(0);
-} else {
-fprintf(stderr, "not feeding\n");
-}
-#endif
-
     in = load(arg_input(), &size);
 
     if (!pacc_wrap(arg_input(), in, size, &p))
@@ -37,7 +25,7 @@ fprintf(stderr, "not feeding\n");
     if (strchr(arg_dump(), '0')) s_dump(p);
 
     desugar(p);
-    preen(p);
+    preen(p, arg_name());
 
     if (strchr(arg_dump(), '1')) s_dump(p);
 

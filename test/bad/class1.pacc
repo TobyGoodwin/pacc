@@ -1,0 +1,5 @@
+/*
+nopacc 5:20 'expected CCNode, "-", or "]"'
+*/
+
+Bad :: char * ← [a-a] → { "foo" }

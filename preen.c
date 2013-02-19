@@ -137,9 +137,9 @@ static void check_expression(struct s_node *g) {
     }
 }
 
-void preen(struct s_node *g) {
-fprintf(stderr, "g->text is >%s<\n", g->text);
-    if (!g->text || g->text[0] == '\0') g->text = "pacc";
+void preen(struct s_node *g, char *name) {
+    assert(g && !g->text);
+    g->text = name;
     resolve(g, g, 0);
     check_redef(g);
     check_reached(g);

@@ -35,6 +35,7 @@ static const struct option long_opts[] = {
     { "defines", optional_argument, 0, 'd' },
     { "feed", required_argument, 0, 'f' },
     { "feed-rule", optional_argument, 0, 'r' },
+    { "name", required_argument, 0, 'n' },
     { "output", required_argument, 0, 'o' },
     { "help", no_argument, 0, 'h' },
     { "version", no_argument, 0, 'v' },
@@ -71,6 +72,11 @@ char *arg_feed_rule(void) {
     return feed_rule;
 }
 
+static char *name = 0;
+char *arg_name(void) {
+    return name;
+}
+
 static char *output = 0;
 char *arg_output(void) {
     assert(output);
@@ -86,12 +92,13 @@ static void usage(void) {
     puts("  -D, --dump-ast=WHEN      dump the parse tree at various points");
     puts("");
     puts("Parser:");
+    puts("  -n, --name=NAME          name the grammar (default: pacc)");
     puts("  -f, --feed=FILE          write extra feed parser to FILE");
     puts("  -r, --feed-rule=RULE     end-of-input rule when feeding (default: __)");
     puts("");
     puts("Output:");
-    puts("  -d, --define[=FILE]      also produce a header file");
-    puts("  -o, --output=FILE        write output to FILE");
+    puts("  -d, --define[=FILE]      also produce a header file (default: NAME.h)");
+    puts("  -o, --output=FILE        write output to FILE (default: NAME.c)");
     puts("");
     puts("Report bugs to <bug@paccrat.org>.");
     exit(0);
@@ -125,6 +132,7 @@ void arg(int argc, char **argv) {
     }
     if (argc - optind != 1) usage();
     input = argv[optind];
-    if (!output) output = repsuf(input, ".c");
+    if (!name) name = repsuf(input, "");
+    if (!output) output = repsuf(name, ".c");
     if (defining && !defines) defines = repsuf(output, ".h");
 }

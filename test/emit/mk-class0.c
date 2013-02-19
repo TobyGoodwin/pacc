@@ -1,5 +1,5 @@
 /*
-chars
+type chars
 parse bab bab
 parse pen pen
 parse git git
@@ -59,7 +59,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     r = cons(p, r);
 
     r = cons(s_text(preamble, 0), r);
-    r = s_both(grammar, "pacc", r);
+    r = s_kid(grammar, r);
 
     *result = r;
     return 1;

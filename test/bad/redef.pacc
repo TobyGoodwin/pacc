@@ -1,0 +1,8 @@
+/*
+nopacc1 "pacc: fatal: rule \`S' redefined"
+*/
+
+# pacc complains about redefined rules
+
+S ← "foo" → { "bar" }
+S ← "baz" → { "qux" }
