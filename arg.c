@@ -41,8 +41,8 @@ static const struct option long_opts[] = {
     { 0, 0, 0, 0 }
 };
 
-/* Use "-d 0" to dump the AST before desugaring; 1 after desugaring, 2
- * after cooking. They can be combined, e.g. "-d02". */
+/* Use "-D 0" to dump the AST before desugaring; 1 after desugaring, 2
+ * after cooking. They can be combined, e.g. "-D02". */
 static char *dump = "";
 char *arg_dump(void) {
     return dump;

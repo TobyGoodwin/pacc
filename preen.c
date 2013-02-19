@@ -6,6 +6,16 @@
 #include "preen.h"
 #include "syntax.h"
 
+/* XXX check_redef is O(n²) */
+static void check_redef(struct s_node *g) {
+    struct s_node *p, *q;
+
+    for (p = g->first->next; p; p = p->next)
+	for (q = g->first->next; q != p; q = q->next)
+	    if (strcmp(p->text, q->text) == 0)
+		fatal3("rule `", p->text, "' redefined");
+}
+
 static void resolve(struct s_node *g, struct s_node *n, struct s_node *from) {
     struct s_node *p;
 
@@ -128,8 +138,10 @@ static void check_expression(struct s_node *g) {
 }
 
 void preen(struct s_node *g) {
+fprintf(stderr, "g->text is >%s<\n", g->text);
     if (!g->text || g->text[0] == '\0') g->text = "pacc";
     resolve(g, g, 0);
+    check_redef(g);
     check_reached(g);
     check_recursion(g);
     check_expression(g);

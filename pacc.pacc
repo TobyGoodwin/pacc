@@ -7,7 +7,7 @@ typedef const unsigned char *range_t;
 
 Grammar :: struct s_node *
     ← _ p:Preamble ds:Defns → 
-    { s_both(grammar, "", cons(p, ds)) }
+    { s_kid(grammar, cons(p, ds)) }
 
 Defns
     ← d:Defn ds:Defns { cons(d, ds) }
