@@ -24,7 +24,7 @@ pacc1: $(OBJS) pacc1.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 pacc1.c: pacc0
-	./pacc0 /dev/null -o $@
+	./pacc0 -n pacc /dev/null -o $@
 
 pacc2: $(OBJS) pacc2.o
 	$(CC) $(LDFLAGS) -o $@ $^

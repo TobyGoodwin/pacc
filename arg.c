@@ -117,11 +117,12 @@ static void version(void) {
 void arg(int argc, char **argv) {
     int c, opt_i;
 
-    while ((c = getopt_long(argc, argv, "D:d::f:ho:r::v", long_opts, &opt_i)) != -1) {
+    while ((c = getopt_long(argc, argv, "D:d::f:hn:o:r::v", long_opts, &opt_i)) != -1) {
 	switch (c) {
 	case 'D': dump = optarg; break;
 	case 'd': defining = 1; defines = optarg; break;
 	case 'f': feed = optarg; break;
+	case 'n': name = optarg; break;
 	case 'o': output = optarg; break;
 	case 'r': feed_rule = optarg; break;
 	case 'v': version(); break;
