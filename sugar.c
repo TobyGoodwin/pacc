@@ -36,7 +36,11 @@ The deblit (desugar bound literal) transform converts this tree:
             ident 145: _pacc_bl115 
 
  */
-static void deblit(struct s_node *n, const char *ign0, int ign1) {
+static void deblit(
+	struct s_node *n,
+	__attribute__((unused)) const char *ign0,
+	__attribute__((unused)) int ign1
+	) {
     char *gd, *id;
     int l;
     struct s_node *p, *q;

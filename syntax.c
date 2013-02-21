@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "error.h"
-#include "pacc.h"
 #include "syntax.h"
 #include "utf8.h"
 

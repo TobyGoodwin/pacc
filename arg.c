@@ -72,7 +72,7 @@ char *arg_feed_rule(void) {
     return feed_rule;
 }
 
-static char *name = 0;
+static char *name = "pacc";
 char *arg_name(void) {
     return name;
 }
@@ -97,8 +97,8 @@ static void usage(void) {
     puts("  -r, --feed-rule=RULE     end-of-input rule when feeding (default: __)");
     puts("");
     puts("Output:");
-    puts("  -d, --define[=FILE]      also produce a header file (default: NAME.h)");
-    puts("  -o, --output=FILE        write output to FILE (default: NAME.c)");
+    puts("  -d, --define[=FILE]      also produce a header file (default: BASE.h)");
+    puts("  -o, --output=FILE        write output to FILE (default: BASE.c)");
     puts("");
     puts("Report bugs to <bug@paccrat.org>.");
     exit(0);
@@ -133,7 +133,6 @@ void arg(int argc, char **argv) {
     }
     if (argc - optind != 1) usage();
     input = argv[optind];
-    if (!name) name = repsuf(input, "");
-    if (!output) output = repsuf(name, ".c");
+    if (!output) output = repsuf(input, ".c");
     if (defining && !defines) defines = repsuf(output, ".h");
 }

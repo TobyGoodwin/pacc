@@ -84,6 +84,15 @@ static void c_code(struct s_node *n) {
     c_str(" \""); c_str(arg_output()); c_strln("\"");
 }
 
+static void c_defines(void) {
+    c_str("#define PACC_NAME "); c_strln(g_node->text);
+    c_strln("");
+    c_strln("#define PACC_ASSERT 1");
+    c_strln("#define PACC_INSTR 0");
+    c_strln("#define PACC_TRACE 0");
+    c_strln("");
+}
+
 static void associate(char *n, struct s_node *s) {
     if (a_ptr == a_alloc) {
 	int l = 2 * a_alloc + 1;
@@ -148,9 +157,12 @@ static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
 
-    pre_decl();
-
     g_node = n;
+    if (arg_defines()) {
+	c_str("#include \"");c_str(arg_defines());c_strln("\"");
+    } else
+	c_defines();
+    pre_decl();
 
     /* We slightly simplify both building & walking the tree and insist
      * that every grammar starts with a preamble, which may be null.
@@ -661,13 +673,13 @@ void emit(struct s_node *g) {
 
 static void h_lines(char *yy, char *type) {
     printf("extern struct pacc_parser *%s_new(void);\n", yy);
-    printf("extern void %s_input(struct pacc_parser *, char *, off_t l);\n", yy);
+    printf("extern void %s_input(struct pacc_parser *, char *, size_t l);\n", yy);
     printf("extern void %s_destroy(struct pacc_parser *);\n", yy);
     printf("extern int %s_parse(struct pacc_parser *);\n", yy);
     printf("extern %s %s_result(struct pacc_parser *);\n", type, yy);
-    printf("extern const char *%s_error(struct pacc_parser *);\n", yy);
-    printf("extern const char *%s_pos(struct pacc_parser *, const char *);\n", yy);
-    printf("extern int %s_wrap(const char *, char *, off_t, %s *result);\n", yy, type);
+    printf("extern char *%s_error(struct pacc_parser *);\n", yy);
+    printf("extern char *%s_pos(struct pacc_parser *, const char *);\n", yy);
+    printf("extern int %s_wrap(const char *, char *, size_t, %s *result);\n", yy, type);
 }
 
 void header(struct s_node *g) {
@@ -677,6 +689,8 @@ void header(struct s_node *g) {
     char *preamble = g->first->text;
     char *type = g->first->next->first->text;
     
+    c_defines();
+
     if (preamble) puts(preamble);
 
     printf("#include <sys/types.h>\n"); /* for off_t */

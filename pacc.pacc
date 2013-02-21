@@ -1,8 +1,5 @@
 {
-#include <ctype.h>
-#include "pacc.h"
 #include "syntax.h"
-typedef const unsigned char *range_t;
 }
 
 Grammar :: struct s_node *

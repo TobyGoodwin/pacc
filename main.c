@@ -6,9 +6,10 @@
 #include "cook.h"
 #include "emit.h"
 #include "load.h"
-#include "pacc.h"
 #include "preen.h"
 #include "syntax.h"
+
+extern int pacc_wrap(const char *, char *, size_t, struct s_node **);
 
 int main(int argc, char **argv) {
     char *in;

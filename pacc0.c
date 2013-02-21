@@ -1,11 +1,5 @@
-#include "pacc.h"
+#include <sys/types.h>
 #include "syntax.h"
-
-char *prefix = 0; /* XXX */
-
-extern char *pacc_pos(struct pacc_parser *p, const char *s) {
-    return 0;
-}
 
 int pacc_wrap(
 	__attribute__((unused)) const char *ign0,
@@ -891,7 +885,6 @@ int pacc_wrap(
 
     r = cons(s_text(preamble,
 "#include <ctype.h>\n"
-"#include \"pacc.h\"\n"
 "#include \"syntax.h\"\n"
 	), r);
     p = s_kid(grammar, r);

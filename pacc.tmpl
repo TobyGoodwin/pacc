@@ -2,7 +2,13 @@
 vim: syntax=c
 */
 
+#if PACC_ASSERT
 #undef NDEBUG
+#else
+#define NDEBUG 1
+#endif
+#define Instr if (PACC_INSTR)
+#define Trace if (PACC_TRACE)
 
 #include <assert.h>
 #include <ctype.h>
@@ -11,10 +17,6 @@ vim: syntax=c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define Tracing 0
-#define Trace if (Tracing)
-#define Instr if (0)
 
 static void panic(const char *e) {
     fprintf(stderr, "pacc: panic: %s\n", e);

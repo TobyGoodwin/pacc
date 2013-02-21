@@ -18,7 +18,7 @@ OBJS = arg.o cook.o emit.o error.o load.o main.o preen.o sugar.o syntax.o templa
 pacc0: $(OBJS) pacc0.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-pacc0.o: pacc0.c pacc.h syntax.h
+pacc0.o: pacc0.c syntax.h
 
 pacc1: $(OBJS) pacc1.o
 	$(CC) $(LDFLAGS) -o $@ $^
