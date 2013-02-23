@@ -18,6 +18,10 @@ vim: syntax=c
 #include <stdlib.h>
 #include <string.h>
 
+#define PACC_XGLUE(a, b) a ## _ ## b
+#define PACC_GLUE(a, b) PACC_XGLUE(a, b)
+#define PACC_SYM(s) PACC_GLUE(PACC_NAME, s)
+
 static void panic(const char *e) {
     fprintf(stderr, "pacc: panic: %s\n", e);
     exit(1);
@@ -39,7 +43,7 @@ struct intermed {
     long rule; size_t col;
     size_t remainder; /* unparsed string */
     long expr_id; /* id of the expression to evaluate, yielding... */
-    union YY_union value; /* ... the semantic value XXX needs to use g_name */
+    union PACC_SYM(vals) value; /* ... the semantic value */
     struct {
 	long call_id; /* a call */
 	size_t col; /* a column */
@@ -249,7 +253,7 @@ static void _pacc_set_bkt_cnt(struct pacc_parser *p) {
     p->m_bkt_cnt = primes[i - 1];
 }
 
-struct pacc_parser *YY_new(void) {
+struct pacc_parser *PACC_SYM(new)(void) {
     struct pacc_parser *p;
 
     p = realloc(0, sizeof *p);
@@ -264,7 +268,7 @@ struct pacc_parser *YY_new(void) {
     return p;
 }
 
-void YY_input(struct pacc_parser *p, char *s, size_t l) {
+void PACC_SYM(input)(struct pacc_parser *p, char *s, size_t l) {
     unsigned int i;
 
     p->string = (unsigned char *)s;
@@ -280,7 +284,7 @@ void YY_input(struct pacc_parser *p, char *s, size_t l) {
     }
 }
 
-void YY_destroy(struct pacc_parser *p) {
+void PACC_SYM(destroy)(struct pacc_parser *p) {
     free(p->m_bkt);
     free(p->m_valid);
     free(p);
@@ -415,7 +419,7 @@ static void pr(char **buf, size_t *l, char *fmt, ...) {
     *l += n;
 }
 
-char *YY_pos(struct pacc_parser *p, const char *s) {
+char *PACC_SYM(pos)(struct pacc_parser *p, const char *s) {
     int *coords;
     size_t l = 0;
     char *r = 0;
@@ -426,7 +430,7 @@ char *YY_pos(struct pacc_parser *p, const char *s) {
     return r;
 }
 
-char *YY_error(struct pacc_parser *p) {
+char *PACC_SYM(error)(struct pacc_parser *p) {
     size_t i, l = 0;
     char *r = 0;
 
@@ -457,12 +461,12 @@ char *YY_error(struct pacc_parser *p) {
 	    if (i + 2 == p->err_valid) pr(&r, &l, "or ");
 	}
     }
-    return YY_pos(p, r);
+    return PACC_SYM(pos)(p, r);
     //printf("%s\n", r);
     //printf("(column %ld)\n", _pacc->err_col);
 }
 
-int YY_parse(struct pacc_parser *_pacc) {
+int PACC_SYM(parse)(struct pacc_parser *_pacc) {
     enum status status;
     int cont, st, _pacc_any_i;
     size_t col, rule_col;
@@ -553,26 +557,26 @@ contin:
     goto top;
 }
 
-PACC_TYPE YY_result(struct pacc_parser *p) {
+PACC_TYPE PACC_SYM(result)(struct pacc_parser *p) {
     return p->value;
 }
 
-int YY_wrap(const char *name, char *addr, size_t l, PACC_TYPE *result) {
+int PACC_SYM(wrap)(const char *name, char *addr, size_t l, PACC_TYPE *result) {
     int parsed;
     struct pacc_parser *p;
 
-    p = YY_new();
+    p = PACC_SYM(new)();
 
-    YY_input(p, addr, l);
-    parsed = YY_parse(p);
-    if (parsed) *result = YY_result(p);
+    PACC_SYM(input)(p, addr, l);
+    parsed = PACC_SYM(parse)(p);
+    if (parsed) *result = PACC_SYM(result)(p);
     else {
-	char *e = YY_error(p);
+	char *e = PACC_SYM(error)(p);
 	fprintf(stderr, "%s:%s\n", name, e);
 	free(e);
     }
 
-    YY_destroy(p);
+    PACC_SYM(destroy)(p);
 
     return parsed;
 }

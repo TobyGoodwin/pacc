@@ -86,6 +86,7 @@ static void c_code(struct s_node *n) {
 
 static void c_defines(void) {
     c_str("#define PACC_NAME "); c_strln(g_node->text);
+    c_str("#define PACC_FEED_NAME "); c_str(g_node->text); c_strln("_feed");
     c_strln("");
     c_strln("#define PACC_ASSERT 1");
     c_strln("#define PACC_INSTR 0");
@@ -153,6 +154,8 @@ static int rule_u(struct s_node *r) {
     return type_list(r->first->text);
 }
 
+static int cooked = 0; /* XXX better way to do this please! */
+
 static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
@@ -160,8 +163,12 @@ static void grammar_pre(struct s_node *n) {
     g_node = n;
     if (arg_defines()) {
 	c_str("#include \"");c_str(arg_defines());c_strln("\"");
+	if (arg_feed() && cooked)
+	    c_strln("#define PACC_NAME PACC_FEED_NAME");
     } else
 	c_defines();
+    ++cooked;
+
     pre_decl();
 
     /* We slightly simplify both building & walking the tree and insist
@@ -185,7 +192,7 @@ static void grammar_pre(struct s_node *n) {
     type_list(n->first->next->first->text);
     for (p = n->first; p; p = p->next)
 	if (p->type == rule) type_list(p->first->text);
-    c_str("union "); c_str(g_name); c_str("_union"); c_open();
+    c_str("union PACC_SYM(vals)"); c_open();
     for (i = 0; i < t_max; ++i) {
 	c_str(t_list[i]); c_str(" u"); c_int(i); c_semi();
     }
@@ -201,7 +208,7 @@ static void grammar_pre(struct s_node *n) {
 
     c_str("#define PACC_TYPE "); c_strln(n->first->next->first->text);
 
-    pre_engine(n->text);
+    pre_engine();
 
     c_str("st=");
     c_long(n->first->type == preamble ? n->first->next->id : n->first->id);
@@ -214,7 +221,7 @@ static void grammar_pre(struct s_node *n) {
 static void grammar_post(__attribute__((unused)) struct s_node *n) {
     c_strln("case -1: break;");
     c_close();
-    post_engine(n->text);
+    post_engine();
 }
 
 static void debug_pre(char *type, struct s_node *n) {
