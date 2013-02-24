@@ -210,10 +210,11 @@ static void grammar_pre(struct s_node *n) {
 
     pre_engine();
 
-    c_str("st=");
+    c_str("cont=");
     c_long(n->first->type == preamble ? n->first->next->id : n->first->id);
     c_semi();
-    c_strln("top:");
+    c_strln("contin:");
+    c_strln("st=cont;");
     c_strln("Trace fprintf(stderr, \"switch to state %d\\n\", st);");
     c_str("switch(st)"); c_open();
 }
@@ -540,9 +541,10 @@ static void emit_call(struct s_node *n) {
     c_strln("_pacc_Push(rule_col);"); /* XXX this is not callee saves */
     c_strln("_pacc_Push(cont);");
     c_str("cont = "); c_long(n->id); c_semi();
-    c_str("st = "); c_long(n->first->id); c_semi();
+    c_strln("_pacc_Push(cont);");
+    c_str("cont = "); c_long(n->first->id); c_semi();
     c_str("/* call "); c_str(n->text); c_strln(" */");
-    c_strln("goto top;");
+    c_strln("goto contin;");
     c_str("case "); c_long(n->id); c_str(": /* return from ");
     c_str(n->text); c_strln(" */");
     c_strln("_pacc_Pop(cont);");
