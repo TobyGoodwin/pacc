@@ -477,7 +477,6 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
     size_t pos, _pacc_ev_i;
     uint32_t _pacc_utf_cp;
 
-    _pacc_Push(cont);
 #EMIT_ENGINE
 
     col = 0;
@@ -510,8 +509,8 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
 	}
 	if ((cur->rule & 3) != evaluated && cur->expr_id) {
 	    col = cur->col;
-	    cont = cur->expr_id;
-	    goto contin;
+	    st = cur->expr_id;
+	    goto top;
 	}
     _pacc_expr_done:
 	cur->rule = (cur->rule & ~3) | evaluated;
