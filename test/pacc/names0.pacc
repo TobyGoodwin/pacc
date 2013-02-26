@@ -1,0 +1,7 @@
+/*
+type chars
+parse xyzx yz
+noparse xzyx S:col:0 2
+*/
+
+S :: char * <- "x" col:("y" "z") "x" { ref_dup(col) }

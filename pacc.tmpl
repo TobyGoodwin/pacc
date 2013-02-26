@@ -7,8 +7,10 @@ vim: syntax=c
 #else
 #define NDEBUG 1
 #endif
-#define Instr if (PACC_INSTR)
-#define Trace if (PACC_TRACE)
+#define PACC_XGLUE(a, b) a ## _ ## b
+#define PACC_GLUE(a, b) PACC_XGLUE(a, b)
+#define PACC_SYM(s) PACC_GLUE(PACC_NAME, s)
+#define PACC_TRACE if (PACC_CAN_TRACE && PACC_SYM(trace))
 
 #include <assert.h>
 #include <ctype.h>
@@ -18,18 +20,16 @@ vim: syntax=c
 #include <stdlib.h>
 #include <string.h>
 
-#define PACC_XGLUE(a, b) a ## _ ## b
-#define PACC_GLUE(a, b) PACC_XGLUE(a, b)
-#define PACC_SYM(s) PACC_GLUE(PACC_NAME, s)
+int PACC_SYM(trace) = 0;
 
-static void panic(const char *e) {
+static void pacc_panic(const char *e) {
     fprintf(stderr, "pacc: panic: %s\n", e);
     exit(1);
 }
 
-static void nomem(void) { panic("out of memory"); }
+static void pacc_nomem(void) { pacc_panic("out of memory"); }
 
-enum status {
+enum pacc_status {
     no_parse, parsed, evaluated, uncomputed
 };
 
@@ -37,7 +37,7 @@ typedef size_t *ref_t;
 
 #EMIT_DECLARATIONS
 
-struct intermed {
+struct pacc_mid {
     /* Where in the matrix are we? Note that the bottom two bits of rule
      * also encode a status. */
     long rule; size_t col;
@@ -52,14 +52,14 @@ struct intermed {
     size_t ev_valid;
 };
 
-static struct intermed *cur;
+static struct pacc_mid *cur;
 
 static void _pacc_save_core(long c, size_t col) {
-    Trace fprintf(stderr, "_pacc_save_core(%ld, %ld)\n", c, col);
+    PACC_TRACE fprintf(stderr, "_pacc_save_core(%ld, %ld)\n", c, col);
     if (cur->ev_valid == cur->ev_alloc) {
 	cur->ev_alloc = cur->ev_alloc * 2 + 1;
 	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
-	if (!cur->evlis) nomem();
+	if (!cur->evlis) pacc_nomem();
     }
     cur->evlis[cur->ev_valid].call_id = c;
     cur->evlis[cur->ev_valid].col = col;
@@ -76,7 +76,7 @@ struct pacc_parser {
     unsigned char *string;
     size_t input_length;
     PACC_TYPE value;
-    struct intermed **m_bkt;
+    struct pacc_mid **m_bkt;
     unsigned int m_bkt_cnt;
     unsigned char *m_valid;
     unsigned char m_chain_max;
@@ -102,7 +102,7 @@ static void _pacc_push(void *x, size_t s, struct pacc_parser *p) {
     if (p->sp + s >= p->stack_alloc) {
 	size_t l = 2 * (p->stack_alloc - p->stack) + s;
 	unsigned char *n = realloc(p->stack, l);
-	if (!n) nomem();
+	if (!n) pacc_nomem();
 	p->sp = n + (p->sp - p->stack);
 	p->stack = n;
 	p->stack_alloc = n + l + 1;
@@ -138,7 +138,7 @@ static char *_pacc_ref_dup(ref_t a, struct pacc_parser *p) {
     size_t l;
 
     l = a[1] - a[0];
-    r = realloc(0, l + 1); if (!r) nomem();
+    r = realloc(0, l + 1); if (!r) pacc_nomem();
     s = (char *)p->string + a[0];
     strncpy(r, s, l);
     r[l] = '\0';
@@ -149,8 +149,8 @@ static char *_pacc_ref_dup(ref_t a, struct pacc_parser *p) {
 // Copyright (c) 2008-2010 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 12
+#define PACC_UTF8_ACCEPT 0
+#define PACC_UTF8_REJECT 12
 
 static const uint8_t utf8d[] = {
   // The first part of the table maps bytes to character classes that
@@ -174,10 +174,10 @@ static const uint8_t utf8d[] = {
 };
 
 inline static uint32_t
-decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
+pacc_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
   uint32_t type = utf8d[byte];
 
-  *codep = (*state != UTF8_ACCEPT) ?
+  *codep = (*state != PACC_UTF8_ACCEPT) ?
     (byte & 0x3fu) | (*codep << 6) :
     (0xff >> type) & (byte);
 
@@ -216,11 +216,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * the string p with length m. Its return value is the number of bytes
  * in the character, 0 in case of error; *c holds the character read. */
 static int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
-    uint32_t state = UTF8_ACCEPT;
+    uint32_t state = PACC_UTF8_ACCEPT;
     int i = 0;
     do
-	if (state == UTF8_REJECT || i == m) return 0;
-    while (decode(&state, c, p[i++]));
+	if (state == PACC_UTF8_REJECT || i == m) return 0;
+    while (pacc_decode(&state, c, p[i++]));
     return i;
 }
 
@@ -257,7 +257,7 @@ struct pacc_parser *PACC_SYM(new)(void) {
     struct pacc_parser *p;
 
     p = realloc(0, sizeof *p);
-    if (!p) nomem();
+    if (!p) pacc_nomem();
     p->m_chain_max = 0;
     p->sp = 0;
     p->stack = p->stack_alloc = 0;
@@ -274,8 +274,8 @@ void PACC_SYM(input)(struct pacc_parser *p, char *s, size_t l) {
     p->string = (unsigned char *)s;
     p->input_length = l;
     _pacc_set_bkt_cnt(p);
-    p->m_bkt = realloc(0, sizeof(struct intermed *) * p->m_bkt_cnt);
-    if (!p->m_bkt) nomem();
+    p->m_bkt = realloc(0, sizeof(struct pacc_mid *) * p->m_bkt_cnt);
+    if (!p->m_bkt) pacc_nomem();
     p->m_valid = realloc(0, 2 * p->m_bkt_cnt);
     for (i = 0; i < p->m_bkt_cnt; ++i) {
 	p->m_bkt[i] = 0;
@@ -291,13 +291,13 @@ void PACC_SYM(destroy)(struct pacc_parser *p) {
 }
 
 /* hash chains */
-static struct intermed *_pacc_result(struct pacc_parser *p, size_t col, long rule) {
+static struct pacc_mid *_pacc_result(struct pacc_parser *p, size_t col, long rule) {
     unsigned char i;
     unsigned int h;
-    struct intermed *bkt, *r;
+    struct pacc_mid *bkt, *r;
 
     assert(col < p->input_length + 1);
-    Trace fprintf(stderr, "_pacc_result(%ld, %ld)\n", col, rule);
+    PACC_TRACE fprintf(stderr, "_pacc_result(%ld, %ld)\n", col, rule);
     h = (col + (rule << 6) + (rule << 16) - rule) % p->m_bkt_cnt;
     bkt = p->m_bkt[h];
     for (i = 0; i < p->m_valid[h * 2]; ++i) {
@@ -306,10 +306,10 @@ static struct intermed *_pacc_result(struct pacc_parser *p, size_t col, long rul
 	    return r;
     }
     if (i == p->m_valid[h * 2 + 1]) {
-	if (i == 255) panic("bucket too large");
+	if (i == 255) pacc_panic("bucket too large");
 	if (i + 1 > p->m_chain_max) p->m_chain_max = i + 1;
-	p->m_bkt[h] = bkt = realloc(bkt, p->m_chain_max * sizeof(struct intermed));
-	if (!bkt) nomem();
+	p->m_bkt[h] = bkt = realloc(bkt, p->m_chain_max * sizeof(struct pacc_mid));
+	if (!bkt) pacc_nomem();
 	p->m_valid[h * 2 + 1] = p->m_chain_max;
     }
     r = bkt + i;
@@ -326,7 +326,7 @@ static struct intermed *_pacc_result(struct pacc_parser *p, size_t col, long rul
 static int _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
     int doit, append;
 
-    Trace fprintf(stderr, "_pacc_error(%s, %ld)\n", what, col);
+    PACC_TRACE fprintf(stderr, "_pacc_error(%s, %ld)\n", what, col);
     append = doit = 1;
     if (col > _pacc->err_col) append = 0;
     else if (col == _pacc->err_col) {
@@ -341,7 +341,7 @@ static int _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
         if (_pacc->err_valid > _pacc->err_alloc) {
             _pacc->err_alloc = 2 * _pacc->err_alloc + 1;
             _pacc->err = realloc(_pacc->err, _pacc->err_alloc * sizeof(char *));
-            if (!_pacc->err) nomem();
+            if (!_pacc->err) pacc_nomem();
         }
         _pacc->err[_pacc->err_valid - 1] = what;
         _pacc->err_col = col;
@@ -357,7 +357,7 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     int x, y, hi, lo;
     struct _pacc_coord *c, *cs = p->coord;
 
-    /* binary search*/
+    /* binary search */
     lo = 0; hi = p->coord_valid;
     while (lo < hi) {
 	int mid = (lo + hi) / 2;
@@ -371,7 +371,7 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     	struct _pacc_coord *n;
 	p->coord_alloc = p->coord_alloc * 2 + 1;
 	n = realloc(p->coord, p->coord_alloc * sizeof *n);
-	if (!n) nomem();
+	if (!n) pacc_nomem();
 	cs = p->coord = n;
     }
 
@@ -387,7 +387,7 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     while (i < col) {
 	uint32_t c;
 	int l = _pacc_utf8_char(p->string + i, p->input_length - i, &c);
-	if (!l) panic("invalid UTF-8 input");
+	if (!l) pacc_panic("invalid UTF-8 input");
 	i += l;
 	++x;
 	if (c == '\n') { ++y; x = 1; }
@@ -400,9 +400,9 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     return c->c;
 }
 /* The userland version */
-#define pacc_coords _pacc_coords(_pacc, col)
+#define pacc_coords _pacc_coords(_pacc, _x)
 
-static void pr(char **buf, size_t *l, char *fmt, ...) {
+static void pacc_pr(char **buf, size_t *l, char *fmt, ...) {
     size_t n;
     va_list argp;
 
@@ -411,7 +411,7 @@ static void pr(char **buf, size_t *l, char *fmt, ...) {
     va_end(argp);
 
     *buf = realloc(*buf, *l + n + 1);
-    if (!buf) nomem();
+    if (!buf) pacc_nomem();
 
     va_start(argp, fmt);
     vsnprintf(*buf + *l, n + 1, fmt, argp);
@@ -425,7 +425,7 @@ char *PACC_SYM(pos)(struct pacc_parser *p, const char *s) {
     char *r = 0;
 
     coords = _pacc_coords(p, p->err_col);
-    pr(&r, &l, "%d:%d: %s", coords[0], coords[1], s);
+    pacc_pr(&r, &l, "%d:%d: %s", coords[0], coords[1], s);
 
     return r;
 }
@@ -440,25 +440,25 @@ char *PACC_SYM(error)(struct pacc_parser *p) {
     //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
 
     if (p->err_valid && p->err[0][0] == '.')
-	pr(&r, &l, "expected ");
+	pacc_pr(&r, &l, "expected ");
     for (i = 0; i < p->err_valid; ++i) {
 	char *s = p->err[i];
 	if (*s == '.') ++s;
 	for ( ; *s; ++s) {
-	    if (isprint(*s)) pr(&r, &l, "%c", *s);
+	    if (isprint(*s)) pacc_pr(&r, &l, "%c", *s);
 	    else switch (*s) {
 		case '\n':
-		    pr(&r, &l, "\\n");
+		    pacc_pr(&r, &l, "\\n");
 		    break;
 		default:
-		    pr(&r, &l, "\\x%02x", *s);
+		    pacc_pr(&r, &l, "\\x%02x", *s);
 		    break;
 	    }
 	}
 
 	if (i + 1 < p->err_valid) {
-	    pr(&r, &l, ", ");
-	    if (i + 2 == p->err_valid) pr(&r, &l, "or ");
+	    pacc_pr(&r, &l, ", ");
+	    if (i + 2 == p->err_valid) pacc_pr(&r, &l, "or ");
 	}
     }
     return PACC_SYM(pos)(p, r);
@@ -467,33 +467,28 @@ char *PACC_SYM(error)(struct pacc_parser *p) {
 }
 
 int PACC_SYM(parse)(struct pacc_parser *_pacc) {
-    enum status status;
-    int cont, st, _pacc_any_i;
-    size_t col, rule_col;
-    int evaluating;
-    col = 0;
-    cont = -1;
-    evaluating = 0;
-    size_t pos, _pacc_ev_i;
+    enum pacc_status _status;
+    int _cont = -1, _st, _pacc_any_i, _evaling = 0;
+    size_t _x = 0, _x_rule, _pos, _pacc_ev_i;
     uint32_t _pacc_utf_cp;
 
 #EMIT_ENGINE
 
-    col = 0;
-    cur = _pacc_result(_pacc, col, start_rule_id);
+    _x = 0;
+    cur = _pacc_result(_pacc, _x, start_rule_id);
     /* pacc grammars are anchored on the right */
     if ((cur->rule & 3) == parsed && cur->remainder != _pacc->input_length) {
 	_pacc_error(_pacc, ".end-of-input", cur->remainder);
 	cur->rule = (cur->rule & ~3) | no_parse;
     }
-    if (!evaluating && (cur->rule & 3) == parsed) {
+    if (!_evaling && (cur->rule & 3) == parsed) {
 	unsigned char *stack_save;
 
-	Trace fprintf(stderr, "PARSED! Time to start eval...\n");
-	evaluating = 1;
+	PACC_TRACE fprintf(stderr, "PARSED! Time to start eval...\n");
+	_evaling = 1;
 	_pacc_ev_i = 0;
     eval_loop:
-	Trace fprintf(stderr, "eval loop with _pacc_ev_i == %ld\n", _pacc_ev_i);
+	PACC_TRACE fprintf(stderr, "eval loop with _pacc_ev_i == %ld\n", _pacc_ev_i);
 	stack_save = _pacc->sp;
     eval1:
 	while (_pacc_ev_i < cur->ev_valid) {
@@ -501,15 +496,15 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
 	    rule = cur->evlis[_pacc_ev_i].call_id;
 	    col = cur->evlis[_pacc_ev_i].col;
 	    ++_pacc_ev_i;
-	    Trace fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
+	    PACC_TRACE fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
 	    _pacc_Push(cur);
 	    _pacc_Push(_pacc_ev_i);
 	    cur = _pacc_result(_pacc, col, rule);
 	    _pacc_ev_i = 0;
 	}
 	if ((cur->rule & 3) != evaluated && cur->expr_id) {
-	    col = cur->col;
-	    st = cur->expr_id;
+	    _x = cur->col;
+	    _st = cur->expr_id;
 	    goto top;
 	}
     _pacc_expr_done:
@@ -519,11 +514,11 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
 	    _pacc_Pop(cur);
 	    goto eval1;
 	}
-	Trace fprintf(stderr, "eval finished\n");
+	PACC_TRACE fprintf(stderr, "eval finished\n");
 	goto contin;
     }
 
-    Instr {
+    PACC_TRACE {
 	unsigned char min;
 	unsigned int i;
 	unsigned long a, v;
@@ -544,11 +539,11 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
 	fprintf(stderr, "total used/allocated: %ld/%ld\n", v, a);
     }
     if ((cur->rule & 3) == evaluated) {
-	Trace fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
+	PACC_TRACE fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
 	_pacc->value = cur->value.u0;
     } else if ((cur->rule & 3) == parsed) {
-	Trace fprintf(stderr, "parsed with void value\n");
-    } else Trace fprintf(stderr, "not parsed\n");
+	PACC_TRACE fprintf(stderr, "parsed with void value\n");
+    } else PACC_TRACE fprintf(stderr, "not parsed\n");
     return (cur->rule & 3) == evaluated;
 }
 

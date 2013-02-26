@@ -1,6 +1,7 @@
 #include <sys/types.h>
 
-extern int parse(const char *, char *, off_t, int *);
-
 #define PACC_TYPE int
 #define PACC_TYPE_FORMAT "%d"
+
+extern int pacc_trace;
+extern int pacc_wrap(const char *, char *, size_t, PACC_TYPE *);

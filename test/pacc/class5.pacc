@@ -12,7 +12,7 @@ parse 'foo   456  	qux' 'foo,456,qux'
 
 char *allocat(char *a, char *b) {
     char *x = malloc(strlen(a) + strlen(b) + 2);
-    if (!x) nomem();
+    if (!x) pacc_nomem();
     strcpy(x, a); strcat(x, ","); strcat(x, b);
     return x;
 }
