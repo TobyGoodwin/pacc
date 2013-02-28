@@ -1,0 +1,284 @@
+\input texinfo   @c -*-texinfo-*-
+@comment $Id@w{$}
+@comment %**start of header
+@setfilename pacc.info
+@include version.texi
+@settitle pacc @value{VERSION}
+@syncodeindex pg cp
+@comment %**end of header
+@copying
+This manual is for GNU pacc (version @value{VERSION}, @value{UPDATED}),
+which is a parser generator.
+
+Copyright @copyright{} 2013 Free Software Foundation, Inc.
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+@end quotation
+@end copying
+
+@dircategory Texinfo documentation system
+@direntry
+* sample: (sample)Invoking sample.
+@end direntry
+
+@titlepage
+@title pacc - a compiler-compiler
+@subtitle for version @value{VERSION}, @value{UPDATED}
+@author Tobold J. Goodwin (@email{toby@@paccrat.org})
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top pacc
+
+This manual is for GNU pacc (version @value{VERSION}, @value{UPDATED}).
+@end ifnottex
+
+@menu
+* Invoking sample::
+* GNU Free Documentation License::
+* Index::
+@end menu
+
+
+@node User Manual
+@chapter User Manual
+
+This @dfn{User Manual} is a complete but concise description of all the
+features of pacc.
+
+@section Command line
+
+@pindex pacc
+@cindex invoking @command{pacc}
+
+Usage:
+
+@example
+pacc [@var{OPTION}]... @var{FILE}
+@end example
+
+@noindent
+@command{pacc} must be invoked with the name of a grammar file, which
+conventionally has a @file{.pacc} extension. @command{pacc} will write an
+output file with the same name but a @file{.c} extension.
+
+@noindent
+Option summary:
+
+@example
+  Operation modes
+    -h, --help               display this help and exit
+    -v, --version            report version number and exit
+    -D, --dump-ast=@var{WHEN}      dump the parse tree at various points
+  
+  Parser: 
+    -n, --name=@var{NAME}          name the grammar (default: pacc)
+    -f, --feed=@var{FILE}          write extra feed parser to @var{FILE}
+    -r, --feed-rule=@var{RULE}     end-of-input rule when feeding (default: __)
+  
+  Output:
+    -d, --defines[=@var{FILE}]     also produce a header file
+    -o, --output=@var{FILE}        write output to @var{FILE}
+@end example
+
+
+@subsection Output options
+
+Some options control the output of pacc.
+
+@table @samp
+@item --output=@var{FILE}
+With the option @samp{-o@var{FILE}} or @samp{--output=@var{FILE}}, pacc will
+write its output to the named @var{FILE}. Since pacc's output is C source code,
+you probably want to specify a @var{FILE} with a @file{.c} extension.
+
+@item --defines[=@var{FILE}]
+With the option @samp{-d} or @samp{--defines}, pacc will additionally write a
+header file, containing external definitions. If no @var{FILE} is specified,
+the defines file will have the same name as the input file but with a @file{.h}
+extension.
+@end table
+
+@subsection Parser options
+
+Some options control the parser (or parsers) that pacc generates.
+
+@table @samp
+@item --feed=@var{FILE}
+With the option @samp{-f@var{FILE}} or @samp{--feed=@var{file}}, pacc writes an
+extra @dfn{feed parser} to the named file. This can be used for parsing command
+line input where some lines are correct but incomplete. If the main parser
+returns an error, but the feed parser recognises the input, the controlling
+program should solicit more input from the user, and feed it to the parser.
+
+@item --feed-rule=@var{RULE}
+Feeding requires a @var{RULE} to indicate places in the grammar where the end
+of input is allowed to occur in a partial input. If feeding is enabled with
+@samp{--feed=@var{FILE}}, but no @dfn{feed rule} is specified, the default feed
+rule is @samp{__} (two underscores).
+@end table
+
+@subsection Help options
+
+The usual help options are supported.
+
+@table @samp
+@item --help
+If the @samp{-h} or @samp{--help} option is specified, pacc writes a short
+description of its command line usage and options to standard output, then
+exits.
+
+@item --version
+If the @samp{-v} or @samp{--version} option is specified, pacc writes version
+information and its copyright statement to standard output, then exits.
+@end table
+
+@subsection Debug options
+
+Some options can help with debugging pacc itself.
+
+@table @samp
+@item --dump-ast=@var{WHEN}
+If the @samp{-D} or @samp{--dump-ast} option is specified, pacc will write a
+dump of the Abstract Syntax Tree representation. The @var{WHEN} string
+specifies various points at which the @abbr{AST} will be dumped: if it contains
+the character @samp{0} the tree will be dumped as soon as the input grammar has
+been parsed; @samp{1} dumps the tree after desugaring; @samp{2} dumps the tree
+after @dfn{cooking} (preparing the grammar for feeding with the @samp{-f}
+flag). Multiple dumps can be specified, e.g.  @samp{-D02}.
+@end table
+
+@section Grammar
+
+The overall structure of a @dfn{pacc grammar} is very simple. First, there is
+an optional preamble enclosed in braces: @samp{@{@}}. Then one or
+more rules.
+
+The @dfn{preamble} contains C source code, and is copied verbatim to the
+beginning of pacc's output file. Typically it will comprise a few
+@samp{#include} statements.
+
+@subsection Rules
+
+A @dfn{rule} consists of a name, an optional type, and a definition.  The first
+rule is the @dfn{start rule} of the grammar: valid utterances of the language
+defined by the grammar match the start rule. 
+  
+The @dfn{name} follows the same lexical rules as C identifier names: it must
+start with an alphabetic character or underscore, and remaining characters are
+alphabetic, numeric, or underscores. The namespace of pacc rule names is
+entirely separate from any C program, however, and there are no reserved words.
+
+The @dfn{type}, if present, is introduced by a double colon @samp{::}, and can
+be any C type name that is in scope, provided that name can be constructed with
+identifiers and the @samp{*} character. Thus, @samp{struct} types are
+supported, but function pointers are not. If the type is omitted, the rule has
+the same type as the previous rule. (@strong{Caution}: this means that
+rearranging the rules in a grammar can change the meaning of the grammar!) If
+the first rule has no explicit type, its type is @samp{int}.
+ 
+The @dfn{definition} is introduced with a left arrow, which is followed by one
+or more matchers, combined with operators.
+
+@subsection Matchers
+
+@dfn{Matcher}s are the fundamental building blocks of definitions.
+
+@table @asis
+@item Literal: @samp{"string"}
+A string enclosed in double quotes matches exactly that string.
+
+@item Character class: @samp{[a-z0-9]}
+A series of characters in square brackets matches any single one of those
+characters, which are written as in C, e.g. @samp{[\t\n]} matches a tab or a
+newline. A character range can be expressed with a hyphen, e.g. @samp{[a-z]}
+matches any lower case letter. A literal hyphen may be matched by making it the
+first or last character in the class, e.g. @samp{[- _]} matches a hyphen, a
+space, or an underscore. A literal right square bracket may be matched by
+preceding it with a backslash, e.g. @samp{[[\]]} matches a left or right square
+bracket.
+
+@item Call: @samp{rule_name}
+A bare word names another rule (it is an error if there is no such rule defined
+in this pacc grammar). It matches anything that the named rule matches.
+
+
+@item Any: @samp{.}
+The period character matches any single character. (UTF-8 coding is assumed.)
+@end table
+
+@subsection Operators
+
+pacc has the following @dfn{operators}, which are shown with their precedence,
+in order from 5 to 0. In the descriptions that follow, @samp{e} and @samp{f}
+are arbitrary pacc expressions; @samp{c} is an arbitrary C expression.
+
+@table @asis
+@item Parentheses: @samp{(e)} (5)
+Parentheses are used for grouping.
+
+@item Repetition: @samp{e?} @samp{e*} @samp{e+} (4)
+@samp{e?} matches @samp{e} optionally (zero or one occurrences); @samp{e*}
+matches zero or more repetitions of @samp{e}; and @samp{e+} matches one or more
+repetitions of @samp{e}.
+
+@item Guards: @samp{&e} @samp{!e} @samp{&@{c@}} (3)
+@samp{&e} requires that the input matches @samp{e} at this point, but it does
+not consume any input. @samp{!e} requires that the input does @emph{not} match
+@samp{e}, and again does not consume anything. @samp{&@{ ... @}} is a
+@dfn{semantic guard}: the braces hold an arbitrary C expression of type
+@samp{int}. The expression is evaluated; the guard succeeds if its value is
+non-zero.
+
+@item Binding: @samp{name:e} (3)
+Matches whatever @samp{e} matches, and binds the value of @samp{e} to
+@samp{name}, which is then in scope till the end of this alternative, for use
+in semantic guards and *expressions*. Note next chapter
+
+@item Bound literal: @samp{"string":e} (3)
+Matches if @samp{e} matches and the *value* of @samp{e} (which must be of type
+@samp{char *}) is equal to @samp{string}.
+
+@item Sequencing:  @samp{e f} (2)
+Matches @samp{e} followed by @samp{f}.
+
+@item Empty: @samp{ε} (2)
+An empty sequence. Epsilon @samp{ε} (U+03B5) represents an empty sequence; it
+can always be omitted, but its use can improve readability.
+
+@item Value: @samp{→ {c}} (1)
+Defines the @dfn{value} of a sequence; @samp{c} is an arbitrary C expression
+which must have the same type as the rule. If @samp{c} is a name (C identifier
+rules) or a decimal integer, the braces are optional. Otherwise, the arrow is
+optional.
+
+@item Alternation: @samp{e / f} (0)
+If @samp{e} matches, the alternation matches; otherwise, if @samp{f} matches,
+the alternation matches. Priority is important: @samp{e} is always tried before
+@samp{f}.
+@end table
+
+
+@node GNU Free Documentation License
+@appendix GNU Free Documentation License
+
+@include fdl.texi
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye

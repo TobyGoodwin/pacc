@@ -86,7 +86,7 @@ char *arg_output(void) {
 static void usage(void) {
     puts("Usage: pacc [OPTION]... FILE");
     puts("");
-    puts("Operation modes");
+    puts("Operation modes:");
     puts("  -h, --help               display this help and exit");
     puts("  -v, --version            report version number and exit");
     puts("  -D, --dump-ast=WHEN      dump the parse tree at various points");
@@ -108,7 +108,7 @@ static void version(void) {
     puts("pacc 0.0 (rōnin)");
     puts("Written by Tobold Jayne Goodwin <toby@paccrat.org>");
     puts("");
-    puts("Copyright (C) 2012 Free Software Foundation, Inc.");
+    puts("Copyright (C) 2012, 2013 Free Software Foundation, Inc.");
     puts("This is free software; see the source for copying conditions.  There is NO");
     puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
     exit(0);

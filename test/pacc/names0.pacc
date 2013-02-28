@@ -4,4 +4,7 @@ parse xyzx yz
 noparse xzyx S:col:0 2
 */
 
+# Because of the use of the name "col", this test fails in all paccs up till
+# 2013-02-26.
+
 S :: char * <- "x" col:("y" "z") "x" { ref_dup(col) }
