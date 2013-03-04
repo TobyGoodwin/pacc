@@ -1,13 +1,22 @@
-RELEASE = pacc-0.1
+RELEASE := pacc-$(shell git describe)
 
 CC = c99
 CFLAGS = -g -Wall -Wextra -I.
 LDFLAGS = -g
 
-.PHONY: all release
+.PHONY: all doc release doc/version.texi
 all: pacc
 
-release:
+doc: doc/pacc.texi doc/version.texi doc/fdl.texi
+	cd doc; texi2pdf pacc.texi; makeinfo pacc.texi
+
+doc/version.texi:
+	date '+@set UPDATED %d %B %y' > $@
+	date '+@set UPDATED-MONTH %B %y' >> $@
+	echo -n '@set EDITION ' >> $@; git describe >> $@
+	echo -n '@set VERSION ' >> $@; git describe >> $@
+
+release: doc
 	mkdir $(RELEASE)
 	cp -a --parents $$(cat MANIFEST) $(RELEASE)
 	tar cfj $(RELEASE).tar.bz2 $(RELEASE)

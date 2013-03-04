@@ -13,7 +13,6 @@ main.c
 Makefile
 MANIFEST
 pacc0.c
-pacc.h
 pacc.pacc
 pacc.tmpl
 preen.c
@@ -27,6 +26,11 @@ template.h
 template.sh
 utf8.c
 utf8.h
+doc/pacc.texi
+doc/fdl.texi
+doc/version.texi
+doc/pacc.pdf
+doc/pacc.info
 test/feeder.c
 test/harness.c
 test/parse.h-chars
@@ -40,7 +44,6 @@ test/bad/eps0.pacc
 test/bad/eps1.pacc
 test/bad/lr0.pacc
 test/bad/lr1.pacc
-test/bad/prec0.pacc
 test/bad/rep0.pacc
 test/bad/res0.pacc
 test/bad/res1.pacc
@@ -69,7 +72,6 @@ test/emit/mk-nlg1.c
 test/emit/mk-not0.c
 test/emit/mk-not1.c
 test/emit/mk-regress0.c
-test/emit/mk-regress1.c
 test/emit/mk-rep0.c
 test/emit/mk-rep1.c
 test/emit/mk-rep2.c
