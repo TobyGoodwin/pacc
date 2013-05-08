@@ -83,7 +83,7 @@ CodeNames
     / StringLit ns:CodeNames → ns
     / CharLit ns:CodeNames → ns
     / C_Comment ns:CodeNames → ns 
-    / (!"}" .) ns:CodeNames → ns
+    / [^}] ns:CodeNames → ns
     / ε { 0 }
 
 CodeAndNames ← n:CodeNames { s_both(expr, ref_str(), n) }
@@ -114,7 +114,7 @@ StringLit ← "\"" q:QuotedChars "\"" _ → { ref_dup(q) }
 
 QuotedChars :: ref_t ← (!"\"" QuotedChar)* { ref() }
 
-QuotedChar ← (Escape / !"\\" . ) → { ref() }
+QuotedChar ← (Escape / [^\\]) → { ref() }
 
 Escape :: void ← SimpleEscape / OctalEscape / HexEscape / UniversalEscape
 

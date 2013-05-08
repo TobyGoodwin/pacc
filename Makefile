@@ -7,8 +7,11 @@ LDFLAGS = -g
 .PHONY: all doc release doc/version.texi
 all: pacc
 
-doc: doc/pacc.texi doc/version.texi doc/fdl.texi
-	cd doc; texi2pdf pacc.texi; makeinfo pacc.texi
+doc: doc/pacc.texi doc/version.texi doc/fdl.texi pacc
+	cd doc; texi2pdf pacc.texi
+	cd doc; makeinfo pacc.texi
+	cd doc; makeinfo --html pacc.texi
+	help2man ./pacc > doc/pacc.man
 
 doc/version.texi:
 	date '+@set UPDATED %d %B %y' > $@
