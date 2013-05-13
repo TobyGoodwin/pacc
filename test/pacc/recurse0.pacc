@@ -1,0 +1,18 @@
+/*
+type int
+parse 3 3
+parse 3-2-1 0
+*/
+
+{
+#include <stdio.h>
+void push(int x) { printf("push(%d)\n", x); }
+void sub(void) { printf("pop(), pop(), sub, push()"); }
+int pop(void) { return 0; }
+}
+
+Expr ← d:Digit e:ExprTail { push(d), pop() }
+ExprTail ← "-" d:Digit e:ExprTail { push(d), e, sub(), 0 }
+	/ { 0 }
+#Sub ← d:Digit "-" s:Sub { d - s } / d:Digit → d 
+Digit ← [0-9] { ref_0(ref()) - '0' }
