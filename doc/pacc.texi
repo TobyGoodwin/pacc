@@ -68,6 +68,12 @@ This tutorial introduces pacc with a series of examples.
 * Types::
 * Referencing the input::
 * Operators::
+* Binding values to names::
+* Expressing precedence::
+* Handling whitespace::
+* Associativity::
+* Feeding example::
+* Any matcher::
 * Using lookahead::
 @end menu
 
@@ -458,15 +464,37 @@ for example @samp{gmp_sscanf}.)
 
 The @samp{*} operator is similar to @samp{+}, but it can also match @emph{zero} occurences of its argument.
 
-@node Binding
-@section Binding
+@node Binding values to names
+@section Binding values to names
 
 @cindex binding
 
 expand example to do sums
 
-@node Feeding
-@section Feeding
+@node Expressing precedence
+@section Expressing precedence
+
+@cindex precedence
+
+add multiplication to example, discuss precedence
+
+@node Handling whitespace
+@section Handling whitespace
+
+@cindex whitespace
+
+expand example to include whitespace
+
+@node Associativity
+@section Associativity
+
+@cindex associativity
+@cindex left recursion
+
+talk about associativity, left recursion, expand example to include - (assuming i actually know how to do that!)
+
+@node Feeding example
+@section Feeding example
 
 @cindex feeding
 
@@ -746,7 +774,7 @@ non-zero.
 @item Binding: @samp{name:e} (3)
 Matches whatever @samp{e} matches, and binds the value of @samp{e} to
 @samp{name}, which is then in scope till the end of this alternative, for use
-in semantic guards and expressions. Note next chapter
+in semantic guards and expressions. @xref{Binding}.
 
 @item Bound literal: @samp{"string":e} (3)
 Matches if @samp{e} matches and the value of @samp{e} (which must be of type
@@ -805,6 +833,10 @@ omitted, although explicitly marking it aids readability.)
 
 @node Binding
 @section Binding
+
+@cindex binding
+@cindex variables
+@findex :
 
 The binding operator is @samp{:}. To its left is an identifier, following the
 usual C rules. To its right is any pacc expression, which must match the input
@@ -930,12 +962,12 @@ will effectively be this:
   Sum :: int <- a:Digit (__ b:Digit "\n" / %)
 @end verbatim
 
+@node Calling the parser
+@section Calling the parser
+
 @cindex calling the parser
 @cindex invoking the parser
 @cindex parser, invoking
-
-@node Calling the parser
-@section Calling the parser
 
 For a parser with a return type of @samp{result}, the external functions
 available (and defined in header file written with the @samp{-d} flag) will

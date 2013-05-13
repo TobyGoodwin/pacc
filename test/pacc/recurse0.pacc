@@ -2,17 +2,50 @@
 type int
 parse 3 3
 parse 3-2-1 0
+parse 6-2-1 3
 */
 
 {
-#include <stdio.h>
-void push(int x) { printf("push(%d)\n", x); }
-void sub(void) { printf("pop(), pop(), sub, push()"); }
-int pop(void) { return 0; }
+  #include <stdio.h>
+
+  struct action { char op; int val; };
+  struct action *stack = 0, *sp = 0, *alloc = 0;
+
+  void push(char op, int x) {
+    printf("push(%c, %d)\n", op, x);
+    if (sp == alloc) {
+      int n = 2 * (alloc - stack) + 1;
+      stack = realloc(stack, n * sizeof *stack);
+      if (!stack) pacc_nomem();
+      alloc = stack + n;
+      sp = alloc - 1;
+    }
+    sp->op = op; sp->val = x;
+    ++sp;
+  }
+
+  int eval(void) {
+    int a;
+    while (stack < alloc) {
+      switch(stack->op) {
+      case ' ': a = stack->val; break;
+      case '-': a -= stack->val; break;
+      }
+      ++stack;
+    }
+    return a;
+  }
 }
 
-Expr ← d:Digit e:ExprTail { push(d), pop() }
-ExprTail ← "-" d:Digit e:ExprTail { push(d), e, sub(), 0 }
+#Expr ←	d:Digit "-" Expr { push('-', d), 0 }
+	#/ d:Digit → { push(' ', d), eval() }
+
+
+Expr ←	d:Digit ExprTail { push(' ', d), eval() }
+ExprTail ← "-" d:Digit ExprTail { push('-', d), 0 }
 	/ { 0 }
+
+#ExprTail ← "-" d:Digit e:ExprTail { push(d), e, sub(), 0 }
+	#/ { 0 }
 #Sub ← d:Digit "-" s:Sub { d - s } / d:Digit → d 
 Digit ← [0-9] { ref_0(ref()) - '0' }

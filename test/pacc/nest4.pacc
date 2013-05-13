@@ -1,0 +1,14 @@
+/*
+type int
+parse '{}' 1
+parse '{ a { b } c }' 1
+parse '{ { } { } }' 1
+noparse '}' Start 1
+noparse '{ { }' 'Nest:*:1, or "}"' 6
+*/
+
+# A different type of nesting
+
+Start ← Nest → 1
+Nest :: void ← [^{}]+
+	/ "{" Nest* "}"

@@ -79,12 +79,23 @@ Result
 
 CodeNames
     ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
-    / lBrace ns:CodeNames rBrace → ns
     / StringLit ns:CodeNames → ns
     / CharLit ns:CodeNames → ns
     / C_Comment ns:CodeNames → ns 
-    / [^}] ns:CodeNames → ns
+    / [^{}] ns:CodeNames → ns
+    / lBrace ns:CodeNames rBrace ps:CodeNames → { append(ns, ps) }
     / ε { 0 }
+
+/*
+CodeNames
+    ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
+    / StringLit ns:CodeNames → ns
+    / CharLit ns:CodeNames → ns
+    / C_Comment ns:CodeNames → ns 
+    / [^{}] ns:CodeNames → ns
+    / lBrace ns:CodeNames rBrace → ns
+    / ε { 0 }
+*/
 
 CodeAndNames ← n:CodeNames { s_both(expr, ref_str(), n) }
 

@@ -1,0 +1,21 @@
+/*
+type int
+parse 2 0
+parse 3 1
+parse 376 0
+*/
+
+# On 2013-05-12, I discovered that v0.0-48-gf4218b6 doesn't handle braces
+# correctly in the preamble - so a preamble could contain at most one function
+# definition.
+
+{
+  int isodd(int x) {
+    return iseven(x - 1);
+  }
+  #int iseven(int x) {
+  #  return x ? isodd(x - 1) : 0;
+  { }
+}
+
+D ← d:[0-9]+ → { isodd(ref_ptr(d)) }
