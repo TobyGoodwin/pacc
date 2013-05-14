@@ -362,7 +362,7 @@ allowed.
 
 Rule 3 explains how we have got away so far without explicit type
 declarations—in their absence, everything defaults to @samp{int}. Let's
-revisit our example again, here's `french2.pacc`_
+revisit our example yet again.
 
 @verbatim
 Start :: int ← Yes → 1 / No → 0
@@ -409,8 +409,8 @@ Digit ← "0" → 0 / "1" → 1 / "2" → 2 / "3" → 3 / "4" → 4 /
 This is tedious and error-prone, but it's the best we can do with the matchers
 we've seen so far. Another matcher available in pacc is the @dfn{character
 class}: square brackets enclose a set of characters to be matched, so the
-character class @samp{[0123456789]} matches a decimal digit. To compress it
-even further, we can write @samp{[0-9]}. The hyphen stands for all the
+character class @samp{[0123456789]} matches a single decimal digit. To compress
+it even further, we can write @samp{[0-9]}. The hyphen stands for all the
 characters between the two characters it separates. But:
 
 @verbatim
@@ -469,14 +469,61 @@ The @samp{*} operator is similar to @samp{+}, but it can also match @emph{zero} 
 
 @cindex binding
 
-expand example to do sums
+We have seen how we can extract an integer from pacc's input into a C
+@samp{int} value. To do much more, we need to be able to bind a name to that
+value so that we can refer to it in expressions. In pacc, we use the @samp{:}
+operator, and write @samp{name:something} to bind @samp{name} to the value of
+@samp{something}.
+
+So what are the type and value assigned to @samp{name}? There are two separate
+cases. If @samp{something} is the name of a rule, then @samp{name} has the same
+type as that rule, and the value of evaluating that rule. In all other cases,
+@samp{name} has the type @samp{ref_t} and its value is everything matched by
+@samp{something}.
+
+Let's expand our example to do simple additions.
+
+@verbatim
+Sum <- d:Decimal "+" s:Sum -> { d + s }
+    / d:Decimal -> d
+Decimal <- [0-9]+ -> { atoi(ref_str()) }
+@end verbatim
+
+We are using recursion. The base case is the second alternative: a @samp{Sum}
+can be simply a @samp{Decimal}. In this case, we bind @samp{d} to the value
+returned by the @samp{Decimal} rule, and that value is then returned as the
+value of the @samp{Sum} rule. For the recursive case, we have a @samp{Decimal},
+followed by a literal plus sign, followed by the recursive call to @samp{Sum}.
+We bind @samp{d} to the @samp{Decimal}, and @samp{s} to the value returned by
+the recursive call. The overall value returned in this case is the sum of
+@samp{d} and @samp{s}.
+
+A name bound in this way is in scope from its binding to the end of the
+alternative in which it occurs. Thus, the two occurences of @samp{d} in this
+rule are in different scopes. 
 
 @node Expressing precedence
 @section Expressing precedence
 
 @cindex precedence
 
-add multiplication to example, discuss precedence
+Now let's expand our calculator example to include multiplication. This
+introduces the notion of @dfn{precedence}. Multiplication is considered to have
+higher precedence than addition. So in an expression such as @samp{2+3*4}, the
+multiplication is performed first, and the answer is @samp{14} (not @samp{20}).
+
+Some parser generators have explicit notation to express precedence, but in
+pacc we do it simply by using rules. Here's how we add multiplication to the
+calculator.
+
+@verbatim
+Sum <- p:Product "+" s:Sum -> { p + s }
+    / p:Product -> p
+Product <- d:Decimal "*" p:Product -> { d * p }
+    / d:Decimal -> d
+Decimal <- [0-9]+ -> { atoi(ref_str()) }
+@end verbatim
+
 
 @node Handling whitespace
 @section Handling whitespace
@@ -841,9 +888,9 @@ omitted, although explicitly marking it aids readability.)
 The binding operator is @samp{:}. To its left is an identifier, following the
 usual C rules. To its right is any pacc expression, which must match the input
 at this point. The binding operator brings into scope the identifier on its
-left; this name remains in scope till the end of the sequence, that is, either
-the end of the rule or the next @samp{/} operator. This identifier may be used
-in expressions and semantic guards.
+left; this name remains in scope till the end of the sequence, that is, the end
+of the rule or enclosing parentheses, or the next @samp{/} operator. This
+identifier may be used in expressions and semantic guards.
 
 If the expression on the right of the @samp{:} is a simple call, then the type
 of the name bound is the same as the type of the rule called. In all other

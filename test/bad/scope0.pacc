@@ -1,0 +1,12 @@
+/*
+XXX
+nopacc 7:17 'name rebound'
+*/
+
+# Names are lexically scoped over sequences, but it is an error to rebind a
+# name.
+
+P :: char * ← a:A a:B "c" → a
+
+A ← "a" { ref_str() }
+B ← "b" { ref_str() }
