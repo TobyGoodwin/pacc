@@ -185,6 +185,7 @@ except with different names for the virtual rules.
 */
 
 static void derep(struct s_node *n, const char *name, int c) {
+#if 0
     char *x0, *x1, *xx;
     int l;
     struct s_node *p, *q, *s;
@@ -241,6 +242,7 @@ static void derep(struct s_node *n, const char *name, int c) {
     n->text = xx;
     n->type = call;
     n->first = 0;
+#endif
 }
 
 static int isrep(struct s_node *n) {
