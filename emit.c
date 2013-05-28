@@ -633,24 +633,10 @@ static void cclass_post(struct s_node *n) {
     debug_post("cclass", n);
 }
 
-/* So for a left recursion style rep, we have an expr, and a seq */
-/* when parsing, we'll need to keep matching the seq as many times as possible,
- * and check that it's valid number. When evaluating, we'll need to run the
- * initial expression the right number of times. Except... we've said that
- * there can be *different* expressions in the loop (the + / - example). To
- * handle that, we'll need to record a list of the different expressions to
- * evaluate.  */
-static void rep_pre(struct s_node *n) {
-    //assert(n->first->type == expr);
-    //assert(n->first->next->type == seq);
-    c_str("int pacc_rep_count = -1;");
-    c_str("for (;");
-    c_str("_status == parsed; ++pacc_rep_count)"); c_open();
-    c_str("cur->expr_id = 0;");
-}
-static void rep_post(struct s_node *n) {
-    c_close();
-    c_str("fprintf(stderr, \"after loop, pacc_rep_count is %d\\n\", pacc_rep_count);");
+static void rep_pre(__attribute__((unused)) struct s_node *n) {
+    int sugar = 1;
+
+    assert(!sugar);
 }
 
 static void (*pre[s_type_max])(struct s_node *);
@@ -692,7 +678,6 @@ void emit(struct s_node *g) {
     post[bind] = bind_post;
     post[guard] = guard_post;
     post[cclass] = cclass_post;
-    post[rep] = rep_post;
 
     node(g);
     fflush(stdout);

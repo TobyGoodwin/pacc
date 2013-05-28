@@ -130,9 +130,8 @@ static void check_expression(struct s_node *g) {
 	    int q = path_min(r, expr);
 	    if (p < 1 || q < 1)
 		fatal3("no expressions in non-void rule `", r->text, "'");
-	    /* XXX needs to go back in, adjusted for new-rep */
-	    //if (p > 1 || q > 1)
-		//fatal3("multiple expressions in rule `", r->text, "'");
+	    if (p > 1 || q > 1)
+		fatal3("multiple expressions in rule `", r->text, "'");
 	}
 
     }
