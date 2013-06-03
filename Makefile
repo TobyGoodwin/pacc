@@ -111,6 +111,10 @@ test/feeder.o: test/parsefeed.h
 test/parsefeed.c test/parsefeed.h test/partial.c: test/parsefeed.pacc
 	./pacc -d -ftest/partial.c $^
 
+test/solo: test/solo.pacc
+	./pacc test/solo.pacc
+	$(CC) -o $@ test/solo.c
+
 test/clean: 
 	@echo test/clean
 	@rm -f test/harness test/harness.o test/parse.o

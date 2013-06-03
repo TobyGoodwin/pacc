@@ -178,10 +178,14 @@ in our program, and supplies the declaration of @code{pacc_wrap()}:
 pacc -d bool.pacc
 @end example
 
-Then simply compile as normal:
+Then simply compile as normal. The output of pacc is valid C99, but not C89, so
+you will probably need to explicitly invoke a C99 compiler. (This is definitely
+an area that needs further study. While I'm not greatly swayed by the argument
+that pacc shold be compatible with a 25 year old standard, it is unfortunate
+that currently if you hand its output to gcc you get an obscure error message.)
 
 @example
-gcc -o bool main.c bool.c
+c99 -o bool main.c bool.c
 @end example
 
 And here's what the program looks like in action:
@@ -485,7 +489,7 @@ Let's expand our example to do simple additions.
 
 @verbatim
 Sum <- d:Decimal "+" s:Sum -> { d + s }
-    / d:Decimal -> d
+     / d:Decimal -> d
 Decimal <- [0-9]+ -> { atoi(ref_str()) }
 @end verbatim
 
@@ -518,19 +522,75 @@ calculator.
 
 @verbatim
 Sum <- p:Product "+" s:Sum -> { p + s }
-    / p:Product -> p
+     / p:Product -> p
 Product <- d:Decimal "*" p:Product -> { d * p }
     / d:Decimal -> d
 Decimal <- [0-9]+ -> { atoi(ref_str()) }
 @end verbatim
 
+Simply because of the way the rules are set out, pacc is obliged to perform the
+higher precedence @samp{*} operator before the lower precedence @samp{+}
+operator: it needs a @samp{Product} before it can begin evaluating a
+@samp{Sum}.
+
+Of course, as soon as we have precedence, we want to offer the option to
+override it with brackets. That's easy to implement too.
+
+@verbatim
+Sum <- p:Product "+" s:Sum -> { p + s }
+     / p:Product -> p
+Product <- t:Term "*" p:Product -> { t * p }
+    / t:Term -> t
+Term <- d:Decimal -> d / "(" s:Sum ")" -> s
+Decimal <- [0-9]+ -> { atoi(ref_str()) }
+@end verbatim
+
+Again, the higher precedence operation (in this case bracketing) appears lower
+down the grammar, and everything works out. This grammar can parse @samp{2+3*4}
+with a value of 14, and @samp{(2+3)*4} with a value of 20.
 
 @node Handling whitespace
 @section Handling whitespace
 
 @cindex whitespace
+@cindex space handling
+@cindex handle spaces
 
-expand example to include whitespace
+So far, our example grammar insists that everything is squashed together.
+Normally, we want to allow arbitrary whitespace to appear wherever it makes
+sense. That usually means between the lexical elements that make up the
+language. For example, we would like to be able to write @samp{12 + 34} or
+@samp{   12   +34} as well as @samp{12+34}. Generally, we don't allow whitespce
+to appear @emph{inside} those lexical elements, so we don't want to accept
+@samp{1 2 + 3 4}.
+
+The usual way to handle this is first to define a rule that matches whitespace.
+Conventionally this rule is called @samp{_} (a single underscore). Normally it
+will match at least @samp{[ \t\n]*}, that is, zero or more occurences of space,
+tab, and newline. If the language being defined includes comments, they would
+usually be included too.
+
+Then, we define a separate rule for each lexical element which matches the
+element in question, followed by our whitespace rule. For example, if @samp{+}
+is a lexical element, we might define the rule @samp{Plus <- "+" _} to match
+it. Finally, we define a new start rule which permits whitespace at the
+beginning of an input. Here's what it looks like.
+
+@verbatim
+Expression <- _ s:Sum -> s
+Sum <- p:Product Plus s:Sum -> { p + s }
+     / p:Product -> p
+Product <- t:Term Star p:Product -> { t * p }
+         / t:Term -> t
+Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
+# lexical elements
+Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
+Plus :: void <- "+" _
+Star <- "*" _
+lBrace <- "(" _
+rBrace <- ")" _
+_ <- [ \t\n]*
+@end verbatim
 
 @node Associativity
 @section Associativity
@@ -538,7 +598,130 @@ expand example to include whitespace
 @cindex associativity
 @cindex left recursion
 
-talk about associativity, left recursion, expand example to include - (assuming i actually know how to do that!)
+An obvious next step for our calculator would be to add subtraction.
+Unfortunately, this is not as simple as you'd hope. Let's rewind to a simpler
+grammar, our first adder, which looks like this:
+
+@verbatim
+Sum <- d:Decimal "+" s:Sum -> { d + s }
+     / d:Decimal -> d
+Decimal <- [0-9]+ -> { atoi(ref_str()) }
+@end verbatim
+
+Implementing subtraction looks simple; add another alternative to the
+@samp{Sum} rule, like this.
+
+@verbatim
+Sum <- d:Decimal "+" s:Sum -> { d + s }
+     / d:Decimal "-" s:Sum -> { d - s }
+     / d:Decimal -> d
+@end verbatim
+
+This correctly evaluates @samp{3-2} giving the answer 1. Unfortunately, if we
+ask it to evaluate @samp{3-2-1}, it gives the answer 2, where we expecting 0.
+It has made subtraction right associative, so @samp{3-2-1} is evaluated as
+@samp{3-(2-1)}. In everyday life, subtraction is considered left associative,
+and @samp{3-2-1} should mean the same as @samp{(3-2)-1}.
+
+In a CFG, we could solve the problem by rearranging the rule to look for a Sum
+first, like this. (Since addition is commutative, it doesn't matter whether or
+not we rearrange the first branch of the rule.)
+
+@verbatim
+Sum <- d:Decimal "+" s:Sum -> { d + s }
+     / s:Sum "-" d:Decimal -> { s - d }
+     / d:Decimal -> d
+@end verbatim
+
+But this won't work in a PEG. When we try to compile it, pacc tells us:
+
+@verbatim
+pacc: fatal: left recursion in rule `Sum'
+@end verbatim
+
+The second alternative in this rule effectively says: ``To match a Sum, first
+try to match a Sum...''. That's an infinite loop, and pacc won't accept it. The
+exact rule is that each alternative of each rule must make some
+progress---consume at least one character from the input---before calling
+itself, whether that call is made directly, or through another rule. So this
+rule would be fine:
+
+@verbatim
+A <- "a" A / "b"
+# equivalent to: A <- "a"+ "b"
+@end verbatim
+
+But this rule constitutes an invalid left recursion:
+
+@verbatim
+A <- "a"* A / "b"
+# Wrong!
+@end verbatim
+
+Getting back to subtraction, I'm afraid the sad news is that implementing a
+left associative operator in the current version of pacc is very difficult. (I
+have some ideas to make it much much easier and cleaner in the future, but they
+have not yet been implemented.) About the best you can do is to manually build
+a list, then reverse it.
+
+Here's a self-contained example that does just that, and can correctly subtract three integers.
+
+@verbatim
+{
+  #include <stdio.h>
+
+  int pacc_wrap(const char *, char *, size_t, int *);
+
+  struct action { char op; int val; };
+  struct action *stack = 0, *sp = 0, *alloc = 0;
+
+  void push(char op, int x) {
+    if (sp == alloc) {
+      int s = alloc - stack;
+      int n = 2 * s + 1;
+      stack = realloc(stack, n * sizeof *stack);
+      if (!stack) pacc_nomem();
+      alloc = stack + n;
+      sp = stack + s;
+    }
+    sp->op = op; sp->val = x;
+    ++sp;
+  }
+
+  int eval(void) {
+    int a;
+    while (--sp >= stack) {
+      switch (sp->op) {
+      case ' ': a = sp->val; break;
+      case '+': a += sp->val; break;
+      case '-': a -= sp->val; break;
+      }
+    }
+    return a;
+  }
+
+  int main(int argc, char **argv) {
+    int result;
+    if (argc != 2) {
+      fprintf(stderr, "one argument please\n");
+      return 1;
+    }
+    if (pacc_wrap("arg", argv[1], strlen(argv[1]), &result))
+      printf("parsed with value %d\n", result);
+    else
+      return 1;
+    return 0;
+  }
+}
+
+Expr <- d:Decimal ExprTail { push(' ', d), eval() }
+ExprTail <- "+" d:Decimal ExprTail { push('+', d), 0 }
+        /   "-" d:Decimal ExprTail { push('-', d), 0 }
+	/   % { 0 }
+
+Decimal ← "-"? [0-9]+ { atoi(ref_str()) }
+@end verbatim
+
 
 @node Feeding example
 @section Feeding example

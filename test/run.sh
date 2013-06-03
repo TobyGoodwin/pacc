@@ -1,8 +1,8 @@
 #! /bin/sh
 
-passes=`mktemp`
-fails=`mktemp`
-expfails=`mktemp`
+passes=$(mktemp)
+fails=$(mktemp)
+expfails=$(mktemp)
 
 fail() {
     echo FAIL: "$1"
@@ -33,7 +33,7 @@ script_from() {
     # match a line (like the comment lines) without also printing it.
     # Also, I was surprised that '{d;q}' means exactly the same as 'd'.
 
-    t=`mktemp`
+    t=$(mktemp)
     sed -n '/\*\//q;2,$p' $1 > $t
     if test -s $t; then
 	. $t
@@ -48,7 +48,7 @@ ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc pacc/*.pacc tut/*.pacc}
 
 for t in $ts; do
     target=$t
-    runner=`echo $target | sed 's,/.*,/run.sh,'`
+    runner=$(echo $target | sed 's,/.*,/run.sh,')
     . $runner
 done
 

@@ -1,0 +1,51 @@
+{
+  int pacc_wrap(const char *, char *, size_t, int *);
+
+  struct action { char op; int val; };
+  struct action *stack = 0, *sp = 0, *alloc = 0;
+
+  void push(char op, int x) {
+    if (sp == alloc) {
+      int s = alloc - stack;
+      int n = 2 * s + 1;
+      stack = realloc(stack, n * sizeof *stack);
+      if (!stack) pacc_nomem();
+      alloc = stack + n;
+      sp = stack + s;
+    }
+    sp->op = op; sp->val = x;
+    ++sp;
+  }
+
+  int eval(void) {
+    int a;
+    while (--sp >= stack) {
+      switch (sp->op) {
+      case ' ': a = sp->val; break;
+      case '+': a += sp->val; break;
+      case '-': a -= sp->val; break;
+      }
+    }
+    return a;
+  }
+
+  int main(int argc, char **argv) {
+    int result;
+    if (argc != 2) {
+      fprintf(stderr, "one argument please\n");
+      return 1;
+    }
+    if (pacc_wrap("arg", argv[1], strlen(argv[1]), &result))
+      printf("parsed with value %d\n", result);
+    else
+      return 1;
+    return 0;
+  }
+}
+
+Expr <- d:Decimal ExprTail { push(' ', d), eval() }
+ExprTail <- "+" d:Decimal ExprTail { push('+', d), 0 }
+        /   "-" d:Decimal ExprTail { push('-', d), 0 }
+	/   % { 0 }
+
+Decimal ← "-"? [0-9]+ { atoi(ref_str()) }
