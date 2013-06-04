@@ -1,1 +1,3 @@
-extern struct s_node *cook(struct s_node *);
+#include "syntax.h"
+
+extern void cook(struct s_node *);

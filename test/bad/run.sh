@@ -16,6 +16,14 @@ nopacc1() {
     check "$r" "$err"
 }
 
+nofeed() {
+    err=$1
+    echo $pacc -f/dev/null parse.pacc
+    r=$($pacc -f/dev/null parse.pacc 2>&1 &&
+	    echo 'parsed bad grammar by mistake!')
+    check "$r" "$err"
+}
+
 nocc() {
     err=$1
     cflags=$2

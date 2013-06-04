@@ -1,0 +1,53 @@
+/*
+type int
+parse '{ }' 0
+parse '{ { } { } }' 0
+*/
+
+CodeNames
+    ← n:Name ns:CodeNames → 0
+    / StringLit ns:CodeNames → ns
+    / CharLit ns:CodeNames → ns
+    / C_Comment ns:CodeNames → ns 
+    / [^{}] ns:CodeNames → ns
+    / lBrace ns:CodeNames rBrace ps:CodeNames → ns
+    / ε → 0
+
+Name :: char * ← n:([_A-Za-z] [_A-Za-z0-9]*) _ { ref_dup(n) }
+
+StringLit ← "\"" q:QuotedChars "\"" _ → { ref_dup(q) }
+
+QuotedChars :: ref_t ← (!"\"" QuotedChar)* { ref() }
+
+QuotedChar ← (Escape / [^\\]) → { ref() }
+
+Escape :: void ← SimpleEscape / OctalEscape / HexEscape / UniversalEscape
+
+SimpleEscape
+    ← "\\" ("a" / "b" / "f" / "n" / "r" / "t" / "v" /
+	    "\\" / "\'" / "\"" / "\?")
+
+OctalEscape ← "\\" [0-7][0-7]?[0-7]?
+
+HexEscape ← "\\x" HexDigit HexDigit?
+
+UniversalEscape ← ("\\u" HexQuad / "\\U" HexQuad HexQuad)
+
+CharLit ← "'" QuotedChar "'" _
+
+HexQuad ← HexDigit HexDigit HexDigit HexDigit
+
+HexDigit ← [0-9A-Fa-f]
+
+Comment
+    ← "#" [^\n]* "\n"
+    / C_Comment
+
+C_Comment
+    ← "//" [^\n]* "\n"
+    / "/*" (!"*/" .)* "*/"
+
+_ ← ( [ \t\n] / Comment )*
+
+lBrace ← "{" _
+rBrace ← "}" _

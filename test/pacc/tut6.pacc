@@ -1,0 +1,15 @@
+/*
+type int
+parse '2+3*4' 14
+parse '(2+3)*4' 20
+parse 3 3
+parse '(3)' 3
+parse '(((2+3)*4)*(2+3))' 100
+*/
+
+Sum <- p:Product "+" s:Sum -> { p + s }
+    / p:Product -> p
+Product <- t:Term "*" p:Product -> { t * p }
+    / t:Term -> t
+Term <- d:Decimal -> d / "(" s:Sum ")" -> s
+Decimal <- [0-9]+ -> { atoi(ref_str()) }

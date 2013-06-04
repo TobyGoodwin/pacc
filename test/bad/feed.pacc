@@ -1,0 +1,10 @@
+/*
+nofeed "pacc: fatal: misplaced feed rule in \`Digit'"
+*/
+
+/* feed rules are special */
+
+Sum :: int ← a:Digit b:Digit → { a + b }
+Digit ← [0-9] __  → { *ref_ptr(ref()) - '0' }
+
+__ :: void ← [ \n] *

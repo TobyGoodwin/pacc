@@ -181,7 +181,7 @@ pacc -d bool.pacc
 Then simply compile as normal. The output of pacc is valid C99, but not C89, so
 you will probably need to explicitly invoke a C99 compiler. (This is definitely
 an area that needs further study. While I'm not greatly swayed by the argument
-that pacc shold be compatible with a 25 year old standard, it is unfortunate
+that pacc should be compatible with a 25 year old standard, it is unfortunate
 that currently if you hand its output to gcc you get an obscure error message.)
 
 @example
@@ -203,6 +203,7 @@ Which is what we wanted!
 
 @node Pacc basics
 @section Pacc basics
+@cindex rules
 
 A pacc grammar consists of one or more @emph{rules}. Let's look at our
 first example again.
@@ -243,6 +244,7 @@ the value of the start rule is the overall value of the parse.
 
 @node Alternatives
 @section Alternatives
+@cindex alternatives
 
 @cartouche
 @quotation
@@ -299,6 +301,7 @@ alternative), so it may take you a while to get used to it.
 
 @node Rules
 @section Rules
+@cindex rules
 
 Here's where we've got to:
 
@@ -722,13 +725,60 @@ ExprTail <- "+" d:Decimal ExprTail { push('+', d), 0 }
 Decimal ← "-"? [0-9]+ { atoi(ref_str()) }
 @end verbatim
 
-
 @node Feeding example
 @section Feeding example
 
 @cindex feeding
+@cindex interactive inputs
+@cindex partial inputs
+@cindex CLI
+@cindex command-line interface
 
-turn sum example into a feedable one
+Leaving aside problematic left association, let's go back to our previous
+calculator. You'll recall that this handles addition and multiplication, with
+arbitrary whitespace between numbers and symbols. @xref{Handling whitespace}.
+
+Suppose we wanted to make an interactive calculator, with a read-eval-print
+loop. It should print a prompt, read a line from the user, evaluate it, print
+the result, and then print another prompt. That's easy enough to achieve, as
+each line read from the user will be a complete utterance in our grammar.
+
+That interface would doubtless be fine in practice for a simple calculator. But
+for a more complex language, we might like a more sophisticated read-eval-print
+loop. Suppose we terminate each sum with an equals character, so a typical
+input would be @samp{2+3=}. That allows us to recognise the end of an
+utterance, which means we can allow the user to enter an expression that
+spreads over several lines.
+
+For a calculator, this is overkill, but it's exactly how command-line
+interfaces such as the Unix shells, SQL front-ends, and Lisp-like languages
+typically work. And the good news is, pacc has support for building interfaces
+like this.
+
+First, we need to mark in our grammar the points where the input can be spread
+across multiple lines. We do this with a distinguished rule, which is
+conventionally called @samp{__} (two underscores). That rule will need to match
+a newline, and generally other whitespace too. In fact, for our calculator
+example we can simply rename our previous whitespace rule @samp{_ <- [ \t\n]*}.
+Here's what the complete grammar will look like, also with the addition of the
+@samp{Equals} rule that indicates the end of an expression.
+
+@verbatim
+Expression <- __ s:Sum Equals -> s
+Sum <- p:Product Plus s:Sum -> { p + s }
+     / p:Product -> p
+Product <- t:Term Star p:Product -> { t * p }
+         / t:Term -> t
+Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
+# lexical elements
+Decimal <- [0-9]+ __ -> { atoi(ref__str()) }
+Plus :: void <- "+" __
+Star <- "*" __
+Equals <- "=" __
+lBrace <- "(" __
+rBrace <- ")" __
+__ <- [ \t\n]*
+@end verbatim
 
 @node Any matcher
 @section Any matcher
@@ -927,6 +977,10 @@ The @dfn{preamble} contains C source code, and is copied verbatim to the
 beginning of pacc's output file. Typically it will comprise a few
 @samp{#include} statements.
 
+@cindex rules
+@cindex rule names
+@cindex types
+
 @subsection Rules
 
 A @dfn{rule} consists of a name, an optional type, and a definition. The first
@@ -948,6 +1002,8 @@ the first rule has no explicit type, its type is @samp{int}.
  
 The @dfn{definition} is introduced with a left arrow @samp{<-}, which is
 followed by one or more matchers, combined with operators.
+
+@cindex matchers
 
 @subsection Matchers
 
@@ -972,7 +1028,7 @@ or right square bracket.
 
 @item Call: @samp{rule_name}
 A bare word names another rule---it is an error if there is no such rule
-defined in this pacc grammar. It matches anything that the named rule matches.
+defined in this pacc grammar. It matches anything that the named rule matches. Call matchers are not allowed in a left recursive position.
 
 @item Any: @samp{.}
 The period character matches any single character. (UTF-8 coding is assumed.)

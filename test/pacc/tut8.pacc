@@ -1,0 +1,21 @@
+/*
+type int
+parse 3+4 7
+parse 3+-2+-1 0
+*/
+
+Expression <- _ s:Sum -> s
+Sum <- p:Product Plus s:Sum -> { p + s }
+     / p:Product Minus s:Sum -> { p - s }
+     / p:Product -> p
+Product <- t:Term Star p:Product -> { t * p }
+         / t:Term -> t
+Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
+# lexical elements
+Decimal <- "-"? [0-9]+ _ -> { atoi(ref_str()) }
+Plus :: void <- "+" _
+Minus <- "-" _
+Star <- "*" _
+lBrace <- "(" _
+rBrace <- ")" _
+_ <- [ \t\n]*

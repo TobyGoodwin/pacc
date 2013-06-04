@@ -1,0 +1,25 @@
+/*
+type int
+parse 3 3
+parse '2+3' 5
+parse '2 + 3' 5
+parse '   2   +    3    ' 5
+parse '6 * 9' 54
+parse '12 + 34' 46
+parse '   12   +34' 46
+parse '12+34' 46
+noparse '1 2 + 3 4' 'Plus, or end-of-input' 3
+*/
+
+Sum <- _ p:Product Plus s:Sum -> { p + s }
+       / p:Product -> p
+Product <- t:Term Star p:Product -> { t * p }
+         / t:Term -> t
+Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
+# lexical elements
+Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
+Plus :: void <- "+" _
+Star <- "*" _
+lBrace <- "(" _
+rBrace <- ")" _
+_ <- [ \t\n]*

@@ -1,5 +1,3 @@
-#! /bin/sh
-
 # This code does not handle spacy filenames, nor should it.
 
 parse_exact() {
