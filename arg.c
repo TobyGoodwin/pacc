@@ -66,12 +66,6 @@ char *arg_feed(void) {
     return feed;
 }
 
-static char *feed_rule = 0;
-char *arg_feed_rule(void) {
-    if (!feed_rule) return "__";
-    return feed_rule;
-}
-
 static char *name = "pacc";
 char *arg_name(void) {
     return name;
@@ -94,7 +88,6 @@ static void usage(void) {
     puts("Parser:");
     puts("  -n, --name=NAME          name the grammar (default: pacc)");
     puts("  -f, --feed=FILE          write extra feed parser to FILE");
-    puts("  -r, --feed-rule=RULE     end-of-input rule when feeding (default: __)");
     puts("");
     puts("Output:");
     puts("  -d, --define[=FILE]      also produce a header file (default: BASE.h)");
@@ -117,14 +110,13 @@ static void version(void) {
 void arg(int argc, char **argv) {
     int c, opt_i;
 
-    while ((c = getopt_long(argc, argv, "D:d::f:hn:o:r::v", long_opts, &opt_i)) != -1) {
+    while ((c = getopt_long(argc, argv, "D:d::f:hn:o:v", long_opts, &opt_i)) != -1) {
 	switch (c) {
 	case 'D': dump = optarg; break;
 	case 'd': defining = 1; defines = optarg; break;
 	case 'f': feed = optarg; break;
 	case 'n': name = optarg; break;
 	case 'o': output = optarg; break;
-	case 'r': feed_rule = optarg; break;
 	case 'v': version(); break;
 	case 'h': usage(); break;
 	case '?': exit(1); break;

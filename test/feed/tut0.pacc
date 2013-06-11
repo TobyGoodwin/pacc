@@ -1,0 +1,20 @@
+/*
+type int
+parse 5 '2+3='
+parse 5 2 + 3 '='
+parse 35  '(' '' 2+3 ' )' '*' '(3 +' '4)' =
+*/
+Expression <- _ s:Sum $ Equals -> s
+Sum <- p:Product $ Plus $ s:Sum -> { p + s }
+     / p:Product -> p
+Product <- t:Term $ Star $ p:Product -> { t * p }
+         / t:Term -> t
+Term <- d:Decimal -> d / lBrace $ s:Sum $ rBrace -> s
+# lexical elements
+Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
+Plus :: void <- "+" _
+Star <- "*" _
+Equals <- "=" _
+lBrace <- "(" _
+rBrace <- ")" _
+_ <- [ \t\n]*

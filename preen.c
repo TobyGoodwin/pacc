@@ -92,6 +92,8 @@ static int consumes(struct s_node *n) {
 	    return n->text && n->text[0] == '1';
 	case call:
 	    return consumes(n->first);
+	case and: case not: case guard:
+	    return 0;
 	case alt:
 	    r = 1;
 	    for (p = n->first; p; p = p->next)
@@ -105,7 +107,7 @@ static int consumes(struct s_node *n) {
     }
 }
 
-static void check_recursion(struct s_node *g) {
+void check_recursion(struct s_node *g) {
     struct s_node *p;
 
     for (p = g->first->next; p; p = p->next) {

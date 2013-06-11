@@ -1,0 +1,5 @@
+/*
+nopacc1 "pacc: fatal: left recursion in rule \`A'"
+*/
+
+A :: void <- !"x" A / "y"

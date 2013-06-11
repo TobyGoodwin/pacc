@@ -14,24 +14,29 @@
  * support the "pre" variable that we use. */
 
 static char *feed_rule;
-
 static void cook0(struct s_node *n, struct s_node *pre) {
     static char *name;
     struct s_node *p, *q;
 
     if (n->type == rule)
 	name = n->text;
-    if (n->type == call && strcmp(feed_rule, n->text) == 0) {
+
+    /* Replace
+     *     ... _ foo
+     * with
+     *     ... _ (foo / !.)
+     * for any non-empty foo. 
+     */
+    if (n->type == cafe) {
 	struct s_node *t;
 	//fprintf(stderr, "match at node %ld\n", n->id);
-	if (!n->next) {
-	    fatal3("misplaced feed rule in `", name, "'");
-	}
+	if (!n->next)
+	    fatal3("invalid `$' at the end of rule `", name, "'");
 	t = s_kid(seq, s_kid(not, s_new(any)));
 	t = cons(s_kid(seq, n->next), t);
 	t = s_kid(alt, t);
-//	pre->next = t;
-//	free(n);
+	//	pre->next = t;
+	//	free(n);
 	n->next = t;
     }
 
@@ -40,7 +45,7 @@ static void cook0(struct s_node *n, struct s_node *pre) {
 	    cook0(q, p);
 }
 
-/* remove all expr nodes */
+/* make all rules void, and remove all expr nodes */
 static void dexpr(struct s_node *n, struct s_node *pre) {
     struct s_node *p, *q;
     if (n->type == expr) {
@@ -61,13 +66,13 @@ void cook(struct s_node *g) {
     char *newname;
     int l;
 
+    dexpr(g, 0);
+    cook0(g, 0);
     l = strlen(g->text) + strlen("_feed") + 1;
     newname = realloc(0, l);
     if (!newname) nomem();
     strcpy(newname, g->text);
     strcat(newname, "_feed");
     g->text = newname;
-    feed_rule = arg_feed_rule();
-    dexpr(g, 0);
-    cook0(g, 0);
+    check_recursion(g);
 }

@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
     struct pacc_parser *p0 = pacc_new();
     struct pacc_parser *p1 = pacc_feed_new();
 
+    //pacc_feed_trace = 1;
     while (n < argc) {
 	len += strlen(argv[n]) + 1;
 	text = realloc(text, len + 1);
@@ -21,7 +22,7 @@ int main(int argc, char **argv) {
 	if (n == 1) *text = '\0';
 	strcat(text, argv[n]);
 	strcat(text, "\n");
-    //fprintf(stderr, "text is now >%s<\n", text);
+	//fprintf(stderr, "text is now >%s<\n", text);
 
 	pacc_input(p0, text, len);
 	parsed = pacc_parse(p0);

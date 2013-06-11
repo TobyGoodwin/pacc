@@ -217,6 +217,7 @@ char *decode_type(enum s_type t) {
     case and:		return "and";
     case any:		return "any";
     case bind:		return "bind";
+    case cafe:		return "cafe";
     case call:		return "call";
     case cclass:	return "cclass";
     case cceq:		return "cceq";

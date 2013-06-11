@@ -3,6 +3,7 @@
 enum s_type {
     grammar, rule,		/* scaffolding */
     type, alt, seq,		/* fundamentals */
+    cafe,			/* feed point */
     and, not,			/* syntactic predicates */
     expr, bind, coords,		/* expressions */
     guard, ident,		/* semantic predicate */

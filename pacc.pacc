@@ -24,6 +24,7 @@ Rule1
 
 Rule2
     ← r:Rule3 s:Rule2 { cons(r, s) }
+    / Dollar s:Rule2 { cons(s_new(cafe), s) }
     / ε { 0 }
 
 Rule3
@@ -165,6 +166,7 @@ lBrace ← "{" _
 rBrace ← "}" _
 Colon ← ":" _
 ColCol ← "::" _
+Dollar ← "$" _
 Dot ← "." _
 Epsilon ← ("ε" / "%") _
 Not ← "!" _

@@ -1,10 +1,10 @@
 /*
-nofeed "pacc: fatal: misplaced feed rule in \`Digit'"
+nofeed "pacc: fatal: invalid \`$' at the end of rule \`Sum'"
 */
 
-/* feed rules are special */
+/* dollar is not permitted at the end of a rule */
 
-Sum :: int ← a:Digit b:Digit → { a + b }
-Digit ← [0-9] __  → { *ref_ptr(ref()) - '0' }
+Sum :: int ← a:Digit $ b:Digit $ → { a + b }
+Digit ← [0-9] _  → { *ref_ptr(ref()) - '0' }
 
-__ :: void ← [ \n] *
+_ :: void ← [ \n] *
