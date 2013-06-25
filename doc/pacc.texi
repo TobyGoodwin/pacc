@@ -744,45 +744,45 @@ the result, and then print another prompt. That's easy enough to achieve, as
 each line read from the user will be a complete utterance in our grammar.
 
 That interface would doubtless be fine in practice for a simple calculator. But
-for a more complex language, we might like a more sophisticated read-eval-print
-loop. Suppose we terminate each sum with an equals character, so a typical
-input would be @samp{2+3=}. That allows us to recognise the end of an
-utterance, which means we can allow the user to enter an expression that
+for a more complex interactive language, we might like a more sophisticated
+read-eval-print loop. Suppose we terminate each sum with an equals character,
+so a typical input would be @samp{2+3=}. That allows us to recognise the end of
+an utterance, which means we can allow the user to enter an expression that
 spreads over several lines.
 
 For a calculator, this is overkill, but it's exactly how command-line
 interfaces such as the Unix shells, SQL front-ends, and Lisp-like languages
 typically work. And the good news is, pacc has support for building interfaces
-like this.
+like these.
 
 First, we need to mark in our grammar the points where the input can be spread
-across multiple lines. We do this with a distinguished rule, which is
-conventionally called @samp{__} (two underscores). We can make the @samp{__}
-rule match newlines @samp{__ <- \n*}, and also simplify our old whitespace
-rule: @samp{_ <- [ \t]*}. The new @samp{__} rule needs to go in high level
-rules, in allthe places where it makes sense for the user to hit @key{RET} and
-keep typing, but not, for instance, in the middle of a number.
+across multiple lines. We do this with the symbol @samp{$}. This needs to go in
+high level rules, in all the places where it makes sense for the user to hit
+@key{RET} and keep typing, but not, for instance, in the middle of a number.
 
-Here's what the complete grammar will look like, also with the addition of the
-@samp{Equals} rule that indicates the end of an expression.
+Here's what the complete grammar for the interactive calculator will look like,
+As well as the @samp{$} markers, we have added the @samp{Equals} rule that
+indicates the end of an expression.
 
 @verbatim
-Expression <- __ s:Sum __ Equals -> s
-Sum <- p:Product __ Plus __ s:Sum -> { p + s }
+Expression <- _ s:Sum $ Equals -> s
+Sum <- p:Product $ Plus $ s:Sum -> { p + s }
      / p:Product -> p
-Product <- t:Term __ Star __ p:Product -> { t * p }
+Product <- t:Term $ Star $ p:Product -> { t * p }
          / t:Term -> t
-Term <- d:Decimal -> d / lBrace __ s:Sum __ rBrace -> s
+Term <- d:Decimal -> d / lBrace $ s:Sum $ rBrace -> s
 # lexical elements
-Decimal <- [0-9]+ _ -> { atoi(ref__str()) }
+Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
 Plus :: void <- "+" _
 Star <- "*" _
 Equals <- "=" _
 lBrace <- "(" _
 rBrace <- ")" _
-_ <- [ \t]*
-__ <- "\n"*
+_ <- [ \t\n]*
 @end verbatim
+
+The @samp{$} markers don't match or consume any input. In fact, they don't
+change anything till we invoke pacc with the @samp{-f} flag. 
 
 @node Any matcher
 @section Any matcher

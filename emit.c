@@ -74,12 +74,10 @@ static void c_code(struct s_node *n) {
 	int i;
 	c_str("#line "); c_int(n->first->pair[0]);
 	c_str(" \""); c_str(arg_input()); c_strln("\"");
-	/* We'll do our own indenting here */
-	need_indent = 0;
 	/* -1 because we've gone one too many; -1 for the upcoming ( */
-	for (i = 0; i < n->first->pair[1] - 2; ++i) c_str(" ");
+	for (i = 0; i < n->first->pair[1] - 2; ++i) putchar(' ');
     }
-    c_str("(");c_str(n->text); c_strln(")");
+    putchar('('); fputs(n->text, stdout); puts(")");
     c_str("#line "); c_long(nr + 1);
     c_str(" \""); c_str(arg_output()); c_strln("\"");
 }

@@ -1,0 +1,12 @@
+/*
+int
+parse 5 5
+noparse x A 1
+*/
+
+# A value can spread over many lines
+
+A :: int <- "5" { 1 +
+			1 +
+			3
+		}
