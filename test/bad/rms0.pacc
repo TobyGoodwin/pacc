@@ -1,6 +1,6 @@
 /*
 noccwarn 'parse.pacc: In function ‘pacc_parse’:
-parse.pacc:13:13: error: passing argument 1 of ‘_pacc_ref_dup’ from incompatible pointer type [-Werror]
+parse.pacc:13:15: error: passing argument 1 of ‘_pacc_ref_dup’ from incompatible pointer type [-Werror]
 parse.c:148:14: note: expected ‘ref_t’ but argument is of type ‘char *’
 cc1: all warnings being treated as errors'
 */
