@@ -1,0 +1,21 @@
+/*
+nocc 'parse.pacc: In function ‘pacc_parse’:
+parse.pacc:21:25: error: ‘five’ undeclared (first use in this function)
+parse.pacc:21:25: note: each undeclared identifier is reported only once for each function it appears in'
+*/
+
+/* This is supposed to test that C errors are reported at the right place in
+ * the pacc file for braceless numbers. But how can we do that? If we write "5"
+ * here, we get a mere warning on the assignment. I suppose -Werror makes it an
+ * error, in which case it comes up completely wrong: the C code looks like
+ * this:
+          cur->value.u0=
+#line 10 "parse.pacc"
+                       (5)
+#line 530 "parse.c"
+          ;
+ * and the error is reported at the beginning of the statement. I don't see a
+ * sane way to fix this.
+ */
+
+S :: char * <- "foo" -> five

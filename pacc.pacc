@@ -74,9 +74,13 @@ CCChar :: const unsigned char *
 CCHyphen :: struct s_node * ← "-" { s_ccnode((const unsigned char *)"-") }
 
 Result
-    ← rArrow n:Name { s_both(expr, n, s_text(ident, n)) }
-    / rArrow n:Number { s_text(expr, n) }
+    ← rArrow b:BareResult → b #n:Name { s_both(expr, n, s_text(ident, n)) }
+    #/ rArrow n:Number { s_text(expr, n) }
     / rArrow? c:Code → c
+
+BareResult
+    ← n:Name { s_both(expr, n, cons(s_coords(pacc_coords), s_text(ident, n))) }
+    / n:Number { s_both(expr, n, s_coords(pacc_coords)) }
 
 CodeNames
     ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
@@ -98,11 +102,12 @@ CodeNames
     / ε { 0 }
 */
 
-CodeAndNames ← n:CodeNames { s_both(expr, ref_str(), n) }
+CodeAndNames ← n:CodeNames →
+	{ s_both(expr, ref_str(), cons(s_coords(pacc_coords), n)) }
 
-Code ← l:CodeStart n:CodeAndNames "}" _ → { s_child_cons(n, l) }
+Code ← lBrace n:CodeAndNames rBrace → n #{ s_child_cons(n, l) }
 
-CodeStart ← "{" → { s_coords(pacc_coords) }
+#CodeStart ← "{" → { s_coords(pacc_coords) }
 
 # XXX unfortunately, emit assumes that there is always a preamble node,
 # even if there is no preamble. We could say

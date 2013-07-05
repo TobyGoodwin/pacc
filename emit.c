@@ -74,11 +74,11 @@ static void c_code(struct s_node *n) {
 	int i;
 	c_str("#line "); c_int(n->first->pair[0]);
 	c_str(" \""); c_str(arg_input()); c_strln("\"");
-	/* -1 because we've gone one too many; -1 for the upcoming ( */
-	for (i = 0; i < n->first->pair[1] - 2; ++i) putchar(' ');
+	/* 1-based counting; subtract 1 for upcoming '(' */
+	for (i = 1; i < n->first->pair[1] - 1; ++i) putchar(' ');
     }
-    putchar('('); fputs(n->text, stdout); puts(")");
-    c_str("#line "); c_long(nr + 1);
+    putchar('('); c_raw(n->text); c_raw(")\n");
+    c_str("#line "); c_long(nr);
     c_str(" \""); c_str(arg_output()); c_strln("\"");
 }
 

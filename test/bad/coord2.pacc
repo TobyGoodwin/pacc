@@ -1,0 +1,11 @@
+/*
+nocc 'parse.pacc: In function ‘pacc_parse’:
+parse.pacc:11:14: error: ‘q’ undeclared (first use in this function)
+parse.pacc:11:14: note: each undeclared identifier is reported only once for each function it appears in'
+*/
+
+/* XXX what we really want to test is that the #line directives are right (e.g.
+ * that #line 532 "parse.c" actually is on line 532) */
+
+S <- T { 0 }
+T <- "foo" { q }
