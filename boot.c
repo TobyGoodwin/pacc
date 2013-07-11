@@ -27,6 +27,7 @@ void walk(struct s_node *p, int d) {
         printf("n->text = \"");
 	for (s = p->text; *s; ++s) {
 	    switch (*s) {
+		case '\n': printf("\\n"); break;
 		case '"': printf("\\\""); break;
 		case '\\': printf("\\\\"); break;
 		default: printf("%c", *s);

@@ -105,7 +105,7 @@ CodeNames
 CodeAndNames ← n:CodeNames →
 	{ s_both(expr, ref_str(), cons(s_coords(pacc_coords), n)) }
 
-Code ← lBrace n:CodeAndNames rBrace → n #{ s_child_cons(n, l) }
+Code ← "{" n:CodeAndNames rBrace → n #{ s_child_cons(n, l) }
 
 #CodeStart ← "{" → { s_coords(pacc_coords) }
 
