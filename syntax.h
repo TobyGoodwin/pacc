@@ -57,9 +57,11 @@ extern void desugar(struct s_node *);
 extern int path_max(struct s_node *, enum s_type);
 extern int path_min(struct s_node *, enum s_type);
 extern void s_dump(struct s_node *);
+extern char *decode_type(enum s_type);
 extern int s_has_children(enum s_type);
-extern int s_is_text(enum s_type);
+extern int s_is_number(enum s_type);
 extern int s_is_pair(enum s_type);
+extern int s_is_text(enum s_type);
 
 extern char *prefix;
 #endif

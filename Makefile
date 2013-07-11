@@ -51,7 +51,7 @@ pacc3.c: pacc2 pacc.pacc
 	./pacc2 pacc.pacc -o $@
 
 pacc: pacc2.d pacc3.d
-	diff $^
+	diff -u $^
 	cp pacc2 $@
 
 template.c: pacc.tmpl template.sh
@@ -78,7 +78,10 @@ template.o: template.h
 utf8.o: utf8.h
 
 %.d: %.c
-	sed '/^#/d' $^ > $@
+	sed '/^#line/d' $^ > $@
+
+boot: boot.o error.o load.o pacc2.o syntax.o utf8.o
+	$(CC) $(LDFLAGS) -o $@ $^
 
 .PHONY: check clean test/clean
 
