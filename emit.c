@@ -68,8 +68,9 @@ static void c_close(void) { --indent; c_strln("}"); }
 static void c_closet(void) { --indent; c_str("} "); }
 
 static void c_code(struct s_node *n) {
-    /* XXX except for pacc0, there is always a coords as a first child of
-     * expr, so it would be better to fix pacc0 and assert here */
+    /* XXX except for a couple of desugared cases, there is always a coords as
+     * a first child of expr, so it would be better to fix sugar.c and assert
+     * here */
     if (n->first && n->first->type == coords) {
 	int i;
 	c_str("#line "); c_int(n->first->pair[0]);

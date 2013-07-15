@@ -35,7 +35,7 @@ void walk(struct s_node *p, int d) {
 	}
 	printf("\"; ");
     }
-    printf("p%d = n; \n", d);
+    printf("p%d = n;\n", d);
 }
 
 

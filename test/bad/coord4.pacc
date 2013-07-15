@@ -1,21 +1,17 @@
 /*
-nocc 'parse.pacc: In function ‘pacc_parse’:
-parse.pacc:21:25: error: ‘five’ undeclared (first use in this function)
-parse.pacc:21:25: note: each undeclared identifier is reported only once for each function it appears in'
+nocc 'parse.c: In function ‘pacc_parse’:
+parse.c:527:24: error: incompatible types when assigning to type ‘struct nonsense’ from type ‘int’'
 */
 
-/* This is supposed to test that C errors are reported at the right place in
- * the pacc file for braceless numbers. But how can we do that? If we write "5"
- * here, we get a mere warning on the assignment. I suppose -Werror makes it an
- * error, in which case it comes up completely wrong: the C code looks like
- * this:
+/* XXX This is supposed to test that braceless numbers carry coords. They do,
+ * but this test still comes out wrong as the C code looks like this:
           cur->value.u0=
 #line 10 "parse.pacc"
                        (5)
 #line 530 "parse.c"
           ;
- * and the error is reported at the beginning of the statement. I don't see a
- * sane way to fix this.
+ * and the error is reported at the equals sign.
  */
 
-S :: char * <- "foo" -> five
+{ struct nonsense { int x; }; }
+S :: struct nonsense <- "foo" -> 5
