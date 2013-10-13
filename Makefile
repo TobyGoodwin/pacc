@@ -126,3 +126,4 @@ test/clean:
 	@rm -f test/feeder test/feeder.o test/parsefeed.o test/partial.o
 	@rm -f test/parsefeed.c test/parsefeed.h test/partial.c
 	@rm -f test/parsefeed.pacc
+	@rm -f test/solo.pacc test/solo.c test/solo
