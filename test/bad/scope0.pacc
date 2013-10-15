@@ -1,6 +1,5 @@
 /*
-XXX
-nopacc 7:17 'name rebound'
+nopacc1 "pacc: fatal: name \`a' rebound"
 */
 
 # Names are lexically scoped over sequences, but it is an error to rebind a

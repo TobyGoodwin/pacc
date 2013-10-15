@@ -139,6 +139,40 @@ static void check_expression(struct s_node *g) {
     }
 }
 
+/* A name cannot be bound more than once in any scope; each child of an alt
+ * represents a single scope. This is O(n^2), but n is the number of bindings
+ * in a sequence, which is rarely more than 2. */
+static void check_rebound_seq(struct s_node *s) {
+    char **names = 0;
+    int namea = 0, namep = 0;
+    struct s_node *p;
+
+    for (p = s->first; p; p = p->next)
+	if (p->type == bind) {
+	    int i;
+	    for (i = 0; i < namep; ++i)
+		if (strcmp(names[i], p->text) == 0) 
+		    fatal3("name `", p->text, "' rebound");
+	    if (namep == namea) {
+		int l = 2 * namea + 1;
+		char **n = realloc(names, l);
+		if (!n) nomem();
+		names = n;
+		namea = l;
+	    }
+	    names[namep++] = p->text;
+	}
+}
+
+static void check_rebound(struct s_node *n) {
+    struct s_node *p;
+    if (n->type == seq)
+	    check_rebound_seq(n);
+    if (s_has_children(n->type))
+	for (p = n->first; p; p = p->next)
+	    check_rebound(p);
+}
+
 void preen(struct s_node *g, char *name) {
     assert(g && !g->text);
     g->text = name;
@@ -147,4 +181,5 @@ void preen(struct s_node *g, char *name) {
     check_reached(g);
     check_recursion(g);
     check_expression(g);
+    check_rebound(g);
 }

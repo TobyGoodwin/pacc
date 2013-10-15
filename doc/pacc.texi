@@ -84,13 +84,13 @@ This tutorial introduces pacc with a series of examples.
 @cindex formal language
 @cindex computer language
 @cindex language
+
 A @dfn{parser} is a computer program that interprets the utterances of a
-@dfn{computer language} A computer language is more properly known as a
-@dfn{formal language}. It's unfortunate, in my opinion, that the word
-``language'' is used here at all (although I can't think of a better word),
-because formal languages are almost entirely @emph{un}like natural languages. A
-skateboard and an aircraft carrier are both means of transport, but that's
-about all they have in common!
+@dfn{computer language}. A computer language is more properly known as a
+@dfn{formal language}. (Formal languages are almost entirely @emph{un}like
+natural languages---@emph{English}, @emph{Pǔtōnghuà}, @emph{Castellano}, etc;
+it is usually a mistake to make analogies or comparisons between human
+languages and computer languages.)
 
 Computer languages vary enormously in complexity: the most elaborate are
 high-level programming languages. At the bottom end, the address box in a web
@@ -570,14 +570,17 @@ to appear @emph{inside} those lexical elements, so we don't want to accept
 The usual way to handle this is first to define a rule that matches whitespace.
 Conventionally this rule is called @samp{_} (a single underscore). Normally it
 will match at least @samp{[ \t\n]*}, that is, zero or more occurences of space,
-tab, and newline. If the language being defined includes comments, they would
-usually be included too.
+tab, and newline. If the language being defined includes comments, they will
+usually be matched by this rule too (reflecting the fact that comments are
+considered equivalent to whitespace by most languages: they separate lexical
+elements).
 
-Then, we define a separate rule for each lexical element which matches the
-element in question, followed by our whitespace rule. For example, if @samp{+}
-is a lexical element, we might define the rule @samp{Plus <- "+" _} to match
-it. Finally, we define a new start rule which permits whitespace at the
-beginning of an input. Here's what it looks like.
+Then, we define a separate rule for each lexical element in our grammar. Each
+lexical element rule will match the element in question, followed by our
+whitespace rule. For our example, @samp{+} is a lexical element, so we will
+define the rule @samp{Plus <- "+" _} to match it. Finally, we define a new
+start rule which permits whitespace at the beginning of an input. Here's what
+it looks like.
 
 @verbatim
 Expression <- _ s:Sum -> s
@@ -594,6 +597,12 @@ lBrace <- "(" _
 rBrace <- ")" _
 _ <- [ \t\n]*
 @end verbatim
+
+This simple example demonstrates another important and powerful feature of PEG
+parsing: there is no need for a separate ``lexer'' to assemble characters into
+lexical tokens. Pacc can do both jobs, and a single grammar specification
+describes the entire language, from input characters, through lexical elements,
+all the way up to complete programs. 
 
 @node Associativity
 @section Associativity
@@ -621,8 +630,8 @@ Sum <- d:Decimal "+" s:Sum -> { d + s }
 @end verbatim
 
 This correctly evaluates @samp{3-2} giving the answer 1. Unfortunately, if we
-ask it to evaluate @samp{3-2-1}, it gives the answer 2, where we expecting 0.
-It has made subtraction right associative, so @samp{3-2-1} is evaluated as
+ask it to evaluate @samp{3-2-1}, it gives the answer 2, where we were expecting
+0.  It has made subtraction right associative, so @samp{3-2-1} is evaluated as
 @samp{3-(2-1)}. In everyday life, subtraction is considered left associative,
 and @samp{3-2-1} should mean the same as @samp{(3-2)-1}.
 
