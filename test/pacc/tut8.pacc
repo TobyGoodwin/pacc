@@ -1,21 +1,28 @@
 /*
 type int
-parse 3+4 7
-parse 3+-2+-1 0
+parse 3 3
+parse '2+3' 5
+parse '2 + 3' 5
+parse '   2   +    3    ' 5
+parse '6 * 9' 54
+parse '12 + 34' 46
+parse '12 /+ a simple comment +/+ 34' 46
+parse '43 /+ a + more / complex comment +/+ 12' 55
+parse '   12   +34' 46
+parse '12+34' 46
+noparse '1 2 + 3 4' 'Plus, or end-of-input' 3
 */
 
-Expression <- _ s:Sum -> s
-Sum <- p:Product Plus s:Sum -> { p + s }
-     / p:Product Minus s:Sum -> { p - s }
-     / p:Product -> p
+Sum <- _ p:Product Plus s:Sum -> { p + s }
+       / p:Product -> p
 Product <- t:Term Star p:Product -> { t * p }
          / t:Term -> t
 Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
 # lexical elements
-Decimal <- "-"? [0-9]+ _ -> { atoi(ref_str()) }
+Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
 Plus :: void <- "+" _
-Minus <- "-" _
 Star <- "*" _
 lBrace <- "(" _
 rBrace <- ")" _
-_ <- [ \t\n]*
+_ <- ( [ \t\n] / Comment )*
+Comment <- "/+" (!"+/" .)* "+/"

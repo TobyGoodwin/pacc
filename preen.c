@@ -139,9 +139,9 @@ static void check_expression(struct s_node *g) {
     }
 }
 
-/* A name cannot be bound more than once in any scope; each child of an alt
- * represents a single scope. This is O(n^2), but n is the number of bindings
- * in a sequence, which is rarely more than 2. */
+/* A name cannot be bound more than once in any scope; each seq represents a
+ * single scope. This is O(n^2), but n is the number of bindings in a sequence,
+ * which is rarely more than 2. */
 static void check_rebound_seq(struct s_node *s) {
     char **names = 0;
     int namea = 0, namep = 0;

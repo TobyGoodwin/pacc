@@ -73,7 +73,8 @@ This tutorial introduces pacc with a series of examples.
 * Handling whitespace::
 * Associativity::
 * Feeding example::
-* Any matcher::
+* The any matcher::
+* Guards::
 * Using lookahead::
 @end menu
 
@@ -671,12 +672,14 @@ A <- "a"* A / "b"
 @end verbatim
 
 Getting back to subtraction, I'm afraid the sad news is that implementing a
-left associative operator in the current version of pacc is very difficult. (I
-have some ideas to make it much much easier and cleaner in the future, but they
-have not yet been implemented.) About the best you can do is to manually build
-a list, then reverse it.
+left associative operator in the current version of pacc is very difficult.
+Left recursion is, without doubt, the Achilles' heel of PEG parsing, and there
+are many ideas about how to handle it better. I have my own thoughts, which may
+see the light of day in a future release.
 
-Here's a self-contained example that does just that, and can correctly subtract three integers.
+One option that works with current versions of pacc is to build a list, then
+reverse it.  Here's a self-contained example that does just that, and can
+correctly subtract three integers.
 
 @verbatim
 {
@@ -793,12 +796,81 @@ _ <- [ \t\n]*
 The @samp{$} markers don't match or consume any input. In fact, they don't
 change anything till we invoke pacc with the @samp{-f} flag. 
 
-@node Any matcher
-@section Any matcher
+@node The any matcher
+@section The any matcher
 
 @cindex any
+@cindex matcher
 
-sum example with C style comments
+Our whistlestop tour of pacc is nearly complete. There is, however, one matcher
+that we have not yet met. It is the @emph{any} matcher, written as @samp{.}, a
+period. As you might expect, it matches a single (UTF8) character (including
+the newline character), without regard to what that character actually is. If
+you are familiar with regular expressions, using @samp{.} to match any
+character may seem familiar, but beware! Pacc behaves quite differently from
+regular expression matchers.
+
+@subsection Pacc expressions and regular expressions
+
+@cindex regular expressions
+@cindex backtracking
+
+Let's look at an example. Consider the input @samp{fooXbarXbaz} and the regular
+expression @samp{/.*X/}. Under regular expression rules, @samp{.*} matches as
+much as possible (@samp{*} is @emph{greedy}), while allowing the rest of the
+expression to match. In this case, it would match @samp{fooXbarX}. In general,
+it will match to the last @samp{X} in the input, or fail if there is no
+@samp{X}.
+
+The pacc expression @samp{.* "X"} looks superficially similar, but in this case
+@samp{.*} will match @emph{the entire string}, and there is nothing left for
+the @samp{"X"} to match. In fact, that pacc expression can never match any
+input.
+
+The difference is that the process of matching a regular expression involves
+backtracking. But pacc never backtracks. So pacc expressions must be carefully
+written so they cannot match more than they should.
+
+In this case, we can use a class matcher instead of the any matcher. The pacc
+expression @samp{[^X]* "X"} is closer to the regular expression we started
+with. Of course, this will only match @samp{fooX}. (It's actually a common
+mistake when using regular expressions to write @samp{/.*X/} intending that it
+will only match the @samp{fooX}. If that is what is required, we must adopt the
+same technque as the pacc expression and write @samp{/[^X]*X/}, or resort to
+Perl's non-greedy @samp{*?} operator if it's available: @samp{/.*?X/}.)
+
+To match up to the @emph{last} @samp{X}, we simply need to apply a repetition
+operator to the previous expression: @samp{([^X]* "X")+}. This, I believe, is
+exactly equivalent to the regular expression we started with: it matches to the
+last @samp{X} in the input, and fails if there is no @samp{X}.
+
+@node Guards
+@section Guards
+
+@cindex guard
+
+For finer control, pacc offers @emph{guards}. These are 
+
+Let's stretch our calculator example one last time: this time we will allow
+C-style comments.  These are lexically equivalent to a space, so we will use
+the @samp{_} rule to match them.
+
+@verbatim
+Expression <- _ s:Sum -> s
+Sum <- p:Product Plus s:Sum -> { p + s }
+     / p:Product -> p
+Product <- t:Term Star p:Product -> { t * p }
+         / t:Term -> t
+Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
+# lexical elements
+Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
+Plus :: void <- "+" _
+Star <- "*" _
+lBrace <- "(" _
+rBrace <- ")" _
+_ <- ( [ \t\n] / Comment )*
+Comment <- "/*" (!"*/" .)* "*/"
+@end verbatim
 
 @node Using lookahead
 @section Using lookahead
