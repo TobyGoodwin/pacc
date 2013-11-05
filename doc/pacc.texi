@@ -815,21 +815,32 @@ regular expression matchers.
 @cindex regular expressions
 @cindex backtracking
 
-Let's look at an example. Consider the input @samp{fooXbarXbaz} and the regular
-expression @samp{/.*X/}. Under regular expression rules, @samp{.*} matches as
-much as possible (@samp{*} is @emph{greedy}), while allowing the rest of the
-expression to match. In this case, it would match @samp{fooXbarX}. In general,
-it will match to the last @samp{X} in the input, or fail if there is no
-@samp{X}.
+For one thing, @samp{.} does not (usually) match the newline character in
+regular  expressions. Pacc is more uniform: @samp{.} always matches @emph{any}
+single character. But this is a minor detail. What I really what to demonstrate
+is how pacc's matching rules are different from a regular expression matcher.
+
+Let's look at an example. Consider the regular expression @samp{/.*X/}. Under
+regular expression rules, @samp{*} is said to be @dfn{greedy}, which means that
+@samp{.*} matches as much as possible, @emph{while allowing the rest of the
+expression to match}. Suppose the input string is @samp{fooXbarXbaz}. In this
+case, the expression will match @samp{fooXbarX}. In general, it will match to
+the last @samp{X} in the input, or fail if there is no @samp{X}.
 
 The pacc expression @samp{.* "X"} looks superficially similar, but in this case
 @samp{.*} will match @emph{the entire string}, and there is nothing left for
 the @samp{"X"} to match. In fact, that pacc expression can never match any
-input.
+input. (If @samp{*} is greedy in regular expressions, it's positively
+gluttonous in pacc!)
 
 The difference is that the process of matching a regular expression involves
-backtracking. But pacc never backtracks. So pacc expressions must be carefully
-written so they cannot match more than they should.
+backtracking. The matching engine effectively shifts input characters between
+different parts of the regular expression (such as the @samp{.*} and the
+@samp{X} in our example). The aim is always to find a match if it possibly can.
+But pacc never backtracks. Instead, each matcher in a pacc expression is
+considered in turn, and matches as much as possible. If that causes an overall
+failure, pacc simply moves on to the next alternative. So pacc expressions must
+be carefully written so they cannot match more than they should.
 
 In this case, we can use a class matcher instead of the any matcher. The pacc
 expression @samp{[^X]* "X"} is closer to the regular expression we started
@@ -849,7 +860,8 @@ last @samp{X} in the input, and fails if there is no @samp{X}.
 
 @cindex guard
 
-For finer control, pacc offers @emph{guards}. These are 
+In the last section, we introduced the any matcher @samp{.}, and then decided
+to use a character class matcher instead.
 
 Let's stretch our calculator example one last time: this time we will allow
 C-style comments.  These are lexically equivalent to a space, so we will use
