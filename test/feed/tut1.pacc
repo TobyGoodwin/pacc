@@ -1,0 +1,9 @@
+/*
+type int
+parse 5 23
+parse 5 14
+parse 5 2 3
+parse 18 9 9
+*/
+Sum :: int <- a:Digit $ b:Digit { a + b }
+Digit <- [0-9] "\n"? { ref_0(ref()) - '0' }

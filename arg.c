@@ -34,7 +34,6 @@ static const struct option long_opts[] = {
     { "dump-ast", required_argument, 0, 'D' },
     { "defines", optional_argument, 0, 'd' },
     { "feed", required_argument, 0, 'f' },
-    { "feed-rule", optional_argument, 0, 'r' },
     { "name", required_argument, 0, 'n' },
     { "output", required_argument, 0, 'o' },
     { "help", no_argument, 0, 'h' },
