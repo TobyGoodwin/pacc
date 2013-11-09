@@ -61,10 +61,11 @@ This manual is for GNU pacc (version @value{VERSION}, @value{UPDATED}).
 * Expressing precedence::
 * Handling whitespace::
 * Left recursion::
-* Feeding example::
+* Interactive inputs::
 * The any matcher::
 * Guards::
 * Using lookahead::
+* Memory management::
 * User Manual::
 * GNU Free Documentation License::
 * Index::
@@ -722,6 +723,7 @@ correctly subtract three integers.
 {
   #include <stdio.h>
 
+  /* A future version will avoid needing this predeclaration. */
   int pacc_wrap(const char *, char *, size_t, int *);
 
   struct action { char op; int val; };
@@ -774,8 +776,8 @@ ExprTail <- "+" d:Decimal ExprTail { push('+', d), 0 }
 Decimal ← "-"? [0-9]+ { atoi(ref_str()) }
 @end verbatim
 
-@node Feeding example
-@chapter Feeding example
+@node Interactive inputs
+@chapter Interactive inputs
 
 @cindex feeding
 @cindex interactive inputs
@@ -837,7 +839,7 @@ The second digit (everything after the @samp{$}) is now optional. Additionally,
 semantic expressions have been removed: this grammar is for recognising only,
 it can't evaluate anything.
 
-We can use the two grammars to write an interactive two-digit-summer as
+We can use the two grammars to construct an interactive two-digit-summer as
 follows.
 
 @enumerate
@@ -875,19 +877,6 @@ lBrace <- "(" _
 rBrace <- ")" _
 _ <- [ \t\n]*
 @end verbatim
-
-The @samp{$} markers don't match or consume any input. In fact, they don't
-change anything till we invoke pacc with the @samp{-f} flag. 
-
-XXX finish this section
-
-Feeding is unique to pacc, and solves a problem with PEG parsing: if
-the input is coming from an interactive stream, how do we know when to
-prompt the user for more input? Note that since this is an interactive
-stream, we need to give the user some idea that more input is needed,
-for example the @env{PS2} prompt in the Bourne shell. (With a tokenized
-LALR(1) parser, it is simple: when the parser asks the lexer for the
-next token, it simply prompts the user for more input if it needs it.)
 
 
 @node The any matcher
@@ -1035,8 +1024,17 @@ The miracle of packrat parsing means that, even in the face of this arbitrary
 lookahead, the parser is @dfn{linear}, that is, @math{O(n)} for time and
 space, where @emph{n} is the size of the input.
 
-@node User Manual
-@chapter User Manual
+@node Memory management
+@chapter Memory management
+
+@cindex memory management
+@findex malloc
+@findex realloc
+@findex free
+@findex nomem
+
+@node User manual
+@chapter User manual
 
 This @dfn{User Manual} is a complete but concise description of all the
 features of pacc.
@@ -1130,12 +1128,6 @@ command line input where some lines are correct but incomplete
 (@pxref{Feeding}). If the main parser returns an error, but the feed parser
 recognises the input, the controlling program should solicit more input from
 the user, and feed it to the parser.
-
-@item --feed-rule=@var{RULE}
-Feeding requires a @var{RULE} to indicate places in the grammar where the end
-of input is allowed to occur in a partial input. If feeding is enabled with
-@samp{--feed=@var{FILE}}, but no @dfn{feed rule} is specified, the default feed
-rule is @samp{__} (two underscores).
 @end table
 
 @subsection Help options
@@ -1159,13 +1151,13 @@ Some options can help with debugging pacc itself.
 
 @table @samp
 @item --dump-ast=@var{WHEN}
-If the @samp{-D} or @samp{--dump-ast} option is specified, pacc will write a
-dump of the Abstract Syntax Tree representation. The @var{WHEN} string
-specifies various points at which the @abbr{AST} will be dumped: if it contains
-the character @samp{0} the tree will be dumped as soon as the input grammar has
-been parsed; @samp{1} dumps the tree after desugaring; @samp{2} dumps the tree
-after @dfn{cooking} (preparing the grammar for feeding with the @samp{-f}
-flag). Multiple dumps can be specified, e.g. @samp{-D02}.
+If the @samp{-D@var{WHEN}} or @samp{--dump-ast=@var{WHEN}} option is specified,
+pacc will write a dump of the Abstract Syntax Tree representation. The
+@var{WHEN} string specifies various points at which the @abbr{AST} will be
+dumped: if it contains the character @samp{0} the tree will be dumped as soon
+as the input grammar has been parsed; @samp{1} dumps the tree after desugaring;
+@samp{2} dumps the tree after @dfn{cooking} (preparing the grammar for feeding
+with the @samp{-f} flag). Multiple dumps can be specified, e.g. @samp{-D02}.
 @end table
 
 @node Grammar
@@ -1176,7 +1168,7 @@ flag). Multiple dumps can be specified, e.g. @samp{-D02}.
 The overall structure of a @dfn{pacc grammar} consists of an optional preamble
 enclosed in braces: @samp{@{@}} followed by one or more rules.  The
 @dfn{preamble} is C source code, and is copied verbatim near the beginning of
-the output file.
+the output file. (If you use the @samp{--defines} option, the preamble is also copied into the @file{.h} file that it creates.)
 
 @cindex rules
 @cindex rule names

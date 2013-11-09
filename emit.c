@@ -160,17 +160,19 @@ static int rule_u(struct s_node *r) {
     return type_list(r->first->text);
 }
 
-static int cooked = 0; /* XXX better way to do this please! */
 
 static void grammar_pre(struct s_node *n) {
     int i, r = 0;
     struct s_node *p;
+    static int cooked = 0;
 
     g_node = n;
     if (arg_defines()) {
 	c_str("#include \"");c_str(arg_defines());c_strln("\"");
-	if (arg_feed() && cooked)
+	if (arg_feed() && cooked) {
+	    c_strln("#undef PACC_NAME");
 	    c_strln("#define PACC_NAME PACC_FEED_NAME");
+	}
     } else
 	c_defines();
     ++cooked;
