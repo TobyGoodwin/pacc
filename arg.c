@@ -97,7 +97,7 @@ static void usage(void) {
 }
 
 static void version(void) {
-    puts("pacc 0.0 (rōnin)");
+    puts("pacc 0.1 (wokou)");
     puts("Written by Tobold Jayne Goodwin <toby@paccrat.org>");
     puts("");
     puts("Copyright (C) 2012, 2013 Free Software Foundation, Inc.");

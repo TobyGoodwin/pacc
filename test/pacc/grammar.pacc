@@ -1,0 +1,11 @@
+/*
+chars
+parse '(0)' A
+parse '((0))' A
+parse '(0))' B
+parse '((0))))' B
+*/
+
+S :: char * <- B { "B" } / A { "A" }
+A :: void <- "(" A ")" / "(" "0" ")"
+B <- "(" B "))" / "(0))"

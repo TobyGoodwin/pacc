@@ -24,9 +24,9 @@ Texts.  A copy of the license is included in the section entitled
 @end quotation
 @end copying
 
-@dircategory Texinfo documentation system
+@dircategory Software development
 @direntry
-* sample: (sample)Invoking sample.
+* pacc: (pacc)                 pacc - a compiler-compiler
 @end direntry
 
 @titlepage
@@ -64,9 +64,10 @@ This manual is for GNU pacc (version @value{VERSION}, @value{UPDATED}).
 * Interactive inputs::
 * The any matcher::
 * Guards::
-* Using lookahead::
+* Semantic guards::
+* Bound literals::
 * Memory management::
-* User Manual::
+* User manual::
 * GNU Free Documentation License::
 * Index::
 @end menu
@@ -231,9 +232,10 @@ starts with another literal string: @samp{"no"}. This does match our
 example input.
 
 So having matched @samp{"no"} the parser then finds @samp{@{0@}}. The braces
-indicate that this is a (tiny!) hunk of C code. Because it is in the
-alternative that matched, it will be evaluated to give a value to the rule. And
-the value of the start rule is the overall value of the parse.
+indicate that this is a @dfn{semantic expression}: a hunk of C code (albeit a
+very tiny one in this case!). Because it is in the alternative that matched, it
+will be evaluated to give a value to the rule. And the value of the start rule
+is the overall value of the parse.
 
 @node Alternatives
 @chapter Alternatives
@@ -416,7 +418,7 @@ it even further, we can write @samp{[0-9]}. The hyphen stands for all the
 characters between the two characters it separates.
 
 But while solving one problem---concisely matching any of a set of
-characters---we have introduced another: how do we express write a useful value
+characters---we have introduced another: how do we write a useful semantic
 expression to go with a character class matcher?
 
 @verbatim
@@ -425,7 +427,10 @@ Digit <- [0-9] -> { /* what goes here? */ }
 
 Now that we have just one alternative that will match any digit, what
 expression can we use that will give us the right value? We need some way to
-refer back to input that we are matching.
+refer back to input that we are matching. We'll see how we do that in the next
+section.
+
+A ch
 
 @node References
 @chapter References
@@ -858,8 +863,8 @@ Otherwise, report the parsing error, and repeat from step 1.
 @end enumerate
 
 Here's what the complete grammar for the interactive calculator will look like,
-As well as the @samp{$} markers, we have added the @samp{Equals} rule that
-indicates the end of an expression.
+@file{icalc.pacc}.  As well as the @samp{$} markers, we have added the
+@samp{Equals} rule that indicates the end of an expression.
 
 @verbatim
 Expression <- _ s:Sum $ Equals -> s
@@ -878,6 +883,81 @@ rBrace <- ")" _
 _ <- [ \t\n]*
 @end verbatim
 
+Here's a wrapper program, @file{main.c}.
+
+@verbatim
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "parse.h"
+
+#define LINE 80
+#define P1 "$ "
+#define P2 "> "
+
+int main(void) {
+    char *text = 0;
+    char *prompt = P1;
+    char line[LINE + 1];
+    int len, parsed;
+    struct pacc_parser *p0 = pacc_new();
+    struct pacc_parser *p1 = pacc_feed_new();
+
+    text = malloc(1); if (!text) exit(1);
+    len = 0; *text = '\0'; prompt = P1;
+    for (;;) {
+	printf("%s", prompt); fflush(stdout);
+	if (!fgets(line, LINE, stdin)) break;
+	len += strlen(line);
+	text = realloc(text, len);
+	if (!text) exit(1);
+	strcat(text, line);
+
+	pacc_input(p0, text, len);
+	parsed = pacc_parse(p0);
+	if (parsed) {
+	    printf("%d\n", pacc_result(p0));
+	    len = 0; *text = '\0'; prompt = P1;
+	} else {
+	    pacc_feed_input(p1, text, len);
+	    parsed = pacc_feed_parse(p1);
+	    if (parsed) {
+		prompt = P2;
+	    } else {
+		char *e = pacc_feed_error(p1);
+		fprintf(stderr, "%s\n", e);
+		free(e);
+		len = 0; *text = '\0'; prompt = P1;
+	    }
+	}
+    }
+    if (len) fprintf(stderr, "unexpected end of input\n");
+    else fprintf(stderr, "\n");
+    return 0;
+}
+@end verbatim
+
+And, for completeness, here's a @file{Makefile}. (This example can be found in
+the @file{test/icalc/} directory of the pacc source distribution.)
+
+@verbatim
+CFLAGS = -std=c99
+PACC = ../../pacc
+
+icalc: parse1.o parse2.o main.o
+	$(CC) -o $@ $^
+
+main.o: main.c parse.h
+parse1.o: parse1.c
+parse2.o: parse2.c
+
+parse.h parse1.c parse2.c: icalc.pacc
+	$(PACC) -dparse.h -o parse1.c -f parse2.c $<
+
+clean:
+	rm -f icalc main.o parse1.o parse2.o parse.h parse1.c parse2.c
+@end verbatim
 
 @node The any matcher
 @chapter The any matcher
@@ -885,23 +965,22 @@ _ <- [ \t\n]*
 @cindex any
 @cindex matcher
 
-Our whistlestop tour of pacc is nearly complete. There is, however, one matcher
-that we have not yet met. It is the @emph{any} matcher, written as @samp{.}, a
-period. As you might expect, it matches a single (UTF8) character (including
-the newline character), without regard to what that character actually is. If
-you are familiar with regular expressions, using @samp{.} to match any
-character may seem familiar, but beware! Pacc behaves quite differently from
-regular expression matchers.
+There is one matcher that we have not yet met. It is the @emph{any} matcher,
+written as @samp{.}, a period. As you might expect, it matches a single (UTF8)
+character (including the newline character), without regard to what that
+character actually is. If you are familiar with regular expressions, using
+@samp{.} to match any character may seem familiar, but beware! Pacc behaves
+quite differently from regular expression matchers.
 
 @subsection Pacc expressions and regular expressions
 
 @cindex regular expressions
 @cindex backtracking
 
-For one thing, @samp{.} does not (usually) match the newline character in
-regular  expressions. Pacc is more uniform: @samp{.} always matches @emph{any}
+For one thing, in regular expressions @samp{.} does not (usually) match the
+newline character. Pacc is more uniform: @samp{.} always matches @emph{any}
 single character. But this is a minor detail. What I really what to demonstrate
-is how pacc's matching rules are different from a regular expression matcher.
+is how pacc's matching rules are different from those of regular expressions.
 
 Let's look at an example. Consider the regular expression @samp{/.*X/}. Under
 regular expression rules, @samp{*} is said to be @dfn{greedy}, which means that
@@ -912,117 +991,116 @@ the last @samp{X} in the input, or fail if there is no @samp{X}.
 
 The pacc expression @samp{.* "X"} looks superficially similar, but in this case
 @samp{.*} will match @emph{the entire string}, and there is nothing left for
-the @samp{"X"} to match. In fact, that pacc expression can never match any
-input. (If @samp{*} is greedy in regular expressions, it's positively
-gluttonous in pacc!)
+the @samp{"X"} to match. So @samp{.* "X"} will always fail. (If @samp{*} is
+greedy in regular expressions, it's positively gluttonous in pacc!)
 
-The difference is that the process of matching a regular expression involves
-backtracking. The matching engine effectively shifts input characters between
-different parts of the regular expression (such as the @samp{.*} and the
-@samp{X} in our example). The aim is always to find a match if it possibly can.
-But pacc never backtracks. Instead, each matcher in a pacc expression is
-considered in turn, and matches as much as possible. If that causes an overall
-failure, pacc simply moves on to the next alternative. So pacc expressions must
-be carefully written so they cannot match more than they should. XXX rework
-this paragraph again.
+The matching engine for regular expressions effectively shifts input characters
+back and forth between different parts of the regular expression (such as the
+@samp{.*} and the @samp{X} in our example), with the aim of always finding a
+match if it possibly can. This is sometimes called @dfn{backtracking}.
 
-In this case, we can use a class matcher instead of the any matcher. The pacc
-expression @samp{[^X]* "X"} is closer to the regular expression we started
-with. Of course, this will only match @samp{fooX}. (It's actually a common
-mistake when using regular expressions to write @samp{/.*X/} intending that it
-will only match the @samp{fooX}. If that is what is required, we must adopt the
-same technque as the pacc expression and write @samp{/[^X]*X/}, or resort to
-Perl's non-greedy @samp{*?} operator if it's available: @samp{/.*?X/}.)
+Pacc never backtracks. Instead, each matcher in a pacc expression is considered
+in turn, and matches as much as possible. If that causes an overall failure,
+pacc simply moves on to the next alternative. So pacc expressions must be
+carefully written so they cannot match more than they should.
 
-To match up to the @emph{last} @samp{X}, we simply need to apply a repetition
-operator to the previous expression: @samp{([^X]* "X")+}. This, I believe, is
-exactly equivalent to the regular expression we started with: it matches to the
-last @samp{X} in the input, and fails if there is no @samp{X}.
+In this case, we can use a negated character class matcher instead of the any
+matcher. The pacc expression @samp{[^X]* "X"} is closer in meaning to the
+regular expression we started with. Of course, this will only match
+@samp{fooX}. (It's actually a common mistake when using regular expressions to
+write @samp{/.*X/} intending that it will only match to the first @samp{X}.
+When that is what is required, we must adopt the same technque as the pacc
+expression and write @samp{/[^X]*X/}, or resort to Perl's non-greedy @samp{*?}
+operator if it's available: @samp{/.*?X/}.)
+
+To match up to the @emph{last} @samp{X} in pacc, we simply need to apply a
+repetition operator to the previous expression: @samp{([^X]* "X")+}. Apart from
+newline handling, this is exactly equivalent to the regular expression we
+started with: it matches to the last @samp{X} in the input, and fails if there
+is no @samp{X}.
 
 @node Guards
 @chapter Guards
 
 @cindex guard
+@cindex positive guard
+@cindex negative guard
 
-In the last section, we introduced the any matcher @samp{.}, and then decided
-to use a negated character class matcher instead. XXX more here 
+In the last section, we introduced the any matcher @samp{.} which matches any
+character all, and then decided instead to use a negated character class
+matcher which matches @emph{almost} any character. To make much use of the any
+matcher, we need guards.
 
-Let's stretch our calculator example one last time: this time we will allow
-C-style comments.  These are lexically equivalent to a space, so we will use
-the @samp{_} rule to match them.
+A matcher really does @emph{two} jobs. First, it @dfn{checks} to see if the
+input at the current position matches. Then, if it does, it @dfn{consumes} that
+input by moving the current position forwards.
 
-XXX lots more to write here
+A @dfn{guard} is a matcher modified so that it only checks, and never consumes.
+Any matcher can be turned into a guard by prefixing it with @samp{&}. For a
+contrived example, the rule @samp{Proto <- ( "ftp" / "http" ) &":"} matches
+either of two well-known protocols, but @emph{only} if it is immediately
+followed by a colon @samp{:}.
 
-@verbatim
-Expression <- _ s:Sum -> s
-Sum <- p:Product Plus s:Sum -> { p + s }
-     / p:Product -> p
-Product <- t:Term Star p:Product -> { t * p }
-         / t:Term -> t
-Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
-# lexical elements
-Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
-Plus :: void <- "+" _
-Star <- "*" _
-lBrace <- "(" _
-rBrace <- ")" _
-_ <- ( [ \t\n] / Comment )*
-Comment <- "/*" (!"*/" .)* "*/"
-@end verbatim
+Guards made with the @samp{&} are @dfn{positive} guards. They are not actually
+as useful as @dfn{negative} guards; any matcher can be turned into a negative
+guard by prefixing it with @samp{!}. A negative guard succeeds, provided the
+input at the current position does @emph{not} match. Negative guards work well
+in conjunction with the any matcher.
 
-@node Using lookahead
-@chapter Using lookahead
-
-@cindex lookahead
-
-When a PEG is parsing a symbol, it can ``look ahead'' as far in the
-input as it needs to in order to decide what this symbol means. There's
-a modest example of this in @file{pacc.pacc} itself.
-
-XXX I'd really like a better example - it doesn't even matter much if it's a
-bit contrived
-
-You may have noticed that definitions in a pacc grammar are not terminated by a
-@samp{;} semi-colon. You might have suspected that each definition must end
-with a newline, but this is not the case. (I certainly recommend that you do,
-in fact, end each definition with a newline, but this is for the benefit of any
-humans reading the grammar, not pacc itself!)
-
-So this is a perfectly good grammar, consisting of 3 definitions:
+The venerable language Pascal surrounds comments with braces: @samp{@{} and
+@samp{@}}. (Pascal comments do not nest: @samp{@{} may not occur within a
+comment.) We can easily write a pacc rule to match Pascal comments, using a
+negated character class again:
 
 @verbatim
-S ← yes {1} / no {0} yes ← "yes" / "oui" no ← "non" / "no"
+PascalComment <- "{" [^{}]* "}"
 @end verbatim
 
-pacc can tell that the first @samp{yes} is a call to another rule, whereas the
-second @samp{yes} is the definition of that rule, because of the @samp{←} that
-comes after the second @samp{yes}. This is expressed in @samp{pacc.pacc} as
-follows::
+How would we match C comments? They are surrounded by @samp{/*} and @samp{*/}.
+(C comments also do not nest: @samp{/*} is permitted within a comment, but it
+doesn't have any meaning.) Character classes aren't going to help here, as they
+deal with just one character at a time. We need a combination of a negative
+guard and the any matcher:
 
 @verbatim
-Rule5
-     ← n:Name !lArrow !ColCol { s_text(call, n) }
-     / ...
+CComment <- "/*" ( !"*/" . )* "*/"
 @end verbatim
 
-In words, a bare Name is a call, only if it is @emph{not} followed by a left
-arrow or a double colon. Otherwise, it starts a new definition; this will be
-picked up by a different rule.
+The key to this rule is the parenthesized expression: @samp{!"*/" .}. This
+means ``check that the input at the current position is not @samp{*/}, and then
+match any character at all''. Then we apply the repetition operator @samp{*} to
+that, and we get an expression that consumes everything up to, but not
+including, the next occurrence of @samp{*/} in the input.
 
-You might look at this example and think that pacc is looking just one token
-ahead here, and an LALR(1) parser can do @emph{that}. But bear in mind that the
-definition of @samp{Name} itself is expressed in this very same PEG, not in a
-separate lexer. Effectively there are no tokens, only characters, and we are
-already looking an arbitrary number of characters ahead.
+@node Semantic guards
+@chapter Semantic guards
 
-In any case, although in this particular case the lookahead involves
-(negative) assertions based on the relatively simple ``lexical'' rules
-@samp{lArrow} and @samp{ColCol}, they could in general be as complicated as you
-want. Positive assertions can also be used for lookahead, of course.
+A third type of guard is available in pacc: the @dfn{semantic guard}. It is
+written @samp{&@{ @var{e} @}}, where @var{e} is an arbitrary C expression of
+integer type. The expression @var{e} is evaluated whilst parsing, with
+variables bound in the current sequence and to the left of the guard in scope.
+A semantic guard succeeds if the expression evaluates true (i.e. non-zero), and
+fails if the expression is false.
 
-The miracle of packrat parsing means that, even in the face of this arbitrary
-lookahead, the parser is @dfn{linear}, that is, @math{O(n)} for time and
-space, where @emph{n} is the size of the input.
+For example, suppose you want to match an alphabetic character in a
+locale-aware way. Pacc doesn't know anything about locales, but you can use the
+standard @code{isalpha()} predicate in a semantic guard:
+
+@verbatim
+Alpha <- c:. &{ isalpha(c) }
+@end verbatim
+
+@xref{Memory management}.
+
+@node Bound literals
+@chapter Bound literals
+
+Many programming languages use @dfn{reserved words} which resemble identifiers
+lexically, but form part of the syntax of the language. Pacc's @dfn{bound
+literals} can help to express these. A bound literal is written as
+@samp{"string":Rule}. It calls @samp{Rule}, which must have type @samp{char *}
+or @samp{ref_t}, and succeeds only if @samp{Rule} returns a value equal to
+@samp{"string"}.
 
 @node Memory management
 @chapter Memory management
@@ -1033,6 +1111,31 @@ space, where @emph{n} is the size of the input.
 @findex free
 @findex nomem
 
+The parsing engine written by pacc uses @code{realloc()} exclusively to
+allocate and free memory. The intention is to make it as easy as possible to
+supply your own memory allocator: it need only implement the @code{realloc()}
+interface (although of course it must be prepared to accept @samp{0} for either
+argument).
+
+If a @code{realloc()} call fails, the parsing engine writes the message
+@samp{out of memory} to @code{stderr} and exits non-zero. If you don't want
+this, you will need to supply your own @code{realloc()} function that handles
+errors.
+
+In theory, the parsing engine written by pacc should not leak memory, although
+finding such bugs has not so far been a high development priority.
+
+For any real application, semantic expressions will need to allocate memory to
+build an AST. Most of the time, pacc only calls the semantic expressions it
+needs, once the parse is complete. As long as you correctly free the AST you
+should be fine.
+
+Semantic guards are problematic, though: they are called, along with any
+expressions needed for variable bindings, during the parse. I haven't yet seen
+a realistic application for a semantic guard that would require memory
+allocation; if anyone can convince me that this is useful, I will teach pacc
+how to handle it properly.
+
 @node User manual
 @chapter User manual
 
@@ -1040,7 +1143,7 @@ This @dfn{User Manual} is a complete but concise description of all the
 features of pacc.
 
 @menu
-* Command line::
+* Invoking pacc::
 * Grammar::
 * Lexical details::
 * Binding::
@@ -1049,8 +1152,8 @@ features of pacc.
 * Interface::
 @end menu
 
-@node Command line
-@section Command line
+@node Invoking pacc
+@section Invoking pacc
 
 @pindex pacc
 @cindex command line

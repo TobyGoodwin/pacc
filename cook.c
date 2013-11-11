@@ -6,6 +6,7 @@
 #include "arg.h"
 #include "cook.h"
 #include "error.h"
+#include "preen.h"
 #include "syntax.h"
 
 /* cook() prepares a grammar for feeding */
@@ -13,10 +14,9 @@
 /* perhaps we should use the walk() function from sugar.c, but that doesn't
  * support the "pre" variable that we use. */
 
-static char *feed_rule;
-static void cook0(struct s_node *n, struct s_node *pre) {
+static void cook0(struct s_node *n) {
     static char *name;
-    struct s_node *p, *q;
+    struct s_node *p;
 
     if (n->type == rule)
 	name = n->text;
@@ -41,8 +41,8 @@ static void cook0(struct s_node *n, struct s_node *pre) {
     }
 
     if (s_has_children(n->type))
-	for (p = n, q = n->first; q; p = q, q = q->next)
-	    cook0(q, p);
+	for (p = n->first; p; p = p->next)
+	    cook0(p);
 }
 
 /* make all rules void, and remove all expr nodes */
@@ -67,7 +67,7 @@ void cook(struct s_node *g) {
     int l;
 
     dexpr(g, 0);
-    cook0(g, 0);
+    cook0(g);
     l = strlen(g->text) + strlen("_feed") + 1;
     newname = realloc(0, l);
     if (!newname) nomem();
