@@ -1,7 +1,5 @@
 /*
-nocc 'parse.pacc: In function ‘pacc_parse’:
-parse.pacc:10:15: error: ‘q’ undeclared (first use in this function)
-parse.pacc:10:15: note: each undeclared identifier is reported only once for each function it appears in'
+nocc 'parse.pacc:8:15: error: ‘q’ undeclared (first use in this function)'
 */
 
 /* test that C errors are reported at the right place in the pacc file for

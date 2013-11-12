@@ -2,6 +2,17 @@
 
 # This code does not handle spacy filenames, nor should it.
 
+# We don't control the output of the C compiler, so can't be too picky about
+# what it says. nocc tests are gcc specific, but hopefully not gcc-version
+# specific.
+acheck() {
+    if echo "$1" | grep -q -F -e "$2"; then
+	pass "$target: $1"
+    else
+	fail "$target: $1 (expected match on $2)"
+    fi
+}
+
 nopacc() {
     loc=$1 err=$2
     echo $pacc parse.pacc
@@ -31,7 +42,7 @@ nocc() {
     $pacc parse.pacc || fail 'pacc failed on nocc test'
     echo c99 parse.c
     r=$(c99 $cflags parse.c 2>&1 && echo 'compiled bad grammar by mistake!')
-    check "$r" "$err"
+    acheck "$r" "$err"
 }
 
 noccwarn() {
