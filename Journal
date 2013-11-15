@@ -9,6 +9,8 @@ Things to do for release:
 * fiddle with MANIFEST till the release has all the right stuff in it
 * make sure that "make clean" works
 * ensure that pacc0.c is up to date
+* tag the release
+* remake the docs
 
 2012-05-14
 ----------
