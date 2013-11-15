@@ -44,7 +44,7 @@ script_from() {
     rm $t
 }
 
-ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc icalc/ pacc/*.pacc self/*.pacc tut/*.pacc}
+ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc icalc/ pacc/*.pacc self/*.pacc}
 
 for t in $ts; do
     target=$t

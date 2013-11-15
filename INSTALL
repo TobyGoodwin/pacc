@@ -8,7 +8,8 @@ For this release:
 
 - to run an individual test: cd test; ./run.sh emit/mk-class0.c
 
-Nothing is automatically installed; you probably want either this:
+Nothing is automatically installed; here's a reasonable set of commands to copy
+and paste for a FHS-compliant system.
 
  cp pacc /usr/local/bin
  cp doc/pacc.man /usr/local/share/man/man1/pacc.1

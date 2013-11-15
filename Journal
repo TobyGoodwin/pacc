@@ -5,8 +5,10 @@ Things to do for release:
 
 * update the README file (and NEWS)
 * work out which documentation output files to include (.pdf, .info, etc)
-* consider doing previous step on F19 (vps?) so unicode works 
+* consider doing previous step on F19 (vps?) so unicode works - it doesn't
 * fiddle with MANIFEST till the release has all the right stuff in it
+* make sure that "make clean" works
+* ensure that pacc0.c is up to date
 
 2012-05-14
 ----------

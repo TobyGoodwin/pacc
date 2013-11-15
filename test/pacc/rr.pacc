@@ -1,0 +1,24 @@
+/*
+type int
+parse 'AEC' 1
+parse 'AED' 2
+parse 'BEC' 3
+parse 'BED' 4
+*/
+
+/* This grammar is LR(1) but not LALR(1). If converted to yacc, there is a
+ * reduce/reduce conflict, the rule f is rejected as useless, and the resulting
+ * parser is unable to accept "BEC". https://en.wikipedia.org/wiki/LALR_parsers
+ */
+
+s = A e C -> 1
+  | A f D -> 2
+  | B f C -> 3
+  | B e D -> 4
+e :: void = E
+f = E
+A = "A"
+B = "B"
+C = "C"
+D = "D"
+E = "E"

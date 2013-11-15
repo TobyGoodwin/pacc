@@ -1,29 +1,9 @@
-RELEASE := pacc-$(shell git describe)
-
 CC = c99
 CFLAGS = -g -Wall -Wextra -I.
 LDFLAGS = -g
 
-.PHONY: all doc release doc/version.texi
+.PHONY: all
 all: pacc
-
-doc: doc/pacc.texi doc/version.texi doc/fdl.texi pacc
-	cd doc; texi2pdf pacc.texi
-	cd doc; makeinfo pacc.texi
-	cd doc; makeinfo --html pacc.texi
-	help2man ./pacc > doc/pacc.man
-
-doc/version.texi:
-	date '+@set UPDATED %d %B %y' > $@
-	date '+@set UPDATED-MONTH %B %y' >> $@
-	echo -n '@set EDITION ' >> $@; git describe >> $@
-	echo -n '@set VERSION ' >> $@; git describe >> $@
-
-release: doc
-	mkdir $(RELEASE)
-	cp -a --parents $$(cat MANIFEST) $(RELEASE)
-	tar cfj $(RELEASE).tar.bz2 $(RELEASE)
-	rm -r $(RELEASE)
 
 OBJS = arg.o cook.o emit.o error.o load.o main.o preen.o sugar.o syntax.o template.o utf8.o
 
@@ -83,11 +63,13 @@ utf8.o: utf8.h
 boot: boot.o error.o load.o pacc2.o syntax.o utf8.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-.PHONY: check clean test/clean
+# Testing
 
+.PHONY: check
 check: pacc
 	cd test && sh run.sh
 
+.PHONY: clean
 clean: test/clean
 	@echo clean
 	@rm -f pacc0 pacc1 pacc2 pacc3 pacc
@@ -118,6 +100,7 @@ test/solo: test/solo.pacc
 	./pacc test/solo.pacc
 	$(CC) -o $@ test/solo.c
 
+.PHONY: test/clean
 test/clean: 
 	@echo test/clean
 	@rm -f test/harness test/harness.o test/parse.o
@@ -127,3 +110,47 @@ test/clean:
 	@rm -f test/parsefeed.c test/parsefeed.h test/partial.c
 	@rm -f test/parsefeed.pacc
 	@rm -f test/solo.pacc test/solo.c test/solo
+	@rm -f test/icalc/icalc test/icalc/main.o
+	@rm -f test/icalc/parse1.o test/icalc/parse2.o
+	@rm -f test/icalc/parse1.c test/icalc/parse2.c test/icalc/parse.h
+
+# Maintainer targets
+.PHONY: release
+release: doc
+	mkdir $$(cat version)
+	cp -a --parents $$(cat MANIFEST) $$(cat version)
+	tar cfj $$(cat version).tar.bz2 $$(cat version)
+	rm -r $$(cat version)
+
+.PHONY: versions
+versions:
+	echo -n pacc- > version; git describe >> version
+	date '+@set UPDATED %d %B %y' > doc/version.texi
+	date '+@set UPDATED-MONTH %B %y' >> doc/version.texi
+	echo -n '@set EDITION ' >> doc/version.texi
+	git describe >> doc/version.texi
+	echo -n '@set VERSION ' >> doc/version.texi
+	git describe >> doc/version.texi
+
+.PHONY: doc
+doc: doc/pacc.info doc/pacc.man doc/pacc.pdf doc/pacc/index.html
+
+DOC_SRC = doc/pacc.texi doc/fdl.texi
+
+doc/pacc.info: $(DOC_SRC)
+	cd doc; makeinfo pacc.texi
+
+doc/pacc.man: $(DOC_SRC) pacc
+	help2man ./pacc > doc/pacc.man
+
+doc/pacc.pdf: $(DOC_SRC)
+	cd doc; texi2pdf pacc.texi
+
+doc/pacc/index.html: $(DOC_SRC)
+	cd doc; makeinfo --html pacc.texi
+
+.PHONY: doc doc/clean
+doc/clean:
+	@echo doc/clean
+	@rm -f doc/pacc.info doc/pacc.man doc/pacc.pdf
+	@rm -rf doc/pacc

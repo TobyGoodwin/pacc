@@ -22,27 +22,22 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
 	Consonant ← [b-df-hj-np-tv-z]
      */
 
-    p = s_text(ccle, 'z');
-    p = cons(s_text(ccge, 'v'), p);
-    p = cons(s_text(ccle, 't'), p);
-    p = cons(s_text(ccge, 'p'), p);
-    p = cons(s_text(ccle, 'n'), p);
-    p = cons(s_text(ccge, 'j'), p);
-    p = cons(s_text(ccle, 'h'), p);
-    p = cons(s_text(ccge, 'f'), p);
-    p = cons(s_text(ccle, 'd'), p);
-    p = cons(s_text(ccge, 'b'), p);
+    p = s_ccrange(s_ccnode("v"), s_ccnode("z"));
+    p = append(s_ccrange(s_ccnode("p"), s_ccnode("t")), p);
+    p = append(s_ccrange(s_ccnode("j"), s_ccnode("n")), p);
+    p = append(s_ccrange(s_ccnode("f"), s_ccnode("h")), p);
+    p = append(s_ccrange(s_ccnode("b"), s_ccnode("d")), p);
     p = s_both(cclass, "[b-df-hj-np-tv-z]", p);
 
     p = s_kid(seq, p);
     p = s_both(rule, "Consonant", cons(s_text(type, "void"), p));
     r = p;
 
-    p = s_text(cceq, 'u');
-    p = cons(s_text(cceq, 'o'), p);
-    p = cons(s_text(cceq, 'i'), p);
-    p = cons(s_text(cceq, 'e'), p);
-    p = cons(s_text(cceq, 'a'), p);
+    p = s_ccnode("u");
+    p = cons(s_ccnode("o"), p);
+    p = cons(s_ccnode("i"), p);
+    p = cons(s_ccnode("e"), p);
+    p = cons(s_ccnode("a"), p);
     p = s_both(cclass, "[aeiou]", p);
 
     p = s_kid(seq, p);

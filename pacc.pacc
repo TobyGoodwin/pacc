@@ -53,13 +53,14 @@ CClass0 ← "[" c:CClass1 "]" _ → c
 CClass1 ← "^"? c:CClass2 → { s_both(cclass, ref_str(), c) }
 
 CClass2
-    ← c:CCHyphen cs:CCRanges { append(c, cs) }
+    ← c:CCHyphen cs:CCRanges? { append(c, cs) }
+    / c:CCrBracket cs:CCRanges? { append(c, cs) }
     / cs:CCRanges c:CCHyphen { append(c, cs) }
     / cs:CCRanges → cs
 
 CCRanges
     ← c:CCRange cs:CCRanges { append(c, cs) }
-    / ε { 0 }
+    / c:CCRange → c
 
 CCRange
     ← a:CCNode "-" b:CCNode &{ a->number < b->number } → { s_ccrange(a, b) }
@@ -72,6 +73,8 @@ CCChar :: const unsigned char *
     / ! "]" y:QuotedChar → { (const unsigned char *)ref_dup(y) }
 
 CCHyphen :: struct s_node * ← "-" { s_ccnode((const unsigned char *)"-") }
+
+CCrBracket ← "]" { s_ccnode((const unsigned char *)"]") }
 
 Result
     ← rArrow b:BareResult → b #n:Name { s_both(expr, n, s_text(ident, n)) }

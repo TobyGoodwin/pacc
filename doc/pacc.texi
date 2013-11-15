@@ -5,6 +5,7 @@
 @documentencoding UTF-8
 @include version.texi
 @settitle pacc @value{VERSION}
+@afourpaper
 @syncodeindex pg cp
 @syncodeindex fn cp
 @comment %**end of header
@@ -254,7 +255,7 @@ Let's go multi-lingual. (There are more elegant ways to write this,
 which we'll come to soon.)
 
 @verbatim
-Start ← "yes" {1} / "oui" {1} / "no" {0} / "non" {0} # wrong!
+Start <- "yes" {1} / "oui" {1} / "no" {0} / "non" {0} # wrong!
 @end verbatim
 
 That may look like it should work, but this is what happens when we
@@ -278,7 +279,7 @@ For this simple grammar, the obvious fix is simply to swap the order of these
 two alternatives. We'll see similar problems, and other fixes, later on.
 
 @verbatim
-Start ← "yes" {1} / "oui" {1} / "non" {0} / "no" {0}
+Start <- "yes" {1} / "oui" {1} / "non" {0} / "no" {0}
 @end verbatim
 
 This grammar works as intended:
@@ -302,15 +303,15 @@ needs rewriting and expanding.)
 Here's where we've got to:
 
 @verbatim
-Start ← "yes" {1} / "oui" {1} / "non" {0} / "no" {0}
+Start <- "yes" {1} / "oui" {1} / "non" {0} / "no" {0}
 @end verbatim
 
 We can improve this by splitting things up and removing the repetition.
 
 @verbatim
-Start ← Yes → 1 / No → 0
-Yes :: void ← "yes" / "oui"
-No ← "non" / "no"
+Start <- Yes → 1 / No → 0
+Yes :: void <- "yes" / "oui"
+No <- "non" / "no"
 @end verbatim
 
 Don't, at the moment, worry about @samp{:: void} on the second line---we'll
@@ -368,9 +369,9 @@ declarations—in their absence, everything defaults to @samp{int}. Let's
 revisit our example yet again.
 
 @verbatim
-Start :: int ← Yes → 1 / No → 0
-Yes :: void ← "yes" / "oui"
-No ← "non" / "no"
+Start :: int <- Yes → 1 / No → 0
+Yes :: void <- "yes" / "oui"
+No <- "non" / "no"
 @end verbatim
 
 The first rule @samp{Start} has type @samp{int}, this time we've made that
@@ -406,7 +407,7 @@ For our next example, let's consider how we could parse a decimal number. We'll
 start by parsing a single digit, and we already know one way we could do that:
 
 @verbatim
-Digit ← "0" → 0 / "1" → 1 / "2" → 2 / "3" → 3 / "4" → 4 /
+Digit <- "0" → 0 / "1" → 1 / "2" → 2 / "3" → 3 / "4" → 4 /
   "5" → 5 / "6" → 6 / "7" → 7 / "8" → 8 / "9" → 9
 @end verbatim
 
@@ -430,7 +431,28 @@ expression can we use that will give us the right value? We need some way to
 refer back to input that we are matching. We'll see how we do that in the next
 section.
 
-A ch
+As well as normal character classes, pacc supports @dfn{negated character
+classes}. These are written with a caret @samp{^} as the first character. For
+example, @samp{[^)]} matches any single character @emph{except} a closing
+parenthesis.
+
+Should you need to write a character classes that includes the literal
+character @samp{^}, simply ensure that it is not the first character in the
+class. To match a literal hyphen, write it as the first or last character in
+the class. To match a literal @samp{]}, write it as the first character. For
+example: the character class @samp{[~^]} matches either a tilde or a caret;
+@samp{[-_]} matches a hyphen or an underscore; and @samp{[][]} matches either
+an opening or a closing bracket.
+
+If you are familiar with character classes in regular expressions, pacc's
+character classes are broadly similar. Note, however, that pacc is not aware of
+locales. In pacc, a hyphenated range for all the characters with Unicode code
+points in the (inclusive) range between those of the two named characters. Nor
+does pacc support named classes (such as @samp{[:alpha:]}). @xref{Semantic
+guards}, if you need to do something like this. (Believe it or not, in at least
+some versions of GNU @command{grep}, in at least some locales, the character
+class @samp{[a-z]} matches all lower case letters, and also all upper case
+letters...  except @samp{Z}.)
 
 @node References
 @chapter References
@@ -441,12 +463,12 @@ A ch
 @findex ref_t
 @findex ref_0()
 
-In any expression, you can write @samp{ref()} which is a @dfn{reference} to
-whichever part of the input is matched by the current rule. The type of
-@samp{ref()} is @samp{ref_t}, an opaque type. A number of helper functions
-exist to do useful things with @samp{ref_t} values. In this case, we can
-utilize the helper function @samp{ref_0()} which returns the first byte of a
-@samp{ref_t} value.
+In any semantic expression, you can write @samp{ref()} which is a
+@dfn{reference} to whichever part of the input is matched by the current rule.
+The type of @samp{ref()} is @samp{ref_t}, an opaque type. A number of helper
+functions exist to do useful things with @samp{ref_t} values. In this case, we
+can utilize the helper function @samp{ref_0()} which returns the first byte of
+a @samp{ref_t} value.
 
 @verbatim
 Digit <- [0-9] -> { ref_0(ref()) - '0' }
@@ -778,7 +800,7 @@ ExprTail <- "+" d:Decimal ExprTail { push('+', d), 0 }
         /   "-" d:Decimal ExprTail { push('-', d), 0 }
 	/   % { 0 }
 
-Decimal ← "-"? [0-9]+ { atoi(ref_str()) }
+Decimal <- "-"? [0-9]+ { atoi(ref_str()) }
 @end verbatim
 
 @node Interactive inputs
@@ -1307,24 +1329,28 @@ followed by one or more matchers, combined with operators.
 
 @table @asis
 @item Literal: @samp{"string"}
-A string enclosed in double quotes matches exactly that string.
+A string enclosed in double quotes matches exactly that string. The usual C
+character escapes are supported, so @samp{\n}, @samp{\012}, @samp{\xA}, and
+@samp{\u000A} all represent the ASCII line feed character.
 
 @item Character class: @samp{[a-z0-9]}
 A series of characters in square brackets matches any single one of those
 characters, which are written as in C, e.g. @samp{[\t\n]} matches a tab or a
-newline. A character range is expressed using two characters separated by a
-hyphen, and it matches any single character with a Unicode code point between
-those of the two characters inclusive, e.g. @samp{[a-z]} matches any lower case
-English letter. The character to the left of the hyphen must be strictly less
-than the character to the right of the hyphen. A literal hyphen may be matched
-by making it the first or last character in the class, e.g. @samp{[- _]}
-matches a hyphen, a space, or an underscore. A literal right square bracket may
-be matched by preceding it with a backslash, e.g.  @samp{[[\]]} matches a left
-or right square bracket.
+newline. If the first character is caret @samp{^}, the class is negated; that
+is, it matches any single character except those in the class. A character
+range is expressed using two characters separated by a hyphen @samp{-}, and it
+matches any single character with a Unicode code point between those of the two
+characters inclusive, e.g.  @samp{[a-z]} matches any lower case English letter.
+The character to the left of the hyphen must be strictly less than the
+character to the right of the hyphen. To include a literal hyphen, make it the
+first or last character in the class. For a literal right square bracket, make
+it first.  For a literal caret, make it anything other than the first
+character.
 
 @item Call: @samp{rule_name}
 A bare word names another rule---it is an error if there is no such rule
-defined in this pacc grammar. It matches anything that the named rule matches. Call matchers are not allowed in a left recursive position.
+defined in this pacc grammar. It matches anything that the named rule matches.
+Call matchers are not allowed in a left recursive position.
 
 @item Any: @samp{.}
 The period character matches any single character. (UTF-8 coding is assumed.)
@@ -1484,7 +1510,8 @@ Feeding is the mechanism which allows pacc to handle input coming from
 interactive streams. The user's input may be a complete utterance, or it may be
 the start of an utterance. In the latter case, we need to solicit more input.
 
-The points in the grammar where the input may be broken are marked with the @samp{$} token. 
+The points in the grammar where the input may be broken are marked with the
+@samp{$} token. 
 
 Then pacc is invoked with the @samp{-f=FILE} option, it writes its normal
 output as usual, then it writes an @emph{additional} parser to the specified

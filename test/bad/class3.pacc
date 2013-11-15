@@ -1,0 +1,5 @@
+/*
+nopacc 6:1 'expected CCRanges, or "]"'
+*/
+
+Bad :: char * ← [] → { "foo" }

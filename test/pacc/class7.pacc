@@ -1,0 +1,15 @@
+/*
+chars
+parse '[now]' '[now']
+parse '[and^then]' '[and^then]'
+parse ']odd[' ']odd['
+parse ']and:even[' ']and:even['
+*/
+
+# Testing "^" and "]" in character classes. We don't need or support escapes.
+
+Test :: char * ← Bracket Word (Separator Word)* Bracket { ref_str() }
+
+Bracket :: void ← [][]
+Word ← [a-z]+
+Separator ← [:^]
