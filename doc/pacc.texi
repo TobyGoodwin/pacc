@@ -82,22 +82,35 @@ This manual is for GNU pacc (version @value{VERSION}, @value{UPDATED}).
 @cindex language
 
 A @dfn{parser} is a computer program that interprets the utterances of a
-@dfn{computer language}. A computer language is more properly known as a
-@dfn{formal language}. (Formal languages are almost entirely @emph{un}like
+@dfn{computer language}.  A computer language is more properly known as a
+@dfn{formal language}.  (Formal languages are almost entirely @emph{un}like
 natural languages---@emph{English}, @emph{Pǔtōnghuà}, @emph{Castellano}, etc;
 it is usually a mistake to make analogies or comparisons between human
 languages and computer languages.)
 
+A computer language is a (usually) infinite set of @dfn{utterances} or
+@dfn{sentences}.  Each utterance is itself a finite string of symbols drawn
+from a finite @dfn{alphabet}.  Although the set of all possible utterances is
+infinite, a useful computer language can be described by a finite (and usually
+quite short) @dfn{grammar}.  For example, consider the computer language which
+consists of all the positive even numbers, written as decimals.  This makes up
+an infinite set of utterances, written with an alphabet of ten symbols
+(@samp{0}, @samp{1}, @dots{}, @samp{9}).  Not every combination of those
+symbols is a valid utterance of this language, but we don't have to list all
+the ones that are.  The language can be described very briefly: any combination
+of those symbols, provided the last one is one of (@samp{0}, @samp{2},
+@samp{4}, @samp{6}, @samp{8}).
+
 Computer languages vary enormously in complexity: the most elaborate are
-high-level programming languages. At the bottom end, the address box in a web
+high-level programming languages.  At the bottom end, the address box in a web
 browser understands an extremely simple computer language, the majority of
 whose utterances begin @samp{http://}! Somewhere in between is the language of
 cells in a spreadsheet, in which one can say things like
 @samp{=A2+3*sum(C7:C9)}.
 
-Pacc is a @dfn{parser generator}. That means that we write a compact
+Pacc is a @dfn{parser generator}.  That means that we write a compact
 description of a computer language, invoke @command{pacc} with that description
-as its input, and pacc writes for us a parser for that language. The output of
+as its input, and pacc writes for us a parser for that language.  The output of
 pacc is a C function, which we can use to build a complete program.
 
 When we run a program that includes a pacc-built parser, the program will
@@ -106,11 +119,11 @@ could be the command line, or a GUI input---and hand that input to the parser.
 The parser now has a couple of jobs to do.
 
 First, it needs to decide if the input is in fact a valid utterance of the
-language described by the grammar. For example, if the language is simple
+language described by the grammar.  For example, if the language is simple
 arithmetic expressions, then @samp{2 * (3 + 4)} presumably @emph{is} a valid
-utterance, whereas @samp{2 + * )( 3 4} is @emph{not}. If the input is erroneous
+utterance, whereas @samp{2 + * )( 3 4} is @emph{not}.  If the input is erroneous
 (not a valid utterance of the described language), then the parser needs to
-indicate how much it could parse before it encountered an error. If we are
+indicate how much it could parse before it encountered an error.  If we are
 parsing a programming language, our utterances may be thousands of lines long,
 so good error-handling is vital.
 
@@ -123,10 +136,10 @@ won't be building trees.)
 @node Getting started
 @chapter Getting started
 
-Let's actually make a pacc parser. We'll start with about the simplest possible
-language I can conceive of. In this language, there are just two valid
-utterances: @strong{yes} and @strong{no}. The ``meaning'' of @strong{yes} will
-be @strong{1}; @strong{no} will mean @strong{0}. This can be expressed in a
+Let's actually make a pacc parser.  We'll start with about the simplest possible
+language I can conceive of.  In this language, there are just two valid
+utterances: @strong{yes} and @strong{no}.  The ``meaning'' of @strong{yes} will
+be @strong{1}; @strong{no} will mean @strong{0}.  This can be expressed in a
 pacc grammar like this.
 
 @verbatim
@@ -134,12 +147,12 @@ Start <- "yes" {1} / "no" {0}
 @end verbatim
 
 We'll worry about the details of exactly how that expresses the language we
-described later on (although you can probably get the general idea). For now,
+described later on (although you can probably get the general idea).  For now,
 we want to turn this into an actual program, so the first thing to do is to put
 that grammar into a file named @file{bool.pacc}.
 
-Next, we'll need to supply the rest of the program. We'll keep it very
-simple. Here's @file{main.c}.
+Next, we'll need to supply the rest of the program.  We'll keep it very
+simple.  Here's @file{main.c}.
 
 @verbatim
 #include <stdio.h>
@@ -166,7 +179,7 @@ int main(int argc, char **argv) {
 @end verbatim
 
 To build the program, we first need to invoke @command{pacc} on the grammar
-definition. This will output @file{bool.c}. We specify the @option{-d} switch
+definition.  This will output @file{bool.c}.  We specify the @option{-d} switch
 to @command{pacc} so that it will also output @file{bool.h} which we included
 in our program, and supplies the declaration of @code{pacc_wrap()}:
 
@@ -174,9 +187,9 @@ in our program, and supplies the declaration of @code{pacc_wrap()}:
 pacc -d bool.pacc
 @end example
 
-Then simply compile as normal. The output of pacc is valid C99, but not C89, so
+Then simply compile as normal.  The output of pacc is valid C99, but not C89, so
 you will probably need to explicitly invoke a C99 compiler. (This is definitely
-an area that needs further study. While I'm not greatly swayed by the argument
+an area that needs further study.  While I'm not greatly swayed by the argument
 that pacc should be compatible with a 25 year old standard, it is unfortunate
 that currently if you hand its output to gcc you get an obscure error message.)
 
@@ -199,53 +212,56 @@ Which is what we wanted!
 
 @node Pacc basics
 @chapter Pacc basics
-@cindex rules
+@cindex rule
 
-A pacc grammar consists of one or more @emph{rules}. Let's look at our
-first example again.
+A pacc grammar consists of one or more @dfn{rules}.  Let's look at our first
+example again.
 
 @verbatim
 Start <- "yes" {1} / "no" {0}
 @end verbatim
 
-There's just one rule in this tiny grammar. Every rule starts with a name, and
+There's just one rule in this tiny grammar.  Every rule starts with a name, and
 the name of this rule is @samp{Start}.
 
-After the name, a left arrow introduces the @emph{definition} of the rule. In
+After the name, a left arrow introduces the @dfn{definition} of the rule.  In
 this case, we've made a left arrow out of two old-fashioned @acronym{ASCII}
 symbols, @samp{<} and @samp{-}, but it's also permitted to use the Unicode
-character @samp{←} (U+2190 @sc{leftwards arrow}). You can also use a plain old
+character @samp{←} (U+2190 @sc{leftwards arrow}).  You can also use a plain old
 equals sign @samp{=} if you prefer.
 
 A pacc parser works by @dfn{matching} the input to the rules in the grammar.
 The process starts with the first rule (in this case it's the only rule), and
 the first thing in the definition of that first rule.  In the case of
-@samp{Start}, the first thing in the definition is @samp{"yes"}. The quote
-marks mean that this is a @dfn{literal string}. For a successful match, the
+@samp{Start}, the first thing in the definition is @samp{"yes"}.  The quote
+marks mean that this is a @dfn{literal string}.  For a successful match, the
 input must be exactly the same characters as are in the literal.
 
 @cindex alternative
-Let's suppose that on this occasion the input is @samp{no}. So the parser
-can't match the input against @samp{"yes"} in the rule. But in this rule
+@findex /
+
+Let's suppose that on this occasion the input is @samp{no}.  So the parser
+can't match the input against @samp{"yes"} in the rule.  But in this rule
 there is an @dfn{alternative}, and the parser will try to match that next.
 The @samp{/} character separates alternatives, so the next alternative
-starts with another literal string: @samp{"no"}. This does match our
+starts with another literal string: @samp{"no"}.  This does match our
 example input.
 
-So having matched @samp{"no"} the parser then finds @samp{@{0@}}. The braces
+So having matched @samp{"no"} the parser then finds @samp{@{0@}}.  The braces
 indicate that this is a @dfn{semantic expression}: a hunk of C code (albeit a
-very tiny one in this case!). Because it is in the alternative that matched, it
-will be evaluated to give a value to the rule. And the value of the start rule
+very tiny one in this case!).  Because it is in the alternative that matched, it
+will be evaluated to give a value to the rule.  And the value of the start rule
 is the overall value of the parse.
 
 @node Alternatives
 @chapter Alternatives
-@cindex alternatives
+@cindex alternative
+@findex /
 
 @cartouche
 @quotation
 An absolutely crucial point to understand about pacc grammars is that
-alternatives are tried @strong{in order}. The first alternative which matches
+alternatives are tried @strong{in order}.  The first alternative which matches
 successfully is the one that ``wins'', and later alternatives aren't considered
 at all.
 @end quotation
@@ -272,11 +288,11 @@ try it:
   
 What went wrong there? The problem is that the third alternative @samp{"no"}
 matches the first two characters of the input @samp{non}, and so that becomes
-the winning alternative, even though that leads to an overall failure. Pacc
+the winning alternative, even though that leads to an overall failure.  Pacc
 parsers never ``back up'' once an alternative has completely matched.
 
 For this simple grammar, the obvious fix is simply to swap the order of these
-two alternatives. We'll see similar problems, and other fixes, later on.
+two alternatives.  We'll see similar problems, and other fixes, later on.
 
 @verbatim
 Start <- "yes" {1} / "oui" {1} / "non" {0} / "no" {0}
@@ -298,7 +314,7 @@ needs rewriting and expanding.)
 
 @node Rules
 @chapter Rules
-@cindex rules
+@cindex rule
 
 Here's where we've got to:
 
@@ -315,27 +331,27 @@ No <- "non" / "no"
 @end verbatim
 
 Don't, at the moment, worry about @samp{:: void} on the second line---we'll
-explain what this means shortly. The important point to notice is that a
-grammar can have more than one rule. The first rule is always the start rule,
+explain what this means shortly.  The important point to notice is that a
+grammar can have more than one rule.  The first rule is always the start rule,
 where parsing begins.
 
 Each rule has a name, in this grammar there are 3 rules named @samp{Start},
-@samp{Yes}, and @samp{No}. Rule names are formed in the same way as C
+@samp{Yes}, and @samp{No}.  Rule names are formed in the same way as C
 identifiers: they must start with a letter or underscore, and continue with
-letters, underscores, or digits. I often follow the convention of starting
+letters, underscores, or digits.  I often follow the convention of starting
 rule names with capital letters as it helps them to stand out, but you don't
 have to.
 
 The fundamental building blocks of pacc are called @dfn{matchers}.  We've
 already met one kind of matcher: a literal string like @samp{"yes"}.  A matcher
-occurs in the definition of a rule, and it matches something in the input. In
+occurs in the definition of a rule, and it matches something in the input.  In
 the case of a literal string, it matches just that one string.
 
 Another kind of matcher is a @dfn{call matcher}.  One rule can call another
-rule, simply by naming the called rule in its definition. As you might expect,
+rule, simply by naming the called rule in its definition.  As you might expect,
 when you call a rule by name, that matches whatever the called rule matches.
 The definition of the @samp{Start} rule contains two call matchers: the first
-calls the rule @samp{Yes} and the second calls the rule @samp{No}. You can
+calls the rule @samp{Yes} and the second calls the rule @samp{No}.  You can
 call a rule before it has been defined, so long as the definition occurs in the
 same pacc grammar.
 
@@ -344,7 +360,7 @@ There are only two other kinds of matcher, which we'll get to soon.
 @node Types
 @chapter Types
 
-@cindex types
+@cindex type
 
 Every pacc rule has a @dfn{type}, which can be almost any C type.  The type of
 a rule appears in its definition, directly after the name introduced by
@@ -365,7 +381,7 @@ allowed.
 @end enumerate
 
 Rule 3 explains how we have got away so far without explicit type
-declarations—in their absence, everything defaults to @samp{int}. Let's
+declarations—in their absence, everything defaults to @samp{int}.  Let's
 revisit our example yet again.
 
 @verbatim
@@ -375,8 +391,8 @@ No <- "non" / "no"
 @end verbatim
 
 The first rule @samp{Start} has type @samp{int}, this time we've made that
-explicit. The second rule @samp{Yes} has type @samp{void}, again by explicit
-declaration. The third rule @samp{No} has no explicit type, so by rule 2
+explicit.  The second rule @samp{Yes} has type @samp{void}, again by explicit
+declaration.  The third rule @samp{No} has no explicit type, so by rule 2
 its type is @samp{void}.
 
 @cartouche
@@ -392,18 +408,18 @@ grammars have only a few different types, so implicit typing saves a lot of,
 errm, typing.
 
 Any C type that can be constructed with words and the @samp{*} character can be
-used as a pacc type. This includes pointers, structures, and unions, but not
-vectors (arrays) or function types. You could use a @samp{typedef} for those if
+used as a pacc type.  This includes pointers, structures, and unions, but not
+vectors (arrays) or function types.  You could use a @samp{typedef} for those if
 you really wanted to, and include it (directly or more likely by
 @samp{#include}) in the pacc preamble.
 
 @node Character classes
 @chapter Character classes
 
-@cindex character classes
+@cindex character class
 @cindex matcher
 
-For our next example, let's consider how we could parse a decimal number. We'll
+For our next example, let's consider how we could parse a decimal number.  We'll
 start by parsing a single digit, and we already know one way we could do that:
 
 @verbatim
@@ -412,10 +428,10 @@ Digit <- "0" → 0 / "1" → 1 / "2" → 2 / "3" → 3 / "4" → 4 /
 @end verbatim
 
 This is tedious and error-prone, but it's the best we can do with the matchers
-we've seen so far. Another matcher available in pacc is the @dfn{character
+we've seen so far.  Another matcher available in pacc is the @dfn{character
 class}: square brackets enclose a set of characters to be matched, so the
-character class @samp{[0123456789]} matches a single decimal digit. To compress
-it even further, we can write @samp{[0-9]}. The hyphen stands for all the
+character class @samp{[0123456789]} matches a single decimal digit.  To compress
+it even further, we can write @samp{[0-9]}.  The hyphen stands for all the
 characters between the two characters it separates.
 
 But while solving one problem---concisely matching any of a set of
@@ -428,31 +444,33 @@ Digit <- [0-9] -> { /* what goes here? */ }
 
 Now that we have just one alternative that will match any digit, what
 expression can we use that will give us the right value? We need some way to
-refer back to input that we are matching. We'll see how we do that in the next
+refer back to input that we are matching.  We'll see how we do that in the next
 section.
 
 As well as normal character classes, pacc supports @dfn{negated character
-classes}. These are written with a caret @samp{^} as the first character. For
+classes}.  These are written with a caret @samp{^} as the first character.  For
 example, @samp{[^)]} matches any single character @emph{except} a closing
 parenthesis.
 
-Should you need to write a character classes that includes the literal
-character @samp{^}, simply ensure that it is not the first character in the
-class. To match a literal hyphen, write it as the first or last character in
-the class. To match a literal @samp{]}, write it as the first character. For
-example: the character class @samp{[~^]} matches either a tilde or a caret;
-@samp{[-_]} matches a hyphen or an underscore; and @samp{[][]} matches either
-an opening or a closing bracket.
+@cindex regular expression
+
+Should you need to write a character class that includes the literal character
+@samp{^}, simply ensure that it is not the first character in the class.  To
+match a literal hyphen, write it as the first or last character in the class.
+To match a literal @samp{]}, write it as the first character.  For example: the
+character class @samp{[~^]} matches either a tilde or a caret; @samp{[-_]}
+matches a hyphen or an underscore; and @samp{[][]} matches either an opening or
+a closing bracket.
 
 If you are familiar with character classes in regular expressions, pacc's
-character classes are broadly similar. Note, however, that pacc is not aware of
-locales. In pacc, a hyphenated range for all the characters with Unicode code
-points in the (inclusive) range between those of the two named characters. Nor
-does pacc support named classes (such as @samp{[:alpha:]}). @xref{Semantic
-guards}, if you need to do something like this. (Believe it or not, in at least
-some versions of GNU @command{grep}, in at least some locales, the character
-class @samp{[a-z]} matches all lower case letters, and also all upper case
-letters...  except @samp{Z}.)
+character classes are broadly similar.  Note, however, that pacc is not aware
+of locales.  In pacc, a hyphenated range only ever stands for all the
+characters with Unicode code points in the (inclusive) range between those of
+the two named characters.  (Believe it or not, in at least some versions of GNU
+@command{grep}, in at least some locales, the character class @samp{[a-z]}
+matches all lower case letters, and also all upper case letters@dots{} except
+@samp{Z}.)  Nor does pacc support named classes (such as @samp{[:alpha:]}).
+@xref{Semantic guards}, if you need to do something like this. 
 
 @node References
 @chapter References
@@ -465,8 +483,8 @@ letters...  except @samp{Z}.)
 
 In any semantic expression, you can write @samp{ref()} which is a
 @dfn{reference} to whichever part of the input is matched by the current rule.
-The type of @samp{ref()} is @samp{ref_t}, an opaque type. A number of helper
-functions exist to do useful things with @samp{ref_t} values. In this case, we
+The type of @samp{ref()} is @samp{ref_t}, an opaque type.  A number of helper
+functions exist to do useful things with @samp{ref_t} values.  In this case, we
 can utilize the helper function @samp{ref_0()} which returns the first byte of
 a @samp{ref_t} value.
 
@@ -474,39 +492,24 @@ a @samp{ref_t} value.
 Digit <- [0-9] -> { ref_0(ref()) - '0' }
 @end verbatim
 
-For example, here is how pacc's own parser used to recognise C identifiers, and
-return them as normal C strings from the @samp{Name} rule (before pacc had
-character classes).
-
-@verbatim
-
-  Name :: char *
-    <- n:(NameStart NameCont*) _ { ref_dup(n) }
-
-  NameStart :: void
-    <- c:. &{ isalpha(ref_0(c)) || ref_0(c) == '_' }
-  NameCont
-    <- c:. &{ isalnum(ref_0(c)) || ref_0(c) == '_' }
-
-@end verbatim
-
-
 @node Operators
 @chapter Operators
 
 @cindex repetition
 @cindex repetition operator
-@cindex operators
+@cindex operator
+@cindex regular expression
 @findex +
 @findex *
 @findex ?
 @findex ref_str()
 
 So now we can concisely parse a single decimal digit: we match the digit with a
-character class, and use a reference to the input to extract its value. To
-extend this to decimal integers, we can use a @dfn{repetition operator}. Pacc
-supports three repetition operators: @samp{?}, @samp{*}, and @samp{+}. They are
-postfix operators, that is to say the operator follows its operand. The operand can be a matcher, or a more complicated expression in brackets.
+character class, and use a reference to the input to extract its value.  To
+extend this to decimal integers, we can use a @dfn{repetition operator}.  Pacc
+supports three repetition operators: @samp{?}, @samp{*}, and @samp{+}.  They
+are postfix operators, that is to say the operator follows its operand.  The
+operand can be a matcher, or a more complicated expression in brackets.
 
 The repetition operators in pacc have the same meanings as they do in regular
 expressions.
@@ -517,11 +520,11 @@ Matches @emph{zero or one} occurrences of its operand, or to put it another
 way, it makes its operand optional.
 
 @item *
-Matches @emph{zero or more} occurrences of its operand. Matches as many times
+Matches @emph{zero or more} occurrences of its operand.  Matches as many times
 as possible.
 
 @item +
-Matches @emph{zero or more} occurrences of its operand. Matches as many times
+Matches @emph{zero or more} occurrences of its operand.  Matches as many times
 as possible. 
 @end table
 
@@ -534,30 +537,30 @@ Decimal <- [0-9]+ -> { atoi(ref_str()) }
 
 We are using the @samp{ref_str()} function which returns a newly allocated,
 @sc{nul} terminated string containing a copy of everything that the current
-rule matches. And @samp{atoi()} is from @samp{<stdlib.h>} of course. (One snag
+rule matches.  And @samp{atoi()} is from @samp{<stdlib.h>} of course. (One snag
 with this example is that pacc will happily match an arbitrarily long integer,
 whereas @samp{atoi()} is limited to integers that will fit in an @samp{int},
-but solving that issue is outside the scope of this tutorial. Possible options
+but solving that issue is outside the scope of this tutorial.  Possible options
 might include the error-checking available in @samp{strtol()}, or to use an
 arbitrary-precision integer package which provides its own conversion function,
 for example @samp{gmp_sscanf}.)
-
-The @samp{*} operator is similar to @samp{+}, but it can also match @emph{zero} occurences of its argument.
 
 @node Binding values to names
 @chapter Binding values to names
 
 @cindex binding
+@cindex operator
+@findex :
 
 We have seen how we can extract an integer from pacc's input into a C
-@samp{int} value. To do much more, we need to be able to bind a name to that
-value so that we can refer to it in expressions. In pacc, we use the @samp{:}
+@samp{int} value.  To do much more, we need to be able to bind a name to that
+value so that we can refer to it in expressions.  In pacc, we use the @samp{:}
 operator, and write @samp{name:something} to bind @samp{name} to the value of
 @samp{something}.
 
 So what are the type and value assigned to @samp{name}? There are two separate
-cases. If @samp{something} is the name of a rule, then @samp{name} has the same
-type as that rule, and the value of evaluating that rule. In all other cases,
+cases.  If @samp{something} is the name of a rule, then @samp{name} has the same
+type as that rule, and the value of evaluating that rule.  In all other cases,
 @samp{name} has the type @samp{ref_t} and its value is everything matched by
 @samp{something}.  For example, if there is a rule @samp{Number :: int}, then
 after @samp{n:Number}, the type of @samp{n} is @samp{int}, but after
@@ -571,21 +574,21 @@ Sum <- d:Decimal "+" s:Sum -> { d + s }
 Decimal <- [0-9]+ -> { atoi(ref_str()) }
 @end verbatim
 
-We are using recursion. The base case is the second alternative: a @samp{Sum}
-can be simply a @samp{Decimal}. In this case, we bind @samp{d} to the value
+We are using recursion.  The base case is the second alternative: a @samp{Sum}
+can be simply a @samp{Decimal}.  In this case, we bind @samp{d} to the value
 returned by the @samp{Decimal} rule, and that value is then returned as the
-value of the @samp{Sum} rule. For the recursive case, we have a @samp{Decimal},
+value of the @samp{Sum} rule.  For the recursive case, we have a @samp{Decimal},
 followed by a literal plus sign, followed by the recursive call to @samp{Sum}.
 We bind @samp{d} to the @samp{Decimal}, and @samp{s} to the value returned by
-the recursive call. The overall value returned in this case is the sum of
+the recursive call.  The overall value returned in this case is the sum of
 @samp{d} and @samp{s}.
 
-A name bound in this way is in scope from its binding to the end of the
-alternative in which it occurs. Thus, the two occurences of @samp{d} in this
-rule are in different scopes. 
+A name bound by the @samp{:} operator is in scope from its binding to the end
+of the alternative in which it occurs.  Thus, the two occurences of @samp{d} in
+the @samp{Sum} rule are in different scopes. 
 
 Note that the second alternative in @samp{Sum} is a prefix of the first
-alternative. This means that it is imperative to write the longer expression
+alternative.  This means that it is imperative to write the longer expression
 first, just like in the @samp{"non" / "no"} example (@pxref{Alternatives}).
 
 @node Expressing precedence
@@ -593,13 +596,13 @@ first, just like in the @samp{"non" / "no"} example (@pxref{Alternatives}).
 
 @cindex precedence
 
-Now let's expand our calculator example to include multiplication. This
-introduces the notion of @dfn{precedence}. Multiplication is considered to have
-higher precedence than addition. So in an expression such as @samp{2+3*4}, the
+Now let's expand our calculator example to include multiplication.  This
+introduces the notion of @dfn{precedence}.  Multiplication is considered to have
+higher precedence than addition.  So in an expression such as @samp{2+3*4}, the
 multiplication is performed first, and the answer is @samp{14} (not @samp{20}).
 
 Some parser generators have explicit notation to express precedence, but in
-pacc we do it simply by using rules. Here's how we add multiplication to the
+pacc we do it simply by using rules.  Here's how we add multiplication to the
 calculator.
 
 @verbatim
@@ -616,7 +619,7 @@ operator: it needs a @samp{Product} before it can begin evaluating a
 @samp{Sum}.
 
 Of course, as soon as we have precedence, we want to offer the option to
-override it with brackets. That's easy to implement too.
+override it with brackets.  That's easy to implement too.
 
 @verbatim
 Sum <- p:Product "+" s:Sum -> { p + s }
@@ -628,7 +631,7 @@ Decimal <- [0-9]+ -> { atoi(ref_str()) }
 @end verbatim
 
 Again, the higher precedence operation (in this case bracketing) appears lower
-down the grammar, and everything works out. This grammar can parse @samp{2+3*4}
+down the grammar, and everything works out.  This grammar can parse @samp{2+3*4}
 with a value of 14, and @samp{(2+3)*4} with a value of 20.
 
 @node Handling whitespace
@@ -640,26 +643,28 @@ with a value of 14, and @samp{(2+3)*4} with a value of 20.
 
 So far, our example grammar insists that everything is squashed together.
 Normally, we want to allow arbitrary whitespace to appear wherever it makes
-sense. That usually means between the lexical elements that make up the
-language. For example, we would like to be able to write @samp{12 + 34} or
-@samp{   12   +34} as well as @samp{12+34}. Generally, we don't allow whitespce
+sense.  That usually means between the lexical elements that make up the
+language.  For example, we would like to be able to write @samp{12 + 34} or
+@samp{   12   +34} as well as @samp{12+34}.  Generally, we don't allow whitespce
 to appear @emph{inside} those lexical elements, so we don't want to accept
 @samp{1 2 + 3 4}.
 
-There are two steps. The first is to define a rule that matches whitespace.
+There are two steps.  The first is to define a rule that matches whitespace.
 Normally it will match at least @samp{[ \t\n]*}, that is, zero or more
-occurences of space, tab, and newline. If the language being defined includes
+occurences of space, tab, and newline.  If the language being defined includes
 comments, they will usually be matched by this rule too (reflecting the fact
 that comments are considered equivalent to whitespace by most languages: they
-separate lexical elements).  Conventionally this whitespace-matching rule is
-called @samp{_} (a single underscore), as that helps to 
+separate lexical elements).  Conventionally the whitespace-matching rule is
+given the unobtrusive name @samp{_} (a single underscore), although you can of
+course choose any name you like.
 
-The second step is to define a separate rule for each lexical element in our
-grammar. Each lexical element rule will match the element in question, followed
-by our whitespace rule. For example, @samp{+} is a lexical element in our
-calculator's grammar, so we will define the rule @samp{Plus <- "+" _} to match
-it.  Finally, we define a new start rule which permits whitespace at the
-beginning of an input. Here's what it looks like.
+The second step is to modify the grammar to use the whitespace rule. We will
+need to define a separate rule for each lexical element in our grammar.  Each
+such rule will match the element in question, followed by our whitespace rule.
+For example, @samp{+} is a lexical element in our calculator's grammar, so we
+will define the rule @samp{Plus <- "+" _} to match it.  Also, the start rule
+will need to permit whitespace at the beginning of an input.  Here's what it
+looks like.
 
 @verbatim
 Expression <- _ s:Sum -> s
@@ -679,7 +684,7 @@ _ <- [ \t\n]*
 
 This simple example demonstrates another important and powerful feature of PEG
 parsing: there is no need for a separate ``lexer'' to assemble characters into
-lexical tokens. Pacc can do both jobs, and a single grammar specification
+lexical tokens.  Pacc can do both jobs, and a single grammar specification
 describes the entire language, from input characters, through lexical elements,
 all the way up to complete programs. 
 
@@ -690,7 +695,7 @@ all the way up to complete programs.
 @cindex left recursion
 
 An obvious next step for our calculator would be to add subtraction.
-Unfortunately, this is not as simple as you'd hope. Let's rewind to a simpler
+Unfortunately, this is not as simple as you'd hope.  Let's rewind to a simpler
 grammar, our first adder, which looks like this:
 
 @verbatim
@@ -708,10 +713,10 @@ Sum <- d:Decimal "+" s:Sum -> { d + s }
      / d:Decimal -> d
 @end verbatim
 
-This correctly evaluates @samp{3-2} giving the answer 1. Unfortunately, if we
+This correctly evaluates @samp{3-2} giving the answer 1.  Unfortunately, if we
 ask it to evaluate @samp{3-2-1}, it gives the answer 2, where we were expecting
 0.  It has made subtraction right associative, so @samp{3-2-1} is evaluated as
-@samp{3-(2-1)}. In everyday life, subtraction is considered left associative,
+@samp{3-(2-1)}.  In everyday life, subtraction is considered left associative,
 and @samp{3-2-1} should mean the same as @samp{(3-2)-1}.
 
 In a CFG, we could solve the problem by rearranging the rule to look for a Sum
@@ -724,27 +729,29 @@ Sum <- d:Decimal "+" s:Sum -> { d + s }
      / d:Decimal -> d
 @end verbatim
 
-But this won't work in a PEG. When we try to compile it, pacc tells us:
+But this won't work in a PEG.  When we try to compile it, pacc tells us:
 
 @verbatim
 pacc: fatal: left recursion in rule `Sum'
 @end verbatim
 
 The second alternative in this rule effectively says: ``To match a Sum, first
-try to match a Sum...''. That's an infinite loop, and pacc won't accept it. The
-exact rule is that each alternative of each rule must make some
+try to match a Sum...''.  That's an infinite loop, and pacc won't accept it.
+The exact rule is that each alternative of each rule must make some
 progress---consume at least one character from the input---before calling
 itself, whether that call is made directly, or through another rule.
 
 Getting back to subtraction, I'm afraid the sad news is that implementing a
 left associative operator in the current version of pacc is very difficult.
 Left recursion is, without doubt, the Achilles' heel of PEG parsing, and there
-are many ideas about how to handle it better. I have my own thoughts, which may
+are many ideas about how to handle it better.  I have my own thoughts, which may
 see the light of day in a future release.
 
 One option that works with current versions of pacc is to build a list, then
-reverse it. Here's a self-contained example that does just that, and can
-correctly subtract three integers.
+reverse it.  Here's a self-contained example that does just that, and can
+correctly subtract three integers.  Whether this could sanely be extended to a
+more complete expression parser, such as those found in typical programming
+languages, I do not know.
 
 @verbatim
 {
@@ -807,40 +814,41 @@ Decimal <- "-"? [0-9]+ { atoi(ref_str()) }
 @chapter Interactive inputs
 
 @cindex feeding
-@cindex interactive inputs
-@cindex partial inputs
+@cindex interactive input
+@cindex partial input
 @cindex CLI
 @cindex command-line interface
+@findex $
 
 Leaving aside problematic left association, let's go back to our previous
-calculator. You'll recall that this handles addition and multiplication, with
+calculator.  You'll recall that this handles addition and multiplication, with
 arbitrary whitespace between numbers and symbols. @xref{Handling whitespace}.
 
 Suppose we wanted to make an interactive calculator, with a read-eval-print
-loop. It should print a prompt, read a line from the user, evaluate it, print
-the result, and then print another prompt. That's easy enough to achieve, as
+loop.  It should print a prompt, read a line from the user, evaluate it, print
+the result, and then print another prompt.  That's easy enough to achieve, as
 each line read from the user will be a complete utterance in our grammar.
 
-That interface would doubtless be fine in practice for a simple calculator. But
+That interface would doubtless be fine in practice for a simple calculator.  But
 for a more complex interactive language, we might like a more sophisticated
-read-eval-print loop. Suppose we terminate each sum with an equals character,
-so a typical input would be @samp{2+3=}. That allows us to recognise the end of
+read-eval-print loop.  Suppose we terminate each sum with an equals character,
+so a typical input would be @samp{2+3=}.  That allows us to recognise the end of
 an utterance, which means we can allow the user to enter an expression that
 spreads over several lines.
 
 For a calculator, this is overkill, but it's exactly how command-line
 interfaces such as the Unix shells, SQL front-ends, and Lisp-like languages
-typically work. Normally, a different prompt is printed when further input is
+typically work.  Normally, a different prompt is printed when further input is
 required; the classic example would be the @samp{PS1} and @samp{PS2} prompts in
-the Bourne shell. Pacc has support for building interfaces like these.
+the Bourne shell.  Pacc has support for building interfaces like these.
 
 First, we need to mark in our grammar the points where the input can be split
-across multiple lines. We do this with the symbol @samp{$}. This needs to go in
+across multiple lines.  We do this with the symbol @samp{$}.  This needs to go in
 high level rules, in all the places where it makes sense for the user to hit
 @key{RET} and keep typing, but not, for instance, in the middle of a number.
 
 To strip the idea right down to its basics, consider this trivial grammar,
-which sums two digits, possibly on separate lines. Note that each digit is
+which sums two digits, possibly on separate lines.  Note that each digit is
 optionally followed by @samp{\n}, so valid utterances include both unsplit
 inputs, such as @samp{23\n}, and inputs split onto two lines, such as
 @samp{2\n3\n}.
@@ -850,9 +858,9 @@ Sum :: int <- a:Digit $ b:Digit { a + b }
 Digit <- [0-9] "\n"? { ref_0(ref()) - '0' }
 @end verbatim
 
-There is only one possible place to break the input: between the two digits. We
-have marked that point in the grammar with the @samp{$}. Now we can invoke pacc
-with the @samp{-f} flag, and it will produce @emph{two} parsers. The first
+There is only one possible place to break the input: between the two digits.  We
+have marked that point in the grammar with the @samp{$}.  Now we can invoke pacc
+with the @samp{-f} flag, and it will produce @emph{two} parsers.  The first
 parser is a perfectly normal one; the @samp{$} has no effect at all.
 
 For the second parser, pacc modifies the grammar to something like this:
@@ -862,7 +870,7 @@ Sum :: void <- Digit Digit?
 Digit <- [0-9] "\n"?
 @end verbatim
 
-The second digit (everything after the @samp{$}) is now optional. Additionally,
+The second digit (everything after the @samp{$}) is now optional.  Additionally,
 semantic expressions have been removed: this grammar is for recognising only,
 it can't evaluate anything.
 
@@ -986,57 +994,59 @@ clean:
 
 @cindex any
 @cindex matcher
+@findex .
 
-There is one matcher that we have not yet met. It is the @emph{any} matcher,
-written as @samp{.}, a period. As you might expect, it matches a single (UTF8)
+There is one matcher that we have not yet met.  It is the @emph{any} matcher,
+written as @samp{.}, a period.  As you might expect, it matches a single (UTF8)
 character (including the newline character), without regard to what that
-character actually is. If you are familiar with regular expressions, using
-@samp{.} to match any character may seem familiar, but beware! Pacc behaves
+character actually is.  If you are familiar with regular expressions, using
+@samp{.} to match any character may seem familiar, but beware!  Pacc behaves
 quite differently from regular expression matchers.
 
 @subsection Pacc expressions and regular expressions
 
-@cindex regular expressions
+@cindex regular expression
 @cindex backtracking
 
 For one thing, in regular expressions @samp{.} does not (usually) match the
-newline character. Pacc is more uniform: @samp{.} always matches @emph{any}
-single character. But this is a minor detail. What I really what to demonstrate
-is how pacc's matching rules are different from those of regular expressions.
+newline character.  Pacc is more uniform: @samp{.} always matches @emph{any}
+single character.  But this is a minor detail.  What I really what to
+demonstrate is how pacc's matching rules are different from those of regular
+expressions.
 
-Let's look at an example. Consider the regular expression @samp{/.*X/}. Under
+Let's look at an example.  Consider the regular expression @samp{/.*X/}.  Under
 regular expression rules, @samp{*} is said to be @dfn{greedy}, which means that
 @samp{.*} matches as much as possible, @emph{while allowing the rest of the
-expression to match}. Suppose the input string is @samp{fooXbarXbaz}. In this
-case, the expression will match @samp{fooXbarX}. In general, it will match to
+expression to match}.  Suppose the input string is @samp{fooXbarXbaz}.  In this
+case, the expression will match @samp{fooXbarX}.  In general, it will match to
 the last @samp{X} in the input, or fail if there is no @samp{X}.
 
 The pacc expression @samp{.* "X"} looks superficially similar, but in this case
 @samp{.*} will match @emph{the entire string}, and there is nothing left for
-the @samp{"X"} to match. So @samp{.* "X"} will always fail. (If @samp{*} is
+the @samp{"X"} to match.  So @samp{.* "X"} will always fail. (If @samp{*} is
 greedy in regular expressions, it's positively gluttonous in pacc!)
 
 The matching engine for regular expressions effectively shifts input characters
 back and forth between different parts of the regular expression (such as the
 @samp{.*} and the @samp{X} in our example), with the aim of always finding a
-match if it possibly can. This is sometimes called @dfn{backtracking}.
+match if it possibly can.  This is sometimes called @dfn{backtracking}.
 
-Pacc never backtracks. Instead, each matcher in a pacc expression is considered
-in turn, and matches as much as possible. If that causes an overall failure,
-pacc simply moves on to the next alternative. So pacc expressions must be
+Pacc never backtracks.  Instead, each matcher in a pacc expression is considered
+in turn, and matches as much as possible.  If that causes an overall failure,
+pacc simply moves on to the next alternative.  So pacc expressions must be
 carefully written so they cannot match more than they should.
 
 In this case, we can use a negated character class matcher instead of the any
-matcher. The pacc expression @samp{[^X]* "X"} is closer in meaning to the
-regular expression we started with. Of course, this will only match
+matcher.  The pacc expression @samp{[^X]* "X"} is closer in meaning to the
+regular expression we started with.  Of course, this will only match
 @samp{fooX}. (It's actually a common mistake when using regular expressions to
 write @samp{/.*X/} intending that it will only match to the first @samp{X}.
-When that is what is required, we must adopt the same technque as the pacc
+When that is what is required, we must adopt the same technique as the pacc
 expression and write @samp{/[^X]*X/}, or resort to Perl's non-greedy @samp{*?}
 operator if it's available: @samp{/.*?X/}.)
 
 To match up to the @emph{last} @samp{X} in pacc, we simply need to apply a
-repetition operator to the previous expression: @samp{([^X]* "X")+}. Apart from
+repetition operator to the previous expression: @samp{([^X]* "X")+}.  Apart from
 newline handling, this is exactly equivalent to the regular expression we
 started with: it matches to the last @samp{X} in the input, and fails if there
 is no @samp{X}.
@@ -1050,23 +1060,23 @@ is no @samp{X}.
 
 In the last section, we introduced the any matcher @samp{.} which matches any
 character all, and then decided instead to use a negated character class
-matcher which matches @emph{almost} any character. To make much use of the any
+matcher which matches @emph{almost} any character.  To make much use of the any
 matcher, we need guards.
 
-A matcher really does @emph{two} jobs. First, it @dfn{checks} to see if the
-input at the current position matches. Then, if it does, it @dfn{consumes} that
+A matcher really does @emph{two} jobs.  First, it @dfn{checks} to see if the
+input at the current position matches.  Then, if it does, it @dfn{consumes} that
 input by moving the current position forwards.
 
 A @dfn{guard} is a matcher modified so that it only checks, and never consumes.
-Any matcher can be turned into a guard by prefixing it with @samp{&}. For a
-contrived example, the rule @samp{Proto <- ( "ftp" / "http" ) &":"} matches
-either of two well-known protocols, but @emph{only} if it is immediately
-followed by a colon @samp{:}.
+Any matcher can be turned into a guard by prefixing it with @samp{&}.  For
+example, the rule @samp{Proto <- ( "ftp" / "http" ) &":"} matches either of two
+well-known protocols, but @emph{only} if it is immediately followed by a colon
+@samp{:}.
 
-Guards made with the @samp{&} are @dfn{positive} guards. They are not actually
+Guards made with the @samp{&} are @dfn{positive} guards.  They are not actually
 as useful as @dfn{negative} guards; any matcher can be turned into a negative
-guard by prefixing it with @samp{!}. A negative guard succeeds, provided the
-input at the current position does @emph{not} match. Negative guards work well
+guard by prefixing it with @samp{!}.  A negative guard succeeds, provided the
+input at the current position does @emph{not} match.  Negative guards work well
 in conjunction with the any matcher.
 
 The venerable language Pascal surrounds comments with braces: @samp{@{} and
@@ -1081,31 +1091,31 @@ PascalComment <- "{" [^{}]* "}"
 How would we match C comments? They are surrounded by @samp{/*} and @samp{*/}.
 (C comments also do not nest: @samp{/*} is permitted within a comment, but it
 doesn't have any meaning.) Character classes aren't going to help here, as they
-deal with just one character at a time. We need a combination of a negative
+deal with just one character at a time.  We need a combination of a negative
 guard and the any matcher:
 
 @verbatim
 CComment <- "/*" ( !"*/" . )* "*/"
 @end verbatim
 
-The key to this rule is the parenthesized expression: @samp{!"*/" .}. This
+The key to this rule is the parenthesized expression: @samp{!"*/" .}.  This
 means ``check that the input at the current position is not @samp{*/}, and then
-match any character at all''. Then we apply the repetition operator @samp{*} to
+match any character at all''.  Then we apply the repetition operator @samp{*} to
 that, and we get an expression that consumes everything up to, but not
 including, the next occurrence of @samp{*/} in the input.
 
 @node Semantic guards
 @chapter Semantic guards
 
-A third type of guard is available in pacc: the @dfn{semantic guard}. It is
+A third type of guard is available in pacc: the @dfn{semantic guard}.  It is
 written @samp{&@{ @var{e} @}}, where @var{e} is an arbitrary C expression of
-integer type. The expression @var{e} is evaluated whilst parsing, with
+integer type.  The expression @var{e} is evaluated whilst parsing, with
 variables bound in the current sequence and to the left of the guard in scope.
 A semantic guard succeeds if the expression evaluates true (i.e. non-zero), and
 fails if the expression is false.
 
 For example, suppose you want to match an alphabetic character in a
-locale-aware way. Pacc doesn't know anything about locales, but you can use the
+locale-aware way.  Pacc doesn't know anything about locales, but you can use the
 standard @code{isalpha()} predicate in a semantic guard:
 
 @verbatim
@@ -1118,11 +1128,22 @@ Alpha <- c:. &{ isalpha(c) }
 @chapter Bound literals
 
 Many programming languages use @dfn{reserved words} which resemble identifiers
-lexically, but form part of the syntax of the language. Pacc's @dfn{bound
-literals} can help to express these. A bound literal is written as
-@samp{"string":Rule}. It calls @samp{Rule}, which must have type @samp{char *}
+lexically, but form part of the syntax of the language.  Pacc's @dfn{bound
+literals} can help to express these.  A bound literal is written as
+@samp{"string":Rule}.  It calls @samp{Rule}, which must have type @samp{char *}
 or @samp{ref_t}, and succeeds only if @samp{Rule} returns a value equal to
 @samp{"string"}.
+
+Here's a tiny language with reserved words.
+
+@verbatim
+S <- "add":Word a:Digit b:Digit { a + b }
+   / "sub":Word a:Digit b:Digit { a - b }
+
+Digit <- d:[0-9] " "* { ref_0(d) - '0' }
+
+Word :: ref_t <- w:[a-z]+ " "+ -> w
+@end verbatim
 
 @node Memory management
 @chapter Memory management
@@ -1134,13 +1155,13 @@ or @samp{ref_t}, and succeeds only if @samp{Rule} returns a value equal to
 @findex nomem
 
 The parsing engine written by pacc uses @code{realloc()} exclusively to
-allocate and free memory. The intention is to make it as easy as possible to
+allocate and free memory.  The intention is to make it as easy as possible to
 supply your own memory allocator: it need only implement the @code{realloc()}
 interface (although of course it must be prepared to accept @samp{0} for either
 argument).
 
 If a @code{realloc()} call fails, the parsing engine writes the message
-@samp{out of memory} to @code{stderr} and exits non-zero. If you don't want
+@samp{out of memory} to @code{stderr} and exits non-zero.  If you don't want
 this, you will need to supply your own @code{realloc()} function that handles
 errors.
 
@@ -1148,12 +1169,12 @@ In theory, the parsing engine written by pacc should not leak memory, although
 finding such bugs has not so far been a high development priority.
 
 For any real application, semantic expressions will need to allocate memory to
-build an AST. Most of the time, pacc only calls the semantic expressions it
-needs, once the parse is complete. As long as you correctly free the AST you
+build an AST.  Most of the time, pacc only calls the semantic expressions it
+needs, once the parse is complete.  As long as you correctly free the AST you
 should be fine.
 
 Semantic guards are problematic, though: they are called, along with any
-expressions needed for variable bindings, during the parse. I haven't yet seen
+expressions needed for variable bindings, during the parse.  I haven't yet seen
 a realistic application for a semantic guard that would require memory
 allocation; if anyone can convince me that this is useful, I will teach pacc
 how to handle it properly.
@@ -1179,8 +1200,10 @@ features of pacc.
 
 @pindex pacc
 @cindex command line
-@cindex options
+@cindex option
 @cindex arguments
+@cindex command arguments
+@cindex flags
 @cindex invoking @command{pacc}
 
 Usage:
@@ -1222,12 +1245,12 @@ Some options control the output of pacc.
 @table @samp
 @item --output=@var{FILE}
 With the option @samp{-o@var{FILE}} or @samp{--output=@var{FILE}}, pacc will
-write its output to the named @var{FILE}. Since pacc's output is C source code,
+write its output to the named @var{FILE}.  Since pacc's output is C source code,
 you should specify a @var{FILE} that has a @file{.c} extension.
 
 @item --defines[=@var{FILE}]
 With the option @samp{-d} or @samp{--defines}, pacc will additionally write a
-header file, containing external definitions. If no @var{FILE} is specified,
+header file, containing external definitions.  If no @var{FILE} is specified,
 the defines file will have the same name as the output file but with a @file{.h}
 extension.
 @end table
@@ -1242,15 +1265,15 @@ Some options control the parser (or parsers) that pacc generates.
 @table @samp
 @item --name=@var{NAME}
 The parser created by pacc is interfaced to your C program through a number of
-functions with names such as @samp{pacc_new()} (@pxref{Interface}). When
+functions with names such as @samp{pacc_new()} (@pxref{Interface}).  When
 the @samp{-n@var{NAME}} or @samp{--name=@var{NAME}} option is specified, the
 functions are instead named @samp{@var{NAME}_new()}.
 
 @item --feed=@var{FILE}
 With the option @samp{-f@var{FILE}} or @samp{--feed=@var{file}}, pacc writes an
-extra @dfn{feed parser} to the named @var{FILE}. This can be used for parsing
+extra @dfn{feed parser} to the named @var{FILE}.  This can be used for parsing
 command line input where some lines are correct but incomplete
-(@pxref{Feeding}). If the main parser returns an error, but the feed parser
+(@pxref{Feeding}).  If the main parser returns an error, but the feed parser
 recognises the input, the controlling program should solicit more input from
 the user, and feed it to the parser.
 @end table
@@ -1277,12 +1300,12 @@ Some options can help with debugging pacc itself.
 @table @samp
 @item --dump-ast=@var{WHEN}
 If the @samp{-D@var{WHEN}} or @samp{--dump-ast=@var{WHEN}} option is specified,
-pacc will write a dump of the Abstract Syntax Tree representation. The
+pacc will write a dump of the Abstract Syntax Tree representation.  The
 @var{WHEN} string specifies various points at which the @abbr{AST} will be
 dumped: if it contains the character @samp{0} the tree will be dumped as soon
 as the input grammar has been parsed; @samp{1} dumps the tree after desugaring;
 @samp{2} dumps the tree after @dfn{cooking} (preparing the grammar for feeding
-with the @samp{-f} flag). Multiple dumps can be specified, e.g. @samp{-D02}.
+with the @samp{-f} flag).  Multiple dumps can be specified, e.g. @samp{-D02}.
 @end table
 
 @node Grammar
@@ -1295,19 +1318,19 @@ enclosed in braces: @samp{@{@}} followed by one or more rules.  The
 @dfn{preamble} is C source code, and is copied verbatim near the beginning of
 the output file. (If you use the @samp{--defines} option, the preamble is also copied into the @file{.h} file that it creates.)
 
-@cindex rules
-@cindex rule names
+@cindex rule
+@cindex rule name
 @cindex types
 
 @subsection Rules
 
-A @dfn{rule} consists of a name, an optional type, and a definition. The first
+A @dfn{rule} consists of a name, an optional type, and a definition.  The first
 rule is the @dfn{start rule} of the grammar: valid utterances of the language
 defined by the grammar match the start rule. 
  
 The @dfn{name} follows the same lexical rules as C identifier names: it must
 start with an alphabetic character or underscore, and remaining characters are
-alphabetic, numeric, or underscores. The namespace of pacc rule names is
+alphabetic, numeric, or underscores.  The namespace of pacc rule names is
 entirely separate from any C program, however, and there are no reserved words.
 
 The @dfn{type}, if present, is introduced by a double colon @samp{::}, and can
@@ -1321,7 +1344,7 @@ has no explicit type, its type is @samp{int}.
 The @dfn{definition} is introduced with a left arrow @samp{<-}, which is
 followed by one or more matchers, combined with operators.
 
-@cindex matchers
+@cindex matcher
 
 @subsection Matchers
 
@@ -1329,27 +1352,27 @@ followed by one or more matchers, combined with operators.
 
 @table @asis
 @item Literal: @samp{"string"}
-A string enclosed in double quotes matches exactly that string. The usual C
+A string enclosed in double quotes matches exactly that string.  The usual C
 character escapes are supported, so @samp{\n}, @samp{\012}, @samp{\xA}, and
 @samp{\u000A} all represent the ASCII line feed character.
 
 @item Character class: @samp{[a-z0-9]}
 A series of characters in square brackets matches any single one of those
 characters, which are written as in C, e.g. @samp{[\t\n]} matches a tab or a
-newline. If the first character is caret @samp{^}, the class is negated; that
-is, it matches any single character except those in the class. A character
+newline.  If the first character is caret @samp{^}, the class is negated; that
+is, it matches any single character except those in the class.  A character
 range is expressed using two characters separated by a hyphen @samp{-}, and it
 matches any single character with a Unicode code point between those of the two
 characters inclusive, e.g.  @samp{[a-z]} matches any lower case English letter.
 The character to the left of the hyphen must be strictly less than the
-character to the right of the hyphen. To include a literal hyphen, make it the
-first or last character in the class. For a literal right square bracket, make
+character to the right of the hyphen.  To include a literal hyphen, make it the
+first or last character in the class.  For a literal right square bracket, make
 it first.  For a literal caret, make it anything other than the first
 character.
 
 @item Call: @samp{rule_name}
 A bare word names another rule---it is an error if there is no such rule
-defined in this pacc grammar. It matches anything that the named rule matches.
+defined in this pacc grammar.  It matches anything that the named rule matches.
 Call matchers are not allowed in a left recursive position.
 
 @item Any: @samp{.}
@@ -1359,7 +1382,7 @@ The period character matches any single character. (UTF-8 coding is assumed.)
 @subsection Operators
 
 Pacc has the following @dfn{operators}, which are shown with their precedence,
-in order from 5 to 0. In the descriptions that follow, @samp{e} and @samp{f}
+in order from 5 to 0.  In the descriptions that follow, @samp{e} and @samp{f}
 are arbitrary pacc expressions; @samp{c} is an arbitrary C expression.
 
 @table @asis
@@ -1376,7 +1399,7 @@ repetitions of @samp{e}.
 not consume any input. @samp{!e} requires that the input does @emph{not} match
 @samp{e}, and again does not consume anything. @samp{&@{ ... @}} is a
 @dfn{semantic guard}: the braces hold an arbitrary C expression of type
-@samp{int}. The expression is evaluated; the guard succeeds if its value is
+@samp{int}.  The expression is evaluated; the guard succeeds if its value is
 non-zero.
 
 @item Binding: @samp{name:e} (3)
@@ -1397,13 +1420,13 @@ its use can improve readability.
 
 @item Value: @samp{-> @{c@}} (1)
 Defines the @dfn{value} of a sequence; @samp{c} is an arbitrary C expression
-which must have the same type as the rule. If @samp{c} is a name (C identifier
-rules) or a decimal integer, the braces are optional. Otherwise, the arrow is
+which must have the same type as the rule.  If @samp{c} is a name (C identifier
+rules) or a decimal integer, the braces are optional.  Otherwise, the arrow is
 optional.
 
 @item Alternation: @samp{e / f} (0)
 If @samp{e} matches, the alternation matches; otherwise, if @samp{f} matches,
-the alternation matches. Priority is important: @samp{e} is always tried before
+the alternation matches.  Priority is important: @samp{e} is always tried before
 @samp{f}.
 @end table
 
@@ -1413,7 +1436,7 @@ the alternation matches. Priority is important: @samp{e} is always tried before
 @subsection Comments and whitespace
 
 Whitespace between grammar elements is optional, except when needed to avoid
-ambiguity. A @dfn{comment} may appear anywhere that whitespace can. Pacc
+ambiguity.  A @dfn{comment} may appear anywhere that whitespace can.  Pacc
 understands both styles of C comment: @samp{/* comment */} and @samp{// to end
 of line} and also @samp{# to end of line}.
 
@@ -1446,15 +1469,15 @@ omitted, although explicitly marking it aids readability.)
 @cindex variables
 @findex :
 
-The binding operator is @samp{:}. To its left is an identifier, following the
-usual C rules. To its right is any pacc expression, which must match the input
-at this point. The binding operator brings into scope the identifier on its
+The binding operator is @samp{:}.  To its left is an identifier, following the
+usual C rules.  To its right is any pacc expression, which must match the input
+at this point.  The binding operator brings into scope the identifier on its
 left; this name remains in scope till the end of the sequence, that is, the end
-of the rule or enclosing parentheses, or the next @samp{/} operator. This
+of the rule or enclosing parentheses, or the next @samp{/} operator.  This
 identifier may be used in expressions and semantic guards.
 
 If the expression on the right of the @samp{:} is a call matcher, then the type
-of the name bound is the same as the type of the rule called. In all other
+of the name bound is the same as the type of the rule called.  In all other
 cases, the type of the name bound is @samp{ref_t}; this includes the case where
 the expression is a parenthesized call. 
 
@@ -1465,13 +1488,13 @@ the expression is a parenthesized call.
 @cindex input, referring to
 
 Expressions in a pacc grammar frequently need to refer to the input
-string. The type @samp{ref_t} and a number of functions facilitate this.
+string.  The type @samp{ref_t} and a number of functions facilitate this.
 
 @table @samp
 @item ref_t
 An opaque type which can hold a reference to a substring of the input string.
 Whenever a name is bound to an expression that is not a simple rule call, it
-has the type @samp{ref_t}. For example, in @samp{c:.}, the type of @samp{c} is
+has the type @samp{ref_t}.  For example, in @samp{c:.}, the type of @samp{c} is
 @samp{ref_t}.
 
 @item ref_t ref()
@@ -1494,8 +1517,10 @@ portable, and it calls @samp{nomem()} if memory cannot be allocated.
 @item char *ref_str()
 Equivalent to @samp{ref_dup(ref())}.
 
-@item int ref_cmp(ref_t r, char *s)
-Has the same value as @samp{strcmp(ref_dup(r), s)}, but allocates no memory.
+@item int ref_streq(ref_t r, char *s)
+Tests if the substring referenced by @samp{r} is equal to the NUL-terminatd
+string @samp{s}. Has the same value as @samp{!strcmp(ref_dup(r), s)}, but
+allocates no memory.
 @end table
 
 @node Feeding
@@ -1505,10 +1530,11 @@ Has the same value as @samp{strcmp(ref_dup(r), s)}, but allocates no memory.
 @cindex partial inputs
 @cindex interactive streams
 @findex -f, --feed
+@findex $
 
 Feeding is the mechanism which allows pacc to handle input coming from
-interactive streams. The user's input may be a complete utterance, or it may be
-the start of an utterance. In the latter case, we need to solicit more input.
+interactive streams.  The user's input may be a complete utterance, or it may be
+the start of an utterance.  In the latter case, we need to solicit more input.
 
 The points in the grammar where the input may be broken are marked with the
 @samp{$} token. 

@@ -24,11 +24,9 @@ int main(int argc, char **argv) {
 	return 1;
 
     if (strchr(arg_dump(), '0')) s_dump(p);
-
     desugar(p);
-    preen(p, arg_name());
-
     if (strchr(arg_dump(), '1')) s_dump(p);
+    preen(p, arg_name());
 
     save(arg_output());
     emit(p);

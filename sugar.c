@@ -43,7 +43,7 @@ static void deblit(
 	) {
     char *gd, *id;
     int l;
-    struct s_node *p, *q;
+    struct s_node *p;
 
     /* We need a unique identifier name for this bound literal... */
     l = snprintf(0, 0, "_pacc_bl%ld", n->id) + 1;
@@ -57,14 +57,14 @@ static void deblit(
     if (!gd) nomem();
     snprintf(gd, l, "ref_streq(%s,\"%s\")", id, n->text);
 
-    p = s_text(ident, id); q = p;
-    p = s_both(guard, gd, q); q = p;
-    p = s_both(bind, id, n->first); p->next = q; q = p;
-
+    p = s_text(ident, id); 
+    p = s_both(guard, gd, p);
+    s_retype(bind, n);
     free(n->text);
-    n->first = p;
-    /* XXX this makes a nested seq */
-    s_retype(seq, n);
+    n->text = id;
+
+    p->next = n->next;
+    n->next = p;
 }
 
 static int isblit(struct s_node *n) {

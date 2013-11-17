@@ -1,0 +1,13 @@
+/*
+type int
+parse 'num 5' 5
+parse 'num 3' 3
+*/
+
+S <- "num":Word a:Digit { a }
+
+#S <- w:Word &{ ref_streq(w, "num") } a:Digit { a }
+
+Digit <- d:[0-9] { ref_0(d) - '0' }
+
+Word :: ref_t <- w:[a-z]+ " "+ -> w

@@ -116,7 +116,7 @@ test/clean:
 
 # Maintainer targets
 .PHONY: release
-release: doc
+release: versions doc
 	mkdir $$(cat version)
 	cp -a --parents $$(cat MANIFEST) $$(cat version)
 	tar cfj $$(cat version).tar.bz2 $$(cat version)
@@ -125,8 +125,8 @@ release: doc
 .PHONY: versions
 versions:
 	echo -n pacc- > version; git describe >> version
-	date '+@set UPDATED %d %B %y' > doc/version.texi
-	date '+@set UPDATED-MONTH %B %y' >> doc/version.texi
+	date '+@set UPDATED %d %B %Y' > doc/version.texi
+	date '+@set UPDATED-MONTH %B %Y' >> doc/version.texi
 	echo -n '@set EDITION ' >> doc/version.texi
 	git describe >> doc/version.texi
 	echo -n '@set VERSION ' >> doc/version.texi
@@ -135,7 +135,7 @@ versions:
 .PHONY: doc
 doc: doc/pacc.info doc/pacc.man doc/pacc.pdf doc/pacc/index.html
 
-DOC_SRC = doc/pacc.texi doc/fdl.texi
+DOC_SRC = doc/pacc.texi doc/fdl.texi doc/version.texi
 
 doc/pacc.info: $(DOC_SRC)
 	cd doc; makeinfo pacc.texi

@@ -153,6 +153,8 @@ test/pacc/bind5.pacc
 test/pacc/blit0.pacc
 test/pacc/blit1.pacc
 test/pacc/blit2.pacc
+test/pacc/blit3.pacc
+test/pacc/blit4.pacc
 test/pacc/class0.pacc
 test/pacc/class1.pacc
 test/pacc/class2.pacc

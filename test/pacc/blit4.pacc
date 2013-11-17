@@ -1,0 +1,13 @@
+/*
+type int
+parse 'add 2 3' 5
+parse 'sub 8 3' 5
+noparse 'div 9 3' 'Word:*:0' 5
+*/
+
+S <- "add":Word a:Digit b:Digit { a + b }
+   / "sub":Word a:Digit b:Digit { a - b }
+
+Digit <- d:[0-9] " "* { ref_0(d) - '0' }
+
+Word :: ref_t <- w:[a-z]+ " "+ -> w

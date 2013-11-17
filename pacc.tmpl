@@ -125,7 +125,6 @@ static void *_pacc_pop(size_t s, struct pacc_parser *p) {
 
 #define ref() (&cur->col)
 #define ref_0(a) (_pacc->string[*a])
-#define ref_cmp(a, s) (_pacc_ref_cmp((a), (s), _pacc))
 #define ref_dup(a) (_pacc_ref_dup((a), _pacc))
 #define ref_len(a) ((a)[1] - (a)[0])
 #define ref_ptr(a) (_pacc->string + *(a))
