@@ -124,7 +124,7 @@ release: versions doc
 
 .PHONY: versions
 versions:
-	echo -n pacc- > version; git describe >> version
+	echo -n pacc- > version; git describe | sed 's,^v,,' >> version
 	date '+@set UPDATED %d %B %Y' > doc/version.texi
 	date '+@set UPDATED-MONTH %B %Y' >> doc/version.texi
 	echo -n '@set EDITION ' >> doc/version.texi

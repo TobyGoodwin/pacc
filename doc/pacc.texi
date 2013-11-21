@@ -1003,7 +1003,7 @@ character actually is.  If you are familiar with regular expressions, using
 @samp{.} to match any character may seem familiar, but beware!  Pacc behaves
 quite differently from regular expression matchers.
 
-@subsection Pacc expressions and regular expressions
+@section Pacc expressions and regular expressions
 
 @cindex regular expression
 @cindex backtracking
