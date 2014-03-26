@@ -524,7 +524,7 @@ Matches @emph{zero or more} occurrences of its operand.  Matches as many times
 as possible.
 
 @item +
-Matches @emph{zero or more} occurrences of its operand.  Matches as many times
+Matches @emph{one or more} occurrences of its operand.  Matches as many times
 as possible. 
 @end table
 
