@@ -3,12 +3,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "error.h"
 
 char *load(const char *n, size_t *size) {
     char *addr;
     struct stat sb;
+    FILE *fp;
 
     close(0);
     if (open(n, O_RDONLY) != 0) fatal3x("cannot open `", n, "'");
@@ -22,10 +25,20 @@ char *load(const char *n, size_t *size) {
 
     addr = (char *)-1;
     addr = mmap(0, *size, PROT_READ, MAP_SHARED, 0, 0);
+    if (addr != (char *)-1)
+        return addr;
 
-    /* XXX eventually, we must try to read the file if we cannot mmap it */
-    if (addr == (char *)-1) fatal3x("cannot mmap `", n, "'");
+    /* Fail to mmap, try to read it. */
+    fp = fopen(n, "r");
+    if (fp == NULL)
+        fatal3x("cannot fopen `", n, "'");
 
+    addr = malloc(*size);
+    if (addr == NULL)
+        fatal3x("cannot allocate to read `", n, "'");
+
+    fread(addr, 1, *size, fp);
+    fclose(fp);
     return addr;
 }
 
