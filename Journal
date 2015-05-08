@@ -1,3 +1,10 @@
+2015-04-30
+----------
+
+Quick thought. If we have -d, then parse.c includes parse.h, which
+includes the prologue. But the prologue is also repeated in parse.c.
+This tends not to work.
+
 2013-11-10
 ----------
 

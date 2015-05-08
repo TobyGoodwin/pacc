@@ -185,7 +185,7 @@ static void grammar_pre(struct s_node *n) {
      * node. */
     p = n->first;
     assert(p->type == preamble);
-    if (p->text) c_raw(p->text);
+    if (!arg_defines() && p->text) c_raw(p->text);
     p = p->next;
 
     for ( ; p; p = p->next) {
