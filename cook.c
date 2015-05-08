@@ -46,11 +46,14 @@ static void cook0(struct s_node *n) {
 }
 
 /* make all rules void, and remove all expr nodes */
-static void dexpr(struct s_node *n, struct s_node *pre) {
+static void dexpr(struct s_node *n, struct s_node *par, struct s_node *sib) {
     struct s_node *p, *q;
     if (n->type == expr) {
-	assert(pre);
-	pre->next = n->next;
+	assert(par || sib);
+	if (sib)
+            sib->next = n->next;
+        else
+            par->first = 0;
 	free(n); /* XXX and its children */
     }
 
@@ -59,14 +62,14 @@ static void dexpr(struct s_node *n, struct s_node *pre) {
 
     if (s_has_children(n->type))
 	for (p = 0, q = n->first; q; p = q, q = q->next)
-	    dexpr(q, p);
+	    dexpr(q, n, p);
 }
 
 void cook(struct s_node *g) {
     char *newname;
     int l;
 
-    dexpr(g, 0);
+    dexpr(g, 0, 0);
     cook0(g);
     l = strlen(g->text) + strlen("_feed") + 1;
     newname = realloc(0, l);
