@@ -1,5 +1,7 @@
 /* We need _BSD_SOURCE for strdup() */
 #define _BSD_SOURCE 1
+/* except that now it's called _DEFAULT_SOURCE */
+#define _DEFAULT_SOURCE 1
 
 #include <assert.h>
 #include <stdio.h>
