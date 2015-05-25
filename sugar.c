@@ -249,6 +249,48 @@ static int isrep(struct s_node *n) {
     return n->type == rep;
 }
 
+/* default expression: convert
+ *   R <- f:Five -> f / Six
+ * into
+ *   R <- f:Five -> f / s:Six -> s
+ */
+/* XXX this would be better done with a loop over just the rules... */
+static void dedefexpr(struct s_node *n, const char *name, int r) {
+    struct s_node *s;
+
+    /* loop over the seq children of the top-level alt */
+    for (s = n->first->next->first; s; s = s->next) {
+        assert(s->type == seq);
+        if (s->first->type == call &&
+                ! s->first->next) {
+            int l;
+            char *id;
+            struct s_node *p, *q;
+
+            /* name for default expr identifier */
+            l = snprintf(0, 0, "_pacc_de%ld", s->id) + 1;
+            id = malloc(l);
+            if (!id) nomem();
+            snprintf(id, l, "_pacc_de%ld", s->id);
+
+            /* XXX this expr node has no coords */
+            p = s_both(expr, id, s_text(ident, id)); q = p;
+            p = s_both(bind, id, s->first);
+            p->next = q;
+            s->first = p;
+        }
+    }
+}
+
+
+static int isdefexpr(struct s_node *n) {
+    /* not actually picking out a default expression: just a non-void rule with
+     * a top-level alt */
+    return n->type == rule &&
+        n->first->next->type == alt &&
+        strcmp(n->first->text, "void") != 0;
+}
+
 typedef int pred_fn_t(struct s_node *);
 typedef void trans_fn_t(struct s_node *, const char *, int);
 
@@ -283,6 +325,8 @@ void desugar(struct s_node *g) {
     rules = 0;
 
     walk(g, &isrep, &derep);
+
+    walk(g, &isdefexpr, &dedefexpr);
 
     for (p = g->first; p->next; p = p->next)
 	;
