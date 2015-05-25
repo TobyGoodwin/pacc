@@ -11,6 +11,7 @@ noparse 6 'P, or end-of-input' 1
  * left hand side of the alternation matches the empty string: it must
  * always succeed. The right hand side of the alternation is effectively
  * unreachable code.
+ * XXX so shouldn't this test be in "bad" as an expected fail?
  */
  
 P ← a:"5"* { atoi(ref_dup(a)) } / b:"6" { atoi(ref_dup(b)) }
