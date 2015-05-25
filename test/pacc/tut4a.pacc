@@ -1,0 +1,14 @@
+/*
+type int
+parse 5 5
+parse 2+3 5
+parse 1+2+2 5
+parse 1+2+1+1 5
+noparse '' Sum 1
+noparse 4+ Sum 3
+*/
+
+/* same as tut4, but using the default expression sugar */
+Sum <- d:Decimal "+" s:Sum -> { d + s }
+    / Decimal
+Decimal <- [0-9]+ -> { atoi(ref_str()) }
