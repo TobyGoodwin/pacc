@@ -254,40 +254,47 @@ static int isrep(struct s_node *n) {
  * into
  *   R <- f:Five -> f / s:Six -> s
  */
+
+static void dedefexpr1(struct s_node *s) {
+    assert(s->type == seq);
+    if (s->first->type == call &&
+            ! s->first->next) {
+        int l;
+        char *id;
+        struct s_node *p, *q;
+
+        /* name for default expr identifier */
+        l = snprintf(0, 0, "_pacc_de%ld", s->id) + 1;
+        id = malloc(l);
+        if (!id) nomem();
+        snprintf(id, l, "_pacc_de%ld", s->id);
+
+        /* XXX this expr node has no coords */
+        p = s_both(expr, id, s_text(ident, id)); q = p;
+        p = s_both(bind, id, s->first);
+        p->next = q;
+        s->first = p;
+    }
+}
+
 /* XXX this would be better done with a loop over just the rules... */
 static void dedefexpr(struct s_node *n, const char *name, int r) {
     struct s_node *s;
 
-    /* loop over the seq children of the top-level alt */
-    for (s = n->first->next->first; s; s = s->next) {
-        assert(s->type == seq);
-        if (s->first->type == call &&
-                ! s->first->next) {
-            int l;
-            char *id;
-            struct s_node *p, *q;
-
-            /* name for default expr identifier */
-            l = snprintf(0, 0, "_pacc_de%ld", s->id) + 1;
-            id = malloc(l);
-            if (!id) nomem();
-            snprintf(id, l, "_pacc_de%ld", s->id);
-
-            /* XXX this expr node has no coords */
-            p = s_both(expr, id, s_text(ident, id)); q = p;
-            p = s_both(bind, id, s->first);
-            p->next = q;
-            s->first = p;
+    if (n->first->next->type == alt) {
+        /* loop over the seq children of the top-level alt */
+        for (s = n->first->next->first; s; s = s->next) {
+            dedefexpr1(s);
         }
+    } else if (n->first->next->type == seq) {
+        dedefexpr1(n->first->next);
     }
 }
 
 
 static int isdefexpr(struct s_node *n) {
-    /* not actually picking out a default expression: just a non-void rule with
-     * a top-level alt */
+    /* not actually picking out a default expression: just any non-void rule */
     return n->type == rule &&
-        n->first->next->type == alt &&
         strcmp(n->first->text, "void") != 0;
 }
 

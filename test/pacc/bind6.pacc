@@ -3,13 +3,15 @@ int
 parse four 4
 parse five 5
 parse six 6
-noparse seven Digit 1
+noparse seven Answer 1
 */
 
-/* Test that omitting the result expression is permitted if the rule is a
- * single call. */
+/* Test that omitting the result expression is permitted if the rule or an
+ * alternative is a single call. */
 
-Digit :: int <- Four / f:Five -> f / Six
+Answer <- Digit
+
+Digit <- Four / f:Five -> f / Six
 
 Four :: char <- "four" -> 4
 Five <- "five" -> 5
