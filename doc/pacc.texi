@@ -655,9 +655,9 @@ So far, our example grammar insists that everything is squashed together.
 Normally, we want to allow arbitrary whitespace to appear wherever it makes
 sense.  That usually means between the lexical elements that make up the
 language.  For example, we would like to be able to write @samp{12 + 34} or
-@samp{   12   +34} as well as @samp{12+34}.  Generally, we don't allow whitespce
-to appear @emph{inside} those lexical elements, so we don't want to accept
-@samp{1 2 + 3 4}.
+@samp{   12   +34} as well as @samp{12+34}.  Generally, we don't allow
+whitespace to appear @emph{inside} those lexical elements, so we don't want to
+accept @samp{1 2 + 3 4}.
 
 There are two steps.  The first is to define a rule that matches whitespace.
 Normally it will match at least @samp{[ \t\n]*}, that is, zero or more
@@ -754,8 +754,8 @@ itself, whether that call is made directly, or through another rule.
 Getting back to subtraction, I'm afraid the sad news is that implementing a
 left associative operator in the current version of pacc is very difficult.
 Left recursion is, without doubt, the Achilles' heel of PEG parsing, and there
-are many ideas about how to handle it better.  I have my own thoughts, which may
-see the light of day in a future release.
+are many ideas about how to handle it better.  I have my own thoughts, which
+may see the light of day in a future release.
 
 One option that works with current versions of pacc is to build a list, then
 reverse it.  Here's a self-contained example that does just that, and can
