@@ -13,6 +13,6 @@ Answer <- Digit
 
 Digit <- Four / f:Five -> f / Six
 
-Four :: char <- "four" -> 4
+Four <- "four" -> 4
 Five <- "five" -> 5
 Six <- "six" -> 6

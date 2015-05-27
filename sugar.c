@@ -266,14 +266,17 @@ static int isrep(struct s_node *n) {
  *   R <- f:Five -> f / s:Six -> s
  */
 
-static void dedefexpr1(struct s_node *s) {
-    assert(s->type == seq);
-    if (s->first->type == call &&
-            ! s->first->next) {
+static void dedefexpr1(struct s_node *s, char *name, char *type) {
+    assert(s && s->type == seq);
+    /* is the only thing in this seq a call? */
+    if (s->first->type == call && ! s->first->next) {
         int l;
         char *id;
         struct s_node *p, *q;
 
+        if (strcmp(type, find_type(s->first->text)) != 0)
+            fatal9("type mismatch: `", name, " :: ", type, "' cannot call `",
+                    s->first->text, " :: ", find_type(s->first->text), "'");
         /* name for default expr identifier */
         l = snprintf(0, 0, "_pacc_de%ld", s->id) + 1;
         id = malloc(l);
@@ -299,9 +302,9 @@ static void dedefexpr(struct s_node *r, __attribute__((unused)) int ign) {
         struct s_node *s;
         /* loop over the seq children of the top-level alt */
         for (s = r->first->next->first; s; s = s->next)
-            dedefexpr1(s);
+            dedefexpr1(s, r->text, r->first->text);
     } else if (r->first->next->type == seq)
-        dedefexpr1(r->first->next);
+        dedefexpr1(r->first->next, r->text, r->first->text);
 }
 
 typedef int pred_fn_t(struct s_node *);

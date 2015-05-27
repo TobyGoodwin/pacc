@@ -22,6 +22,13 @@ void fatal5(const char *a, const char *b, const char *c, const char *d, const ch
     exit(1);
 }
 
+void fatal9(const char *a, const char *b, const char *c,
+        const char *d, const char *e, const char *f,
+        const char *g, const char *h, const char *i) {
+    fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s\n", fatal, a, b, c, d, e, f, g, h, i);
+    exit(1);
+}
+
 void fatal3x(const char *a, const char *b, const char *c) {
     fatal5(a, b, c, ": ", strerror(errno));
 }
