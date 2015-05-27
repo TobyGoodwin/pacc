@@ -289,24 +289,19 @@ static void dedefexpr1(struct s_node *s) {
 }
 
 /* XXX this would be better done with a loop over just the rules... */
-static void dedefexpr(struct s_node *n, const char *name, int r) {
-    struct s_node *s;
+static void dedefexpr(struct s_node *r, __attribute__((unused)) int ign) {
+    assert(r && r->type == rule);
+    assert(r->first && r->first->type == type);
+    if (strcmp(r->first->text, "void") == 0)
+        return;
 
-    if (n->first->next->type == alt) {
+    if (r->first->next->type == alt) {
+        struct s_node *s;
         /* loop over the seq children of the top-level alt */
-        for (s = n->first->next->first; s; s = s->next) {
+        for (s = r->first->next->first; s; s = s->next)
             dedefexpr1(s);
-        }
-    } else if (n->first->next->type == seq) {
-        dedefexpr1(n->first->next);
-    }
-}
-
-
-static int isdefexpr(struct s_node *n) {
-    /* not actually picking out a default expression: just any non-void rule */
-    return n->type == rule &&
-        strcmp(n->first->text, "void") != 0;
+    } else if (r->first->next->type == seq)
+        dedefexpr1(r->first->next);
 }
 
 typedef int pred_fn_t(struct s_node *);
@@ -329,13 +324,26 @@ static void walk(struct s_node *n, pred_fn_t pred, trans_fn_t transform) {
 		walk(p, pred, transform);
 }
 
+/* call f for each rule */
+typedef void rule_fn_t(struct s_node *, int);
+
+static void for_each_rule(struct s_node *top, rule_fn_t f) {
+    int n;
+    struct s_node *p;
+
+    assert(top && top->type == grammar);
+    assert(top->first && top->first->type == preamble);
+    assert(top->first->next && top->first->next->type == rule);
+
+    for (n = 0, p = top->first->next; p; p = p->next, ++n)
+        f(p, n);
+}
+
 void desugar(struct s_node *g) {
     top = g; /* XXX for find_type */
 
     walk(g, &isblit, &deblit);
-    walk(g, &isbind, &debind);
-    patchrules(g);
-    walk(g, &isrep, &derep);
-    walk(g, &isdefexpr, &dedefexpr);
-    patchrules(g);
+    walk(g, &isbind, &debind); patchrules(g);
+    walk(g, &isrep, &derep); patchrules(g);
+    for_each_rule(g, &dedefexpr);
 }
