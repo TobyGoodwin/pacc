@@ -54,6 +54,7 @@ struct pacc_mid {
 
 static struct pacc_mid *cur;
 
+static void _pacc_save_core() __attribute__((unused));
 static void _pacc_save_core(long c, size_t col) {
     PACC_TRACE fprintf(stderr, "_pacc_save_core(%ld, %ld)\n", c, col);
     if (cur->ev_valid == cur->ev_alloc) {
@@ -131,6 +132,7 @@ static void *_pacc_pop(size_t s, struct pacc_parser *p) {
 #define ref_str() (_pacc_ref_dup(ref(), _pacc))
 #define ref_streq(a, b) (_pacc_ref_streq((a), (b), _pacc))
 
+static char *_pacc_ref_dup() __attribute__((unused));
 static char *_pacc_ref_dup(ref_t a, struct pacc_parser *p) {
     char *restrict r;
     const char *restrict s;
@@ -223,6 +225,7 @@ static int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
     return i;
 }
 
+static int _pacc_ref_streq() __attribute__((unused));
 static int _pacc_ref_streq(ref_t a, char *b, struct pacc_parser *p) {
     /* XXX this could be made quicker */
     if (strlen(b) != (size_t)(a[1] - a[0])) return 0;
