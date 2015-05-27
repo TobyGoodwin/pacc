@@ -18,7 +18,18 @@
  * clarity to imagined performance. 
  */
 
+/* When a desugaring creates new rules, it first links it into rules. Then we
+ * patch that onto the tree. */
 static struct s_node *rules = 0;
+
+static void patchrules(struct s_node *g) {
+    struct s_node *p;
+
+    for (p = g->first; p->next; p = p->next)
+	;
+    p->next = rules;
+    rules = 0;
+}
 
 /* XXX only find_type needs this; must be a better way? */
 static struct s_node *top;
@@ -319,23 +330,12 @@ static void walk(struct s_node *n, pred_fn_t pred, trans_fn_t transform) {
 }
 
 void desugar(struct s_node *g) {
-    struct s_node *p;
-
     top = g; /* XXX for find_type */
 
     walk(g, &isblit, &deblit);
-
     walk(g, &isbind, &debind);
-    for (p = g->first; p->next; p = p->next)
-	;
-    p->next = rules;
-    rules = 0;
-
+    patchrules(g);
     walk(g, &isrep, &derep);
-
     walk(g, &isdefexpr, &dedefexpr);
-
-    for (p = g->first; p->next; p = p->next)
-	;
-    p->next = rules;
+    patchrules(g);
 }
