@@ -265,6 +265,7 @@ struct pacc_parser *PACC_SYM(new)(void) {
     p->stack = p->stack_alloc = 0;
     p->err = 0;
     p->err_alloc = p->err_valid = 0;
+    p->err_col = 0;
     p->coord = 0;
     p->coord_alloc = p->coord_valid = 0;
     return p;
