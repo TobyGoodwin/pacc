@@ -288,8 +288,18 @@ void PACC_SYM(input)(struct pacc_parser *p, char *s, size_t l) {
 }
 
 void PACC_SYM(destroy)(struct pacc_parser *p) {
+    unsigned int i, j;
+
+    for (i = 0; i < p->m_bkt_cnt; ++i) {
+        for (j = 0; j < p->m_valid[i * 2]; ++j)
+            free((p->m_bkt[i]+j)->evlis);
+        free(p->m_bkt[i]);
+    }
     free(p->m_bkt);
+    free(p->err);
+    free(p->coord);
     free(p->m_valid);
+    free(p->stack);
     free(p);
 }
 
