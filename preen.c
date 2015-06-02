@@ -156,7 +156,7 @@ static void check_rebound_seq(struct s_node *s) {
 		    fatal3("name `", p->text, "' rebound");
 	    if (namep == namea) {
 		int l = 2 * namea + 1;
-		char **n = realloc(names, l);
+		char **n = realloc(names, l * sizeof *n);
 		if (!n) nomem();
 		names = n;
 		namea = l;
