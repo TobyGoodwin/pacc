@@ -1,0 +1,17 @@
+/*
+int
+parse 222222 64
+parse 325325 900
+noparse seven Answer 1
+*/
+
+/* Test that we can bind several variables. Pacc before 0.2 had a serious
+ * memory allocation bug which could be triggered by this. */
+
+Answer <- a:Digit b:Digit c:Digit d:Digit e:Digit f:Digit -> { a*b*c*d*e*f }
+
+Digit <- Two / Three / Five
+
+Two <- "2" -> 2
+Three <- "3" -> 3
+Five <- "5" -> 5
