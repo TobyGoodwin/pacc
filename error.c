@@ -33,6 +33,12 @@ void fatal3x(const char *a, const char *b, const char *c) {
     fatal5(a, b, c, ": ", strerror(errno));
 }
 
+static char *warning = "pacc: warning: ";
+
+void warn3(const char *a, const char *b, const char *c) {
+    fprintf(stderr, "%s%s%s%s\n", warning, a, b, c);
+}
+
 void nomem(void) {
     fatal1("out of memory");
 }

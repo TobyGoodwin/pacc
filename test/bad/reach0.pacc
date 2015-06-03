@@ -1,8 +1,0 @@
-/*
-nopacc1 "pacc: fatal: rule \`Q' not reached"
-*/
-
-# pacc complains about unreached rules
-
-S ← "foo" → { "bar" }
-Q ← "baz" → { "qux" }

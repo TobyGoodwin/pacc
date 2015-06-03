@@ -1,0 +1,10 @@
+/*
+type chars "rule \`Q' not reached"
+parse foo bar
+noparse qux S 1
+*/
+
+# pacc complains about unreached rules
+
+S :: char * ← "foo" → { "bar" }
+Q ← "baz" → { "qux" }

@@ -64,7 +64,7 @@ static void check_reached(struct s_node *g) {
     for (p = g->first->next; p; p = p->next) {
 	assert(p->type == rule);
 	if (!p->reached)
-	    fatal3("rule `", p->text, "' not reached");
+	    warn3("rule `", p->text, "' not reached");
 	p->reached = 0;
     }
 }
