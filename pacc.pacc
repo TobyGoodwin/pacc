@@ -110,6 +110,18 @@ CodeAndNames ← n:CodeNames →
 
 Code ← "{" n:CodeAndNames rBrace → n #{ s_child_cons(n, l) }
 
+TypeOptional :: char *
+    ← ColCol ts:TypeElements → { new_s_stash_type(ts) }
+    / ε { s_stashed_type() }
+
+TypeElements  :: struct s_node *
+    ← t:TypeElement ts:TypeElements → { append(t, ts) }
+    / TypeElement
+
+TypeElement ← t:TypeRaw → { s_text(type, t) }
+
+TypeRaw :: char * ← Name / Star → { "*" }
+
 #CodeStart ← "{" → { s_coords(pacc_coords) }
 
 # XXX unfortunately, emit assumes that there is always a preamble node,
@@ -118,17 +130,13 @@ Code ← "{" n:CodeAndNames rBrace → n #{ s_child_cons(n, l) }
 #     ← c:Code? { c ? s_retype(preamble, c) : s_text(preamble, 0) }
 # but that doesn't seem like an improvement. Perhaps the "optimizer" and
 # tree preener could insert an empty preamble when needed.
-Preamble
+Preamble :: struct s_node *
     ← c:Code { s_retype(preamble, c) }
     / ε { s_text(preamble, 0) }
 
 Name :: char * ← n:([_A-Za-z] [_A-Za-z0-9]*) _ { ref_dup(n) }
 
 Number ← n:[0-9]+ _ → { ref_dup(n) }
-
-TypeOptional
-    ← ColCol TypeElement+ { s_stash_type(ref_str()) }
-    / ε { s_stashed_type() }
 
 StringLit ← "\"" q:QuotedChars "\"" _ → { ref_dup(q) }
 
@@ -153,9 +161,6 @@ CharLit ← "'" QuotedChar "'" _
 HexQuad ← HexDigit HexDigit HexDigit HexDigit
 
 HexDigit ← [0-9A-Fa-f]
-
-TypeElement
-    ← Name _ / "*" _
 
 Comment
     ← "#" [^\n]* "\n"
