@@ -1,0 +1,21 @@
+/*
+chars
+parse four quatro
+parse five cinco
+parse six seis
+noparse seven Answer 1
+*/
+
+/* Test that whitespace is insignificant in type names. */
+
+Answer :: char * <- Digit
+
+Digit <- Four / f:Five -> f / Six
+
+Four :: char   * <- "four" -> { "quatro" }
+Five :: char  *<- "five" -> { "cinco" }
+Six
+
+
+::
+char	*       <- "six" -> { "seis" }
