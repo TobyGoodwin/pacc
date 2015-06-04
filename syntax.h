@@ -47,8 +47,7 @@ extern struct s_node *s_ccrange(struct s_node *, struct s_node *);
 #define new_node(t) s_new(t)
 
 extern struct s_node *s_alt(struct s_node *, struct s_node *);
-extern char *s_stash_type(char *);
-extern char *new_s_stash_type(struct s_node *);
+extern char *s_stash_type(struct s_node *);
 extern char *s_stashed_type(void);
 
 /* manipulating trees */

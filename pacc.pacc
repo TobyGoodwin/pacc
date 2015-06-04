@@ -111,7 +111,7 @@ CodeAndNames ← n:CodeNames →
 Code ← "{" n:CodeAndNames rBrace → n #{ s_child_cons(n, l) }
 
 TypeOptional :: char *
-    ← ColCol ts:TypeElements → { new_s_stash_type(ts) }
+    ← ColCol ts:TypeElements → { s_stash_type(ts) }
     / ε { s_stashed_type() }
 
 TypeElements  :: struct s_node *

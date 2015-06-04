@@ -84,22 +84,8 @@ struct s_node *s_alt(struct s_node *s, struct s_node *r) {
 }
 
 static char *t = "int";
-char *s_stash_type(char *typ) {
-    char *s;
 
-    /* XXX can we really not strip the string in the grammar? */
-    while (*typ && (*typ == ':' || *typ == ' '))
-       ++typ;
-    s = typ + strlen(typ) - 1;
-    while (*s == ' ' || *s == '\t' || *s == '\n') {
-       *s = '\0';
-       --s;
-    }
-    t = typ;
-    return t;
-}
-
-char *new_s_stash_type(struct s_node *type_list) {
+char *s_stash_type(struct s_node *type_list) {
     char *typ = 0;
     int typ_len = 0;
     struct s_node *p;
