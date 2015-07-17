@@ -1,0 +1,23 @@
+/*
+int
+parse 'five five' 25
+parse 'five six' 30
+parse 'six five' 30
+parse 'six six' 36
+parse 'eight six' 30
+noparse 'five seven' 'Word:*:0' 11
+*/
+
+# This bug was first identified in quux. The problem is that ref_t is (or was?)
+# a pointer into a struct intermed, which can get realloc()'d if parsing occurs
+# after evaluation. This is the case when a semantic guard is used (and bound
+# literals are sugar for semantic guards). It's a heisenbug that may not always
+# show up, and can change under a debugger, or valgrind (which was instrumental
+# in finding it).
+
+P ← a:Number b:Number { a * b }
+  / w:Word c:Number { c * strlen(ref_dup(w)) }
+
+Number ← "five":Word { 5 } / "six":Word { 6 }
+
+Word :: ref_t ← w:[a-z]+ " "* -> w
