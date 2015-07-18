@@ -53,12 +53,12 @@ struct pacc_mid {
     size_t ev_valid;
 };
 
-#define pacc_MIDS_PER_BLK (4096 / sizeof(struct pacc_mid) - 1)
+#define _pacc_MIDS_PER_BLK (4096 / sizeof(struct pacc_mid) - 1)
 
 /* a block of mids */
 struct pacc_blk {
     struct pacc_blk *next;
-    struct pacc_mid mid[pacc_MIDS_PER_BLK];
+    struct pacc_mid mid[_pacc_MIDS_PER_BLK];
 };
 
 /* a hash bucket */
@@ -303,24 +303,38 @@ void PACC_SYM(input)(struct pacc_parser *p, char *s, size_t l) {
     }
 }
 
-void PACC_SYM(destroy)(struct pacc_parser *p) {
-    unsigned int i, j;
-
-    /* XXX revisit! */
-    return;
-#if 0
-    for (i = 0; i < p->m_bkt_cnt; ++i) {
-        for (j = 0; j < p->m_valid[i * 2]; ++j)
-            free((p->m_bkt[i]+j)->evlis);
-        free(p->m_bkt[i]);
+static void _pacc_destroy_blk_chain(struct pacc_blk *blk) {
+    if (blk) {
+        _pacc_destroy_blk_chain(blk->next);
+        free(blk);
     }
+}
+
+static void _pacc_destroy_bucket(struct pacc_bkt *bkt) {
+    unsigned int i;
+    struct pacc_blk *blk = bkt->blk;
+
+    for (i = 0; i < bkt->valid; ++i) {
+        struct pacc_mid *m;
+
+        if (i > 0 && i % _pacc_MIDS_PER_BLK == 0)
+            blk = blk->next;
+        m = blk->mid + i % _pacc_MIDS_PER_BLK;
+        free(m->evlis);
+    }
+    _pacc_destroy_blk_chain(bkt->blk);
+}
+
+void PACC_SYM(destroy)(struct pacc_parser *p) {
+    unsigned int i;
+
+    for (i = 0; i < p->m_bkt_cnt; ++i)
+        _pacc_destroy_bucket(p->m_bkt + i);
     free(p->m_bkt);
     free(p->err);
     free(p->coord);
-    free(p->m_valid);
     free(p->stack);
     free(p);
-#endif
 }
 
 /* hash table */
@@ -337,15 +351,15 @@ static struct pacc_mid *_pacc_result(struct pacc_parser *p, size_t col, long rul
     bkt = p->m_bkt + h;
     blk = bkt->blk;
     for (i = 0; i < bkt->valid; ++i) {
-        if (i > 0 && i % pacc_MIDS_PER_BLK == 0)
+        if (i > 0 && i % _pacc_MIDS_PER_BLK == 0)
             blk = blk->next;
 //fprintf(stderr, "h = %d, i = %d, valid = %d\n", h, i, bkt->valid);
-	r = blk->mid + i % pacc_MIDS_PER_BLK;
+	r = blk->mid + i % _pacc_MIDS_PER_BLK;
 	if (r->col == col && r->rule >> 4 == rule)
 	    return r;
     }
     if (i == bkt->valid) {
-        if (bkt->valid++ % pacc_MIDS_PER_BLK == 0) {
+        if (bkt->valid++ % _pacc_MIDS_PER_BLK == 0) {
             struct pacc_blk *b = realloc(0, sizeof *b);
             if (!b) pacc_nomem();
             if (blk) blk->next = b;
@@ -358,7 +372,7 @@ static struct pacc_mid *_pacc_result(struct pacc_parser *p, size_t col, long rul
 	//if (!bkt) pacc_nomem();
 	//p->m_valid[h * 2 + 1] = p->m_chain_max;
     }
-    r = blk->mid + i % pacc_MIDS_PER_BLK;
+    r = blk->mid + i % _pacc_MIDS_PER_BLK;
     /* Initialize the new element. */
     r->col = col; r->rule = rule << 4 | uncomputed;
     r->evlis = 0;
@@ -571,29 +585,30 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
 	goto contin;
     }
 
-// XXX need to redo this!
-#if 0
     PACC_TRACE {
-	unsigned char min;
+	unsigned int min, max;
 	unsigned int i;
 	unsigned long a, v;
 
 	a = v = 0;
-	min = _pacc->m_chain_max;
+	min = -1; max = 0;
 	for (i = 0; i < _pacc->m_bkt_cnt; ++i) {
-	    unsigned char valid = _pacc->m_valid[i * 2];
-	    unsigned char alloc = _pacc->m_valid[i * 2 + 1];
+	    unsigned int valid = _pacc->m_bkt[i].valid;
+	    unsigned int alloc;
+
+            alloc = _pacc_MIDS_PER_BLK * ((valid % _pacc_MIDS_PER_BLK != 0) + valid / _pacc_MIDS_PER_BLK);
 	    fprintf(stderr, "%d/%d ", valid, alloc);
 	    v += valid; a += alloc;
-	    if (alloc < min)
-		min = alloc;
+	    if (valid < min)
+		min = valid;
+            if (valid > max)
+                max = valid;
 	}
 	fprintf(stderr, "\n");
 	fprintf(stderr, "used %u buckets\n", _pacc->m_bkt_cnt);
-	fprintf(stderr, "chain length from %d to %d\n", min, _pacc->m_chain_max);
+	fprintf(stderr, "chain length from %d to %d\n", min, max);
 	fprintf(stderr, "total used/allocated: %ld/%ld\n", v, a);
     }
-#endif
 
     if ((cur->rule & 3) == evaluated) {
 	PACC_TRACE fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
