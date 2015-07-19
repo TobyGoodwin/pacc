@@ -1,0 +1,17 @@
+/*
+chars
+parse '"now"' '"now"'
+parse '"and^then"' '"and^then"'
+parse '"odd"' '"odd"'
+parse '"and:even"' '"and:even"'
+parse "'single'" "'single'"
+noparse '"mismatch' Quote 10
+*/
+
+# Testing "\"" and "'" in character classes.
+
+Test :: char * ← Quote Word (Separator Word)* Quote { ref_str() }
+
+Quote :: void ← ['"]
+Word ← [a-z]+
+Separator ← [:^]

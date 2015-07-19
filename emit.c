@@ -625,19 +625,32 @@ static void emit_ccle(struct s_node *n) {
 }
 
 static void cclass_post(struct s_node *n) {
+    char *esc, *p, *q;
+
+    /* escape " characters in the string */
+    esc = realloc(0, 2 * strlen(n->text) + 1);
+    if (!esc) nomem();
+    for (p = n->text, q = esc; *p; ++p, ++q) {
+        if (*p == '\"')
+            *q++ = '\\';
+        *q = *p;
+    }
+    *q = '\0';
+    
     if (n->text[0] == '^') c_str(")");
     c_str(")"); c_open();
     c_strln("_status = parsed;");
     c_strln("_x += _pacc_any_i;");
     c_close(); c_str("else"); c_open();
     //error(n->text, 1);
-    c_str("_pacc_error(_pacc, \".["); c_str(n->text); c_strln("]\", _x);");
+    c_str("_pacc_error(_pacc, \".["); c_str(esc); c_strln("]\", _x);");
     c_strln("_status = no_parse;");
     c_close(); c_close();
     c_str("else"); c_open();
-    c_str("_pacc_error(_pacc, \".["); c_str(n->text); c_strln("]\", _x);");
+    c_str("_pacc_error(_pacc, \".["); c_str(esc); c_strln("]\", _x);");
     c_strln("_status = no_parse;");
     c_close();
+    free(esc);
     debug_post("cclass", n);
 }
 
