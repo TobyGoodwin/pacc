@@ -53,7 +53,7 @@ struct pacc_mid {
     size_t ev_valid;
 };
 
-#define _pacc_MIDS_PER_BLK (4096 / sizeof(struct pacc_mid) - 1)
+#define _pacc_MIDS_PER_BLK (1024 / sizeof(struct pacc_mid) - 1)
 
 /* a block of mids */
 struct pacc_blk {
@@ -262,11 +262,11 @@ static void _pacc_set_bkt_cnt(struct pacc_parser *p) {
 	1318815761, 3584912873U
     };
     int i, p_sz = sizeof(primes) / sizeof(*primes);
-    unsigned long bkt_cnt = n_rules * (p->input_length + 1) / 100;
+    unsigned long max = n_rules * (p->input_length + 1) / 100;
+    //fprintf(stderr, "rules = %ld, length = %ld, max == %ld\n", n_rules, p->input_length, max);
 
-    for (i = 1; i < p_sz; ++i) {
-	if (primes[i] > bkt_cnt) break;
-    }
+    for (i = 1; i < p_sz; ++i)
+	if (primes[i] > max) break;
     p->m_bkt_cnt = primes[i - 1];
 }
 
@@ -338,8 +338,9 @@ void PACC_SYM(destroy)(struct pacc_parser *p) {
 }
 
 /* hash table */
-static struct pacc_mid *_pacc_result(struct pacc_parser *p, size_t col, long rule) {
-    unsigned char i;
+static struct pacc_mid *_pacc_result(struct pacc_parser *p,
+        size_t col, long rule) {
+    unsigned int i;
     unsigned int h;
     struct pacc_blk *blk;
     struct pacc_bkt *bkt;
@@ -350,36 +351,30 @@ static struct pacc_mid *_pacc_result(struct pacc_parser *p, size_t col, long rul
     h = (col + (rule << 6) + (rule << 16) - rule) % p->m_bkt_cnt;
     bkt = p->m_bkt + h;
     blk = bkt->blk;
-    for (i = 0; i < bkt->valid; ++i) {
-        if (i > 0 && i % _pacc_MIDS_PER_BLK == 0)
+    r = blk->mid;
+    for (i = 0; i < bkt->valid; ++i, ++r) {
+        if (i > 0 && i % _pacc_MIDS_PER_BLK == 0) {
             blk = blk->next;
-//fprintf(stderr, "h = %d, i = %d, valid = %d\n", h, i, bkt->valid);
-	r = blk->mid + i % _pacc_MIDS_PER_BLK;
+            r = blk->mid;
+        }
 	if (r->col == col && r->rule >> 4 == rule)
 	    return r;
     }
-    if (i == bkt->valid) {
-        if (bkt->valid++ % _pacc_MIDS_PER_BLK == 0) {
-            struct pacc_blk *b = realloc(0, sizeof *b);
-            if (!b) pacc_nomem();
-            if (blk) blk->next = b;
-            else bkt->blk = b;
-            blk = b;
-            blk->next = 0;
-        }
-//fprintf(stderr, "reallocating bucket %d to %d\n", h, p->m_chain_max);
-	//p->m_bkt[h] = bkt = realloc(bkt, p->m_chain_max * sizeof(struct pacc_mid));
-	//if (!bkt) pacc_nomem();
-	//p->m_valid[h * 2 + 1] = p->m_chain_max;
+    if (bkt->valid++ % _pacc_MIDS_PER_BLK == 0) {
+        struct pacc_blk *b = realloc(0, sizeof *b);
+        if (!b) pacc_nomem();
+        if (blk) blk->next = b;
+        else bkt->blk = b;
+        blk = b;
+        blk->next = 0;
+        r = blk->mid;
     }
-    r = blk->mid + i % _pacc_MIDS_PER_BLK;
     /* Initialize the new element. */
     r->col = col; r->rule = rule << 4 | uncomputed;
     r->evlis = 0;
     r->ev_alloc = r->ev_valid = 0;
     /* Correct use of a side effect in an (unfailing) assert. */
     assert((r->expr_id = 0) == 0);
-    //++(p->m_valid[h * 2]);
     return r;
 }
 
