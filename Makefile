@@ -77,8 +77,10 @@ clean: test/clean
 	@rm -f pacc0.o pacc1.o pacc2.o pacc3.o
 	@rm -f pacc1.c pacc2.c pacc3.c pacc2.d pacc3.d template.c
 
+LIBS=-lgc
+
 test/harness: test/harness.o test/parse.o
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 test/harness.o: test/parse.h
 
@@ -86,10 +88,10 @@ test/parse.c test/parse.h: test/parse.pacc
 	./pacc $^
 
 test/emitter: $(OBJS) test/emitter.o
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 test/feeder: test/feeder.o test/parsefeed.o test/partial.o
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 test/feeder.o: test/parsefeed.h
 
@@ -98,7 +100,7 @@ test/parsefeed.c test/parsefeed.h test/partial.c: test/parsefeed.pacc
 
 test/solo: test/solo.pacc
 	./pacc test/solo.pacc
-	$(CC) -o $@ test/solo.c
+	$(CC) -o $@ test/solo.c $(LIBS)
 
 .PHONY: test/clean
 test/clean: 

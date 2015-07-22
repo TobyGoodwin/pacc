@@ -1,4 +1,7 @@
 {
+#include <gc.h>
+#define realloc(x,s) (GC_REALLOC((x),(s)))
+#define free(x) ((void)x)
 #include "syntax.h"
 }
 

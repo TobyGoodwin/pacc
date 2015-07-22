@@ -1159,24 +1159,37 @@ Word :: ref_t <- w:[a-z]+ " "+ -> w
 @chapter Memory management
 
 @cindex memory management
+@cindex memory leaks
 @findex malloc
 @findex realloc
 @findex free
 @findex nomem
 
-The parsing engine written by pacc uses @code{realloc()} exclusively to
-allocate and free memory.  The intention is to make it as easy as possible to
-supply your own memory allocator: it need only implement the @code{realloc()}
-interface (although of course it must be prepared to accept @samp{0} for either
-argument).
+The parsing engine written by pacc uses only @code{realloc()} to
+allocate memory, and @code{free()} to free memory. We avoid
+@code{malloc()} by observing that @code{malloc(x)} is equivalent to
+@code{realloc(0, x)}. The intention is to make it slightly easier to
+supply your own memory allocator: it need only implement the
+@code{realloc()} and @code{free()} interfaces (although of course it
+must be prepared to accept @samp{0} as the first argument to
+@code{realloc()}).
+
+For example, if you want the parsing engine to use the Boehm garbage
+collector, include the following in the preamble of your grammar.
+
+@verbatim
+#include <gc.h>
+#define realloc(x,s) (GC_REALLOC((x),(s)))
+#define free(x) ((void)x)
+@end verbatim
 
 If a @code{realloc()} call fails, the parsing engine writes the message
 @samp{out of memory} to @code{stderr} and exits non-zero.  If you don't want
 this, you will need to supply your own @code{realloc()} function that handles
 errors.
 
-In theory, the parsing engine written by pacc should not leak memory, although
-finding such bugs has not so far been a high development priority.
+When you call @code{pacc_destroy()}, all memory allocated by the parsing
+engine itself is freed.
 
 For any real application, semantic expressions will need to allocate memory to
 build an AST.  Most of the time, pacc only calls the semantic expressions it
@@ -1184,10 +1197,12 @@ needs, once the parse is complete.  As long as you correctly free the AST you
 should be fine.
 
 Semantic guards are problematic, though: they are called, along with any
-expressions needed for variable bindings, during the parse.  I haven't yet seen
-a realistic application for a semantic guard that would require memory
-allocation; if anyone can convince me that this is useful, I will teach pacc
-how to handle it properly.
+expressions needed for variable bindings, during the parse. This may
+well result in memory being allocated that may not be referenced by the AST
+that is finally built. Currently there is no way to free such memory.
+This is a hard problem to solve, since the results calculated while
+evaluating semantic guards will be reused for the final result if they
+are needed.
 
 @node User manual
 @chapter User manual
@@ -1202,7 +1217,7 @@ features of pacc.
 * Binding::
 * References to the input::
 * Feeding::
-* Interface::
+* Interfaces::
 @end menu
 
 @node Invoking pacc
@@ -1274,10 +1289,11 @@ Some options control the parser (or parsers) that pacc generates.
 
 @table @samp
 @item --name=@var{NAME}
-The parser created by pacc is interfaced to your C program through a number of
-functions with names such as @samp{pacc_new()} (@pxref{Interface}).  When
-the @samp{-n@var{NAME}} or @samp{--name=@var{NAME}} option is specified, the
-functions are instead named @samp{@var{NAME}_new()}.
+The parser created by pacc is interfaced to your C program through a
+number of functions with names such as @samp{pacc_new()}
+(@pxref{Interfaces}). When the @samp{-n@var{NAME}} or
+@samp{--name=@var{NAME}} option is specified, the functions are instead
+named @samp{@var{NAME}_new()}.
 
 @item --feed=@var{FILE}
 With the option @samp{-f@var{FILE}} or @samp{--feed=@var{file}}, pacc writes an
@@ -1567,8 +1583,15 @@ the interface functions are named @samp{pacc_feed_new()}, etc. (or if
 
 @end enumerate
 
-@node Interface
-@section Interface
+@node Interfaces
+@section Interfaces
+
+The @dfn{external interface} specifies how your program invokes the pacc
+parser. The @dfn{internal interface} has considerations for the snippets
+of C code that appear in a @samp{.pacc} file, both in the preamble, and
+the value expressions of parsing rules.
+
+@subsection External interface
 
 @cindex interface
 @cindex API
@@ -1578,21 +1601,25 @@ the interface functions are named @samp{pacc_feed_new()}, etc. (or if
 @cindex parser, invoking
 
 For a parser with a return type of @samp{result}, the external functions
-available (and defined in header file written with the @samp{-d} flag) will
-look approximately like this:
+available (and defined in the header file written with the @samp{-d}
+flag) will look like this:
 
 @verbatim
 struct pacc_parser;
-extern int pacc_trace;
-extern struct pacc_parser *pacc_new(void);
-extern void pacc_input(struct pacc_parser *, char *input, size_t length);
-extern void pacc_destroy(struct pacc_parser *);
-extern int pacc_parse(struct pacc_parser *);
-extern result pacc_result(struct pacc_parser *);
-extern char *pacc_error(struct pacc_parser *);
-extern char *pacc_pos(struct pacc_parser *, const char *);
-extern int pacc_wrap(const char *, char *, size_t, result *result);
+int pacc_trace;
+struct pacc_parser *pacc_new(void);
+void pacc_input(struct pacc_parser *, char *input, size_t length);
+void pacc_destroy(struct pacc_parser *);
+int pacc_parse(struct pacc_parser *);
+result pacc_result(struct pacc_parser *);
+char *pacc_error(struct pacc_parser *);
+char *pacc_pos(struct pacc_parser *, const char *);
+int pacc_wrap(const char *, char *, size_t, result *result);
 @end verbatim
+
+The @samp{pacc} prefix on each function name is the default. You can
+specify a different prefix with the @samp{--name} option. The structure
+will still be called @samp{pacc_parser} though.
 
 The interface is an Object-Oriented one:
 
@@ -1616,6 +1643,37 @@ destroys the parser and returns @samp{0} if the input could not be parsed,
 otherwise evaluates the result of the parse into @samp{result_pointer},
 destroys the parser and returns @samp{1}.
 @end table
+
+@subsection Internal interface
+
+@cindex utility functions
+@cindex functions, utility
+@cindex reserved names
+@cindex namespace
+@findex pacc_nomem
+@findex ref()
+
+There are some utility functions defined by the parser engine that you
+may use in the C code snippets in a @samp{.pacc} file.
+
+@table @samp
+@item void pacc_nomem(void)
+prints the message @samp{pacc: panic: out of memory} to standard error,
+and exits. The parser engine calls @samp{pacc_nomem()} whenever a call
+to @samp{realloc()} fails.
+@end table
+
+Within the C code snippets in a @samp{.pacc} file, you must avoid using
+names that are used by the parser engine itself. All names beginning
+with @samp{pacc_} and @samp{_pacc_} are reserved to the parser engine. 
+
+In addition, the name @samp{ref}, and all names beginning @samp{ref_}
+are reserved.
+
+All allocation and freeing of memory done by the pacc parser engine uses
+only the @samp{realloc()} interface. Thus, an alternative memory
+managers can be used with @samp{#define realloc(x,s) ...} in the
+preamble.
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License
