@@ -82,8 +82,8 @@ Result
     / rArrow? c:Code → c
 
 BareResult
-    ← n:Name { s_both(expr, n, cons(s_coords(pacc_coords), s_text(ident, n))) }
-    / n:Number { s_both(expr, n, s_coords(pacc_coords)) }
+    ← n:Name { s_both(expr, n, cons(s_coords(PACC_COORDS), s_text(ident, n))) }
+    / n:Number { s_both(expr, n, s_coords(PACC_COORDS)) }
 
 CodeNames
     ← n:Name ns:CodeNames { s_set_cons(s_text(ident, n), ns) }
@@ -106,7 +106,7 @@ CodeNames
 */
 
 CodeAndNames ← n:CodeNames →
-	{ s_both(expr, ref_str(), cons(s_coords(pacc_coords), n)) }
+	{ s_both(expr, ref_str(), cons(s_coords(PACC_COORDS), n)) }
 
 Code ← "{" n:CodeAndNames rBrace → n #{ s_child_cons(n, l) }
 

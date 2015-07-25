@@ -407,6 +407,9 @@ static int _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
 /* Given a parser p, and a column col, return the "coordinates" in a
  * pair of ints: coord[0] is the line number, and coord[1] is the column
  * within the line, both 1-based. */
+
+/* XXX this has the same pointer to realloc'd bug that I fixed for
+ * struct mids */
 static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     unsigned int i;
     int x, y, hi, lo;
@@ -455,7 +458,7 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     return c->c;
 }
 /* The userland version */
-#define pacc_coords _pacc_coords(_pacc, _x)
+#define PACC_COORDS _pacc_coords(_pacc, _x)
 
 static void pacc_pr(char **buf, size_t *l, char *fmt, ...) {
     size_t n;
