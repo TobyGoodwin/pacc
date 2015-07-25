@@ -1,10 +1,6 @@
 #ifndef PACC_SYNTAX_H
 #define PACC_SYNTAX_H 1
 
-#include <gc.h>
-#define realloc(x,s) (GC_REALLOC((x),(s)))
-#define free(x) ((void)x)
-
 enum s_type {
     grammar, rule,		/* scaffolding */
     type, alt, seq,		/* fundamentals */
