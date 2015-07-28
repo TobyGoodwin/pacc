@@ -67,6 +67,7 @@ This manual is for GNU pacc (version @value{VERSION}, @value{UPDATED}).
 * Guards::
 * Semantic guards::
 * Bound literals::
+* Error handling::
 * Memory management::
 * User manual::
 * GNU Free Documentation License::
@@ -834,28 +835,32 @@ Leaving aside problematic left association, let's go back to our previous
 calculator.  You'll recall that this handles addition and multiplication, with
 arbitrary whitespace between numbers and symbols. @xref{Handling whitespace}.
 
-Suppose we wanted to make an interactive calculator, with a read-eval-print
-loop.  It should print a prompt, read a line from the user, evaluate it, print
-the result, and then print another prompt.  That's easy enough to achieve, as
-each line read from the user will be a complete utterance in our grammar.
+Suppose we wanted to make an interactive calculator, with a
+read-eval-print loop.  It should print a prompt, read a line from the
+user, evaluate it, print the result, and then print another prompt.
+That's easy enough to achieve, as each line read from the user will be a
+complete utterance in our grammar.
 
-That interface would doubtless be fine in practice for a simple calculator.  But
-for a more complex interactive language, we might like a more sophisticated
-read-eval-print loop.  Suppose we terminate each sum with an equals character,
-so a typical input would be @samp{2+3=}.  That allows us to recognise the end of
-an utterance, which means we can allow the user to enter an expression that
-spreads over several lines.
+That interface would doubtless be fine in practice for a simple
+calculator.  But for a more complex interactive language, we might like
+a more sophisticated read-eval-print loop.  To demonstrate this, let's
+artificially complicate the calculator.  Suppose we terminate each sum
+with an equals character, so a typical input would be @samp{2+3=}. Now
+that we can recognise the end of an utterance, we can allow the user to
+enter an expression that spreads over several lines.
 
 For a calculator, this is overkill, but it's exactly how command-line
-interfaces such as the Unix shells, SQL front-ends, and Lisp-like languages
-typically work.  Normally, a different prompt is printed when further input is
-required; the classic example would be the @samp{PS1} and @samp{PS2} prompts in
-the Bourne shell.  Pacc has support for building interfaces like these.
+interfaces such as the Unix shells, SQL front-ends, and Lisp-like
+languages typically work.  Normally, a different prompt is printed when
+further input is required; the classic example would be the @samp{PS1}
+and @samp{PS2} prompts in the Bourne shell. Pacc has support for
+building interfaces like these.
 
-First, we need to mark in our grammar the points where the input can be split
-across multiple lines.  We do this with the symbol @samp{$}.  This needs to go in
-high level rules, in all the places where it makes sense for the user to hit
-@key{RET} and keep typing, but not, for instance, in the middle of a number.
+First, we need to mark in our grammar the points where the input can be
+split across multiple lines.  We do this with the symbol @samp{$}.  This
+needs to go in high level rules, in all the places where it makes sense
+for the user to hit @key{RET} and keep typing, but not, for instance, in
+the middle of a number.
 
 To strip the idea right down to its basics, consider this trivial grammar,
 which sums two digits, possibly on separate lines.  Note that each digit is
@@ -868,10 +873,11 @@ Sum :: int <- a:Digit $ b:Digit { a + b }
 Digit <- [0-9] "\n"? { ref_0(ref()) - '0' }
 @end verbatim
 
-There is only one possible place to break the input: between the two digits.  We
-have marked that point in the grammar with the @samp{$}.  Now we can invoke pacc
-with the @samp{-f} flag, and it will produce @emph{two} parsers.  The first
-parser is a perfectly normal one; the @samp{$} has no effect at all.
+There is only one possible place to break the input: between the two
+digits.  We have marked that point in the grammar with the @samp{$}.
+Now we can invoke pacc with the @samp{-f} flag, and it will produce
+@emph{two} parsers.  The first parser is a perfectly normal one; the
+@samp{$} has no effect at all.
 
 For the second parser, pacc modifies the grammar to something like this:
 
@@ -1155,6 +1161,63 @@ Digit <- d:[0-9] " "* { ref_0(d) - '0' }
 Word :: ref_t <- w:[a-z]+ " "+ -> w
 @end verbatim
 
+@node Error handling
+@chapter Error handling
+
+@cindex error handling
+@cindex handling errors
+@cindex error recovery
+
+In the event that the parser returns @samp{0} to indicate that the parse
+has failed, then you can call @code{char *pacc_error(struct pacc_parser
+*)} which returns a string indicating the furthest point in the input
+which the parser reached, and what it expected to find there.
+
+Consider the following one-rule grammar:
+
+@verbatim
+FortySomething <- "forty-" ("four" → { 44 } / "five" → { 45 })
+@end verbatim
+
+With the input @samp{fifty-three}, the parser can make no progress at all,
+and @code{pacc_error()} returns @samp{1:1: expected FortySomething}.
+
+With the input @samp{forty-three}, the first 6 characters are
+successfully parsed, and @code{pacc_error()} returns @samp{1:7: expected
+"four", or "five"}.
+
+Note that @code{pacc_error()} is the default name for the error
+function. If you used the @samp{--name=NAME} / @samp{-n NAME} flag, the
+error function will be called @code{NAME_error} instead.
+
+There are currently some limitations on error handling.
+
+@itemize @bullet
+
+@item
+Only one error can ever be reported. There is no option for @dfn{error
+recovery}. For example, a parser for a language like C on
+encountering an error should ideally discard input till the next
+@samp{;} or @samp{@}}, and then resume parsing and reporting further
+errors it may find. This cannot be achieved with a pacc-created parser
+yet.
+
+@item
+Certain pacc constructs are @dfn{syntactic sugar}, and in the process of
+desugaring them, new rules are created. Currently errors may reference
+these names, which are meaningless to the end user. For example, if the
+above grammar is altered to the following by adding a @samp{*} after the
+first string:
+
+@verbatim
+FortySomething ← "forty-"* ("four" → { 44 } / "five" → { 45 }) 
+@end verbatim
+
+then the input @samp{forty-three} produces the error @samp{1:7: expected
+FortySomething:*:0, "four", or "five"}
+
+@end itemize
+
 @node Memory management
 @chapter Memory management
 
@@ -1164,6 +1227,28 @@ Word :: ref_t <- w:[a-z]+ " "+ -> w
 @findex realloc
 @findex free
 @findex nomem
+
+The parsing engine generated by pacc allocates a fair amount of memory. (To
+parse @code{pacc.pacc} itself on a 64-bit architecture, pacc allocates around
+3.5MB of memory.) If a memory allocation call fails, the parsing engine writes
+the message @samp{pacc: panic: out of memory} to @code{stderr} and exits
+non-zero.
+
+When you call @code{pacc_destroy()}, all memory allocated by the parsing
+engine itself is freed.
+
+For any real application, semantic expressions will need to allocate memory to
+build an AST. Most of the time, pacc only calls the semantic expressions it
+needs, once the parse is complete. As long as you correctly free the AST you
+should be fine.
+
+Semantic guards are problematic, though: they are called, along with any
+expressions needed for variable bindings, during the parse. This may
+well result in memory being allocated that may not be referenced by the AST
+that is finally built. Currently there is no way to free such memory.
+This is a hard problem to solve, since the results calculated while
+evaluating semantic guards will be reused for the final result if they
+are needed.
 
 The parsing engine written by pacc uses only @code{realloc()} to
 allocate memory, and @code{free()} to free memory. We avoid
@@ -1182,27 +1267,6 @@ collector, include the following in the preamble of your grammar.
 #define realloc(x,s) (GC_REALLOC((x),(s)))
 #define free(x) ((void)x)
 @end verbatim
-
-If a @code{realloc()} call fails, the parsing engine writes the message
-@samp{out of memory} to @code{stderr} and exits non-zero.  If you don't want
-this, you will need to supply your own @code{realloc()} function that handles
-errors.
-
-When you call @code{pacc_destroy()}, all memory allocated by the parsing
-engine itself is freed.
-
-For any real application, semantic expressions will need to allocate memory to
-build an AST.  Most of the time, pacc only calls the semantic expressions it
-needs, once the parse is complete.  As long as you correctly free the AST you
-should be fine.
-
-Semantic guards are problematic, though: they are called, along with any
-expressions needed for variable bindings, during the parse. This may
-well result in memory being allocated that may not be referenced by the AST
-that is finally built. Currently there is no way to free such memory.
-This is a hard problem to solve, since the results calculated while
-evaluating semantic guards will be reused for the final result if they
-are needed.
 
 @node User manual
 @chapter User manual
@@ -1605,43 +1669,59 @@ available (and defined in the header file written with the @samp{-d}
 flag) will look like this:
 
 @verbatim
+#define PACC_TYPE /* type of start rule */
 struct pacc_parser;
 int pacc_trace;
 struct pacc_parser *pacc_new(void);
 void pacc_input(struct pacc_parser *, char *input, size_t length);
 void pacc_destroy(struct pacc_parser *);
 int pacc_parse(struct pacc_parser *);
-result pacc_result(struct pacc_parser *);
+PACC_TYPE pacc_result(struct pacc_parser *);
 char *pacc_error(struct pacc_parser *);
 char *pacc_pos(struct pacc_parser *, const char *);
-int pacc_wrap(const char *, char *, size_t, result *result);
+int pacc_wrap(const char *, char *, size_t, PACC_TYPE *result);
 @end verbatim
 
 The @samp{pacc} prefix on each function name is the default. You can
 specify a different prefix with the @samp{--name} option. The structure
 will still be called @samp{pacc_parser} though.
 
-The interface is an Object-Oriented one:
+The interface is an object-oriented one:
 
-@table @samp
-@item pacc_new()
+@table @code
+
+@item struct pacc_parser *pacc_new(void)
 returns a new parser object.
-@item pacc_input()
+
+@item void pacc_input(struct pacc_parser *p, char *input, size_t length)
 prepares the parser to parse the given @samp{input} of given @samp{length}.
-@item pacc_parse()
+
+@item int pacc_parse(struct pacc_parser *p)
 performs the parse, returning @samp{1} if it was successful, @samp{0}
 otherwise.
-@item pacc_error()
-if @samp{pacc_parse()} returned @samp{0}, returns a newly-allocated string describing the error that the parser found.
-@item pacc_result()
-if @samp{pacc_parse()} returned @samp{1}, returns the result of the parse.
-@item pacc_destroy()
+
+@item char *pacc_error(struct pacc_parser *p)
+if @code{pacc_parse()} returned @samp{0}, returns a newly-allocated
+string describing the error that the parser found.
+
+@item char *pacc_pos(struct pacc_parser *p, const char *s)
+returns a newly allocated string containing the coordinates of the
+furthest error found, e.g. @samp{3:17: }, followed by @samp{s}.
+
+@item PACC_TYPE pacc_result(struct pacc_parser *p)
+if @code{pacc_parse()} returned @samp{1}, returns the result of the parse.
+
+@item void pacc_destroy(pacc_parser *p)
 destroys the parser.
-@item pacc_wrap()
-is a convenience function that creates a parser, invokes it on the given input,
-destroys the parser and returns @samp{0} if the input could not be parsed,
-otherwise evaluates the result of the parse into @samp{result_pointer},
-destroys the parser and returns @samp{1}.
+
+@item int pacc_wrap(const char *n, char *in, size_t l, PACC_TYPE *result_pointer)
+is a convenience function that creates a parser and invokes it on the
+given input @samp{in} of length @samp{l}. If the input was successfully
+parsed, the result is evaluated into @code{result_pointer} and @samp{1}
+is returned. Otherwise, the parse error is written to @code{stderr}
+prefixed by @samp{name}, and @samp{0} is returned. In either case, the
+parser is destroyed.
+
 @end table
 
 @subsection Internal interface
@@ -1650,30 +1730,45 @@ destroys the parser and returns @samp{1}.
 @cindex functions, utility
 @cindex reserved names
 @cindex namespace
-@findex pacc_nomem
+@findex pacc_nomem()
+@findex pacc_panic()
 @findex ref()
 
 There are some utility functions defined by the parser engine that you
 may use in the C code snippets in a @samp{.pacc} file.
 
-@table @samp
+@table @code
+
+@item int *PACC_COORDS
+is a macro that returns a pointer to a pair of @code{int}s, representing
+the line number and column of the first character matched by the current
+rule. The @code{int}s pointed to are in space belonging to the pacc
+parser, which will be freed on @code{pacc_destroy()}, so you should copy
+the coordinates into your AST.
+
 @item void pacc_nomem(void)
-prints the message @samp{pacc: panic: out of memory} to standard error,
-and exits. The parser engine calls @samp{pacc_nomem()} whenever a call
-to @samp{realloc()} fails.
+prints the message @samp{pacc: panic: out of memory} to @code{stderr},
+and exits. The parser engine calls @samp{pacc_nomem} whenever a call to
+@samp{realloc()} fails.
+
+@item void pacc_panic(const char *error)
+prints @samp{pacc: panic: } followed by @code{error} to @code{stderr}
+and exits.
+
 @end table
 
 Within the C code snippets in a @samp{.pacc} file, you must avoid using
 names that are used by the parser engine itself. All names beginning
-with @samp{pacc_} and @samp{_pacc_} are reserved to the parser engine. 
+with @samp{pacc_}, @samp{PACC_} and @samp{_pacc_} are reserved to the
+parser engine.
 
 In addition, the name @samp{ref}, and all names beginning @samp{ref_}
 are reserved.
 
-All allocation and freeing of memory done by the pacc parser engine uses
-only the @samp{realloc()} interface. Thus, an alternative memory
-managers can be used with @samp{#define realloc(x,s) ...} in the
-preamble.
+All allocation of memory done by the pacc parser engine uses only
+@code{realloc()} and @code{free()} interface. Thus, an alternative
+memory manager can be used with @samp{#define realloc(x,s) ... #define
+free(x) ...} in the preamble.
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License

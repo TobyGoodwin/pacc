@@ -419,9 +419,10 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
     lo = 0; hi = p->coord_valid;
     while (lo < hi) {
 	int mid = (lo + hi) / 2;
-	if (cs[mid].n < col) lo = mid + 1;
-	else if (cs[mid].n > col) hi = mid;
-	else return cs[mid].c;
+        c = cs + mid;
+	if (c->n < col) lo = mid + 1;
+	else if (c->n > col) hi = mid;
+	else return c->c;
     }
 
     /* increase list if necessary */
@@ -606,6 +607,8 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
 	fprintf(stderr, "used %u buckets\n", _pacc->m_bkt_cnt);
 	fprintf(stderr, "chain length from %d to %d\n", min, max);
 	fprintf(stderr, "total used/allocated: %ld/%ld\n", v, a);
+        fprintf(stderr, "coord_valid: %ld\n", _pacc->coord_valid);
+        fprintf(stderr, "coord_alloc: %ld\n", _pacc->coord_alloc);
     }
 
     if ((cur->rule & 3) == evaluated) {
