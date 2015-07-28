@@ -46,8 +46,8 @@ struct pacc_mid {
     long expr_id; /* id of the expression to evaluate, yielding... */
     union PACC_SYM(vals) value; /* ... the semantic value */
     struct {
-	long call_id; /* a call */
-	size_t col; /* a column */
+        long call_id; /* a call */
+        size_t col; /* a column */
     } *evlis;
     size_t ev_alloc;
     size_t ev_valid;
@@ -73,19 +73,14 @@ static void _pacc_save_core() __attribute__((unused));
 static void _pacc_save_core(long c, size_t col) {
     PACC_TRACE fprintf(stderr, "_pacc_save_core(%ld, %ld)\n", c, col);
     if (cur->ev_valid == cur->ev_alloc) {
-	cur->ev_alloc = cur->ev_alloc * 2 + 1;
-	cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
-	if (!cur->evlis) pacc_nomem();
+        cur->ev_alloc = cur->ev_alloc * 2 + 1;
+        cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
+        if (!cur->evlis) pacc_nomem();
     }
     cur->evlis[cur->ev_valid].call_id = c;
     cur->evlis[cur->ev_valid].col = col;
     ++cur->ev_valid;
 }
-
-struct _pacc_coord {
-    size_t n;
-    int c[2];
-};
 
 /* a pacc parser */
 struct pacc_parser {
@@ -109,19 +104,19 @@ struct pacc_parser {
     size_t err_col;
 
     /* Dynamic array of co-ordinates */
-    struct _pacc_coord *coord;
+    struct _pacc_coord_memo *coord;
     size_t coord_alloc;
     size_t coord_valid;
 };
 
 static void _pacc_push(void *x, size_t s, struct pacc_parser *p) {
     if (p->sp + s >= p->stack_alloc) {
-	size_t l = 2 * (p->stack_alloc - p->stack) + s;
-	unsigned char *n = realloc(p->stack, l);
-	if (!n) pacc_nomem();
-	p->sp = n + (p->sp - p->stack);
-	p->stack = n;
-	p->stack_alloc = n + l + 1;
+        size_t l = 2 * (p->stack_alloc - p->stack) + s;
+        unsigned char *n = realloc(p->stack, l);
+        if (!n) pacc_nomem();
+        p->sp = n + (p->sp - p->stack);
+        p->stack = n;
+        p->stack_alloc = n + l + 1;
     }
     assert(p->sp >= p->stack && p->sp + s < p->stack_alloc);
     memcpy(p->sp, x, s);
@@ -235,7 +230,7 @@ static int _pacc_utf8_char(unsigned char *p, int m, uint32_t *c) {
     uint32_t state = PACC_UTF8_ACCEPT;
     int i = 0;
     do
-	if (state == PACC_UTF8_REJECT || i == m) return 0;
+        if (state == PACC_UTF8_REJECT || i == m) return 0;
     while (pacc_decode(&state, c, p[i++]));
     return i;
 }
@@ -257,16 +252,16 @@ perl -le '$x=1;while(($e=int(exp($x/1)))<2**32){print "./primes ",$e," ",100+$e,
  */
 static void _pacc_set_bkt_cnt(struct pacc_parser *p) {
     static unsigned int primes[] = {
-	3, 7, 23, 59, 149, 409, 1097, 2999, 8111, 22027, 59879, 162779, 442439,
-	1202609, 3269029, 8886113, 24154957, 65659969, 178482319, 485165237,
-	1318815761, 3584912873U
+        3, 7, 23, 59, 149, 409, 1097, 2999, 8111, 22027, 59879, 162779, 442439,
+        1202609, 3269029, 8886113, 24154957, 65659969, 178482319, 485165237,
+        1318815761, 3584912873U
     };
     int i, p_sz = sizeof(primes) / sizeof(*primes);
     unsigned long max = n_rules * (p->input_length + 1) / 100;
     //fprintf(stderr, "rules = %ld, length = %ld, max == %ld\n", n_rules, p->input_length, max);
 
     for (i = 1; i < p_sz; ++i)
-	if (primes[i] > max) break;
+        if (primes[i] > max) break;
     p->m_bkt_cnt = primes[i - 1];
 }
 
@@ -296,10 +291,10 @@ void PACC_SYM(input)(struct pacc_parser *p, char *s, size_t l) {
     if (!p->m_bkt) pacc_nomem();
     //p->m_valid = realloc(0, 2 * p->m_bkt_cnt);
     for (i = 0; i < p->m_bkt_cnt; ++i) {
-	p->m_bkt[i].blk = 0;
-	p->m_bkt[i].valid = 0;
-	//p->m_valid[i * 2] = 0; /* valid */
-	//p->m_valid[i * 2 + 1] = 0; /* allocated */
+        p->m_bkt[i].blk = 0;
+        p->m_bkt[i].valid = 0;
+        //p->m_valid[i * 2] = 0; /* valid */
+        //p->m_valid[i * 2 + 1] = 0; /* allocated */
     }
 }
 
@@ -357,8 +352,8 @@ static struct pacc_mid *_pacc_result(struct pacc_parser *p,
             blk = blk->next;
             r = blk->mid;
         }
-	if (r->col == col && r->rule >> 4 == rule)
-	    return r;
+        if (r->col == col && r->rule >> 4 == rule)
+            return r;
     }
     if (bkt->valid++ % _pacc_MIDS_PER_BLK == 0) {
         struct pacc_blk *b = realloc(0, sizeof *b);
@@ -404,34 +399,41 @@ static int _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
     return 0; /* for the fail() macro */
 }
 
-/* Given a parser p, and a column col, return the "coordinates" in a
- * pair of ints: coord[0] is the line number, and coord[1] is the column
- * within the line, both 1-based. */
+struct _pacc_coord {
+    unsigned int line;
+    unsigned int col;
+};
 
-/* XXX this has the same pointer to realloc'd bug that I fixed for
- * struct mids */
-static int *_pacc_coords(struct pacc_parser *p, size_t col) {
+struct _pacc_coord_memo {
+    size_t n;
+    struct _pacc_coord c;
+};
+
+/* Given a parser p, and a column col, return the "coordinates" in a
+ * struct _pacc_coord. Both line and col are 1-based. */
+
+static struct _pacc_coord _pacc_coords(struct pacc_parser *p, size_t col) {
     unsigned int i;
     int x, y, hi, lo;
-    struct _pacc_coord *c, *cs = p->coord;
+    struct _pacc_coord_memo *c, *cs = p->coord;
 
     /* binary search */
     lo = 0; hi = p->coord_valid;
     while (lo < hi) {
-	int mid = (lo + hi) / 2;
+        int mid = (lo + hi) / 2;
         c = cs + mid;
-	if (c->n < col) lo = mid + 1;
-	else if (c->n > col) hi = mid;
-	else return c->c;
+        if (c->n < col) lo = mid + 1;
+        else if (c->n > col) hi = mid;
+        else return c->c;
     }
 
     /* increase list if necessary */
     if (p->coord_valid + 1 > p->coord_alloc) {
-    	struct _pacc_coord *n;
-	p->coord_alloc = p->coord_alloc * 2 + 1;
-	n = realloc(p->coord, p->coord_alloc * sizeof *n);
-	if (!n) pacc_nomem();
-	cs = p->coord = n;
+        struct _pacc_coord_memo *n;
+        p->coord_alloc = p->coord_alloc * 2 + 1;
+        n = realloc(p->coord, p->coord_alloc * sizeof *n);
+        if (!n) pacc_nomem();
+        cs = p->coord = n;
     }
 
     /* move hole to the right place */
@@ -440,26 +442,27 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
 
     /* find the coordinates */
     c = cs + lo; c->n = col;
-    if (lo > 0) { y = cs[lo - 1].c[0]; i = cs[lo - 1].n; }
+    if (lo > 0) { y = cs[lo - 1].c.line; i = cs[lo - 1].n; }
     else { y = 1; /* line numbering is 1-based, natch */ i = 0; }
     x = 1;
     while (i < col) {
-	uint32_t c;
-	int l = _pacc_utf8_char(p->string + i, p->input_length - i, &c);
-	if (!l) pacc_panic("invalid UTF-8 input");
-	i += l;
-	++x;
-	if (c == '\n') { ++y; x = 1; }
+        uint32_t c;
+        int l = _pacc_utf8_char(p->string + i, p->input_length - i, &c);
+        if (!l) pacc_panic("invalid UTF-8 input");
+        i += l;
+        ++x;
+        if (c == '\n') { ++y; x = 1; }
     }
 
     /* memoize them */
-    c->c[0] = y;
+    c->c.line = y;
     /* column numbering is also 1-based; start points to \n */
-    c->c[1] = x;
+    c->c.col = x;
     return c->c;
 }
 /* The userland version */
-#define PACC_COORDS _pacc_coords(_pacc, _x)
+#define PACC_LINE (_pacc_coords(_pacc, _x).line)
+#define PACC_COL (_pacc_coords(_pacc, _x).col)
 
 static void pacc_pr(char **buf, size_t *l, char *fmt, ...) {
     size_t n;
@@ -479,12 +482,12 @@ static void pacc_pr(char **buf, size_t *l, char *fmt, ...) {
 }
 
 char *PACC_SYM(pos)(struct pacc_parser *p, const char *s) {
-    int *coords;
+    struct _pacc_coord c;
     size_t l = 0;
     char *r = 0;
 
-    coords = _pacc_coords(p, p->err_col);
-    pacc_pr(&r, &l, "%d:%d: %s", coords[0], coords[1], s);
+    c = _pacc_coords(p, p->err_col);
+    pacc_pr(&r, &l, "%d:%d: %s", c.line, c.col, s);
 
     return r;
 }
@@ -499,26 +502,26 @@ char *PACC_SYM(error)(struct pacc_parser *p) {
     //printf("got `%c', ", p->string[p->err_col]); /* XXX UTF-8? */
 
     if (p->err_valid && p->err[0][0] == '.')
-	pacc_pr(&r, &l, "expected ");
+        pacc_pr(&r, &l, "expected ");
     for (i = 0; i < p->err_valid; ++i) {
-	char *s = p->err[i];
-	if (*s == '.') ++s;
-	for ( ; *s; ++s) {
-	    if (isprint(*s)) pacc_pr(&r, &l, "%c", *s);
-	    else switch (*s) {
-		case '\n':
-		    pacc_pr(&r, &l, "\\n");
-		    break;
-		default:
-		    pacc_pr(&r, &l, "\\x%02x", *s);
-		    break;
-	    }
-	}
+        char *s = p->err[i];
+        if (*s == '.') ++s;
+        for ( ; *s; ++s) {
+            if (isprint(*s)) pacc_pr(&r, &l, "%c", *s);
+            else switch (*s) {
+                case '\n':
+                    pacc_pr(&r, &l, "\\n");
+                    break;
+                default:
+                    pacc_pr(&r, &l, "\\x%02x", *s);
+                    break;
+            }
+        }
 
-	if (i + 1 < p->err_valid) {
-	    pacc_pr(&r, &l, ", ");
-	    if (i + 2 == p->err_valid) pacc_pr(&r, &l, "or ");
-	}
+        if (i + 1 < p->err_valid) {
+            pacc_pr(&r, &l, ", ");
+            if (i + 2 == p->err_valid) pacc_pr(&r, &l, "or ");
+        }
     }
     return PACC_SYM(pos)(p, r);
     //printf("%s\n", r);
@@ -544,78 +547,78 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
     cur = _pacc_result(_pacc, _x, start_rule_id);
     /* pacc grammars are anchored on the right */
     if ((cur->rule & 3) == parsed && cur->remainder != _pacc->input_length) {
-	_pacc_error(_pacc, ".end-of-input", cur->remainder);
-	cur->rule = (cur->rule & ~3) | no_parse;
+        _pacc_error(_pacc, ".end-of-input", cur->remainder);
+        cur->rule = (cur->rule & ~3) | no_parse;
     }
     if (!_evaling && (cur->rule & 3) == parsed) {
-	unsigned char *stack_save;
+        unsigned char *stack_save;
 
-	PACC_TRACE fprintf(stderr, "PARSED! Time to start eval...\n");
-	_evaling = 1;
-	_pacc_ev_i = 0;
+        PACC_TRACE fprintf(stderr, "PARSED! Time to start eval...\n");
+        _evaling = 1;
+        _pacc_ev_i = 0;
     eval_loop:
-	PACC_TRACE fprintf(stderr, "eval loop with _pacc_ev_i == %ld\n", _pacc_ev_i);
-	stack_save = _pacc->sp;
+        PACC_TRACE fprintf(stderr, "eval loop with _pacc_ev_i == %ld\n", _pacc_ev_i);
+        stack_save = _pacc->sp;
     eval1:
-	while (_pacc_ev_i < cur->ev_valid) {
-	    int col, rule;
-	    rule = cur->evlis[_pacc_ev_i].call_id;
-	    col = cur->evlis[_pacc_ev_i].col;
-	    ++_pacc_ev_i;
-	    PACC_TRACE fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
-	    _pacc_Push(cur);
-	    _pacc_Push(_pacc_ev_i);
-	    cur = _pacc_result(_pacc, col, rule);
-	    _pacc_ev_i = 0;
-	}
-	if ((cur->rule & 3) != evaluated && cur->expr_id) {
-	    _x = cur->col;
-	    _st = cur->expr_id;
-	    goto top;
-	}
+        while (_pacc_ev_i < cur->ev_valid) {
+            int col, rule;
+            rule = cur->evlis[_pacc_ev_i].call_id;
+            col = cur->evlis[_pacc_ev_i].col;
+            ++_pacc_ev_i;
+            PACC_TRACE fprintf(stderr, "eval loop: r%d @ c%d\n", rule, col);
+            _pacc_Push(cur);
+            _pacc_Push(_pacc_ev_i);
+            cur = _pacc_result(_pacc, col, rule);
+            _pacc_ev_i = 0;
+        }
+        if ((cur->rule & 3) != evaluated && cur->expr_id) {
+            _x = cur->col;
+            _st = cur->expr_id;
+            goto top;
+        }
     _pacc_expr_done:
-	cur->rule = (cur->rule & ~3) | evaluated;
-	if (_pacc->sp != stack_save) {
-	    _pacc_Pop(_pacc_ev_i);
-	    _pacc_Pop(cur);
-	    goto eval1;
-	}
-	PACC_TRACE fprintf(stderr, "eval finished\n");
-	goto contin;
+        cur->rule = (cur->rule & ~3) | evaluated;
+        if (_pacc->sp != stack_save) {
+            _pacc_Pop(_pacc_ev_i);
+            _pacc_Pop(cur);
+            goto eval1;
+        }
+        PACC_TRACE fprintf(stderr, "eval finished\n");
+        goto contin;
     }
 
     PACC_TRACE {
-	unsigned int min, max;
-	unsigned int i;
-	unsigned long a, v;
+        unsigned int min, max;
+        unsigned int i;
+        unsigned long a, v;
 
-	a = v = 0;
-	min = -1; max = 0;
-	for (i = 0; i < _pacc->m_bkt_cnt; ++i) {
-	    unsigned int valid = _pacc->m_bkt[i].valid;
-	    unsigned int alloc;
+        a = v = 0;
+        min = -1; max = 0;
+        for (i = 0; i < _pacc->m_bkt_cnt; ++i) {
+            unsigned int valid = _pacc->m_bkt[i].valid;
+            unsigned int alloc;
 
             alloc = _pacc_MIDS_PER_BLK * ((valid % _pacc_MIDS_PER_BLK != 0) + valid / _pacc_MIDS_PER_BLK);
-	    fprintf(stderr, "%d/%d ", valid, alloc);
-	    v += valid; a += alloc;
-	    if (valid < min)
-		min = valid;
+            fprintf(stderr, "%d/%d ", valid, alloc);
+            v += valid; a += alloc;
+            if (valid < min)
+                min = valid;
             if (valid > max)
                 max = valid;
-	}
-	fprintf(stderr, "\n");
-	fprintf(stderr, "used %u buckets\n", _pacc->m_bkt_cnt);
-	fprintf(stderr, "chain length from %d to %d\n", min, max);
-	fprintf(stderr, "total used/allocated: %ld/%ld\n", v, a);
+        }
+        fprintf(stderr, "\n");
+        fprintf(stderr, "used %u buckets\n", _pacc->m_bkt_cnt);
+        fprintf(stderr, "chain length from %d to %d\n", min, max);
+        fprintf(stderr, "total used/allocated: %ld/%ld\n", v, a);
         fprintf(stderr, "coord_valid: %ld\n", _pacc->coord_valid);
         fprintf(stderr, "coord_alloc: %ld\n", _pacc->coord_alloc);
     }
 
     if ((cur->rule & 3) == evaluated) {
-	PACC_TRACE fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
-	_pacc->value = cur->value.u0;
+        PACC_TRACE fprintf(stderr, "parsed with value " TYPE_PRINTF "\n", cur->value.u0); /* XXX u0 */
+        _pacc->value = cur->value.u0;
     } else if ((cur->rule & 3) == parsed) {
-	PACC_TRACE fprintf(stderr, "parsed with void value\n");
+        PACC_TRACE fprintf(stderr, "parsed with void value\n");
     } else PACC_TRACE fprintf(stderr, "not parsed\n");
     return (cur->rule & 3) == evaluated;
 }
@@ -634,9 +637,9 @@ int PACC_SYM(wrap)(const char *name, char *addr, size_t l, PACC_TYPE *result) {
     parsed = PACC_SYM(parse)(p);
     if (parsed) *result = PACC_SYM(result)(p);
     else {
-	char *e = PACC_SYM(error)(p);
-	fprintf(stderr, "%s:%s\n", name, e);
-	free(e);
+        char *e = PACC_SYM(error)(p);
+        fprintf(stderr, "%s:%s\n", name, e);
+        free(e);
     }
 
     PACC_SYM(destroy)(p);

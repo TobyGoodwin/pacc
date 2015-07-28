@@ -11,5 +11,5 @@ parse xxy 3
  */
 
 S ← [xy]* c:C → c / [x]* d:D → d
-C ← &{ PACC_COORDS[1], 1 } "z" → { PACC_COORDS[1] }
-D ← &{ PACC_COORDS[1], 1 } "y" → { PACC_COORDS[1] }
+C ← &{ PACC_COL, 1 } "z" → { PACC_COL }
+D ← &{ PACC_COL, 1 } "y" → { PACC_COL }

@@ -31,10 +31,10 @@ struct s_node *s_text(enum s_type t, char *n) {
     return r;
 }
 
-struct s_node *s_coords(int *c) {
+struct s_node *s_coords(unsigned int line, unsigned int col) {
     struct s_node *r = s_new(coords);
-    r->pair[0] = c[0];
-    r->pair[1] = c[1];
+    r->pair[0] = line;
+    r->pair[1] = col;
     return r;
 }
 

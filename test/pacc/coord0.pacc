@@ -10,4 +10,4 @@ parse 12£4€6𝄞85 9
 */
 
 S ← (!"5" .)* c:C → c
-C ← "5" → { PACC_COORDS[1] }
+C ← "5" → { PACC_COL }

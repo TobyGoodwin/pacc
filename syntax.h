@@ -34,7 +34,7 @@ extern struct s_node *create(void);
 extern struct s_node *s_new(enum s_type);
 extern struct s_node *s_num(enum s_type, int);
 extern struct s_node *s_text(enum s_type, char *);
-extern struct s_node *s_coords(int *);
+extern struct s_node *s_coords(unsigned int line, unsigned int col);
 extern struct s_node *s_child(struct s_node *, struct s_node *);
 extern struct s_node *s_kid(enum s_type, struct s_node *);
 extern struct s_node *s_both(enum s_type, char *, struct s_node *);
