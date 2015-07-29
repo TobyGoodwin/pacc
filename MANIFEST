@@ -59,7 +59,6 @@ test/bad/lr2.pacc
 test/bad/path0.pacc
 test/bad/path1.pacc
 test/bad/path2.pacc
-test/bad/reach0.pacc
 test/bad/redef.pacc
 test/bad/rep0.pacc
 test/bad/res0.pacc
@@ -67,6 +66,7 @@ test/bad/res1.pacc
 test/bad/rms0.pacc
 test/bad/run.sh
 test/bad/scope0.pacc
+test/bad/type0.pacc
 test/emit/mk-and0.c
 test/emit/mk-any0.c
 test/emit/mk-baf0.c
@@ -111,6 +111,7 @@ test/emit/run.sh
 test/feed/add0.pacc
 test/feed/add1.pacc
 test/feed/baf4.pacc
+test/feed/nil.pacc
 test/feed/run.sh
 test/feed/tut0.pacc
 test/feed/tut1.pacc
@@ -150,6 +151,9 @@ test/pacc/bind2.pacc
 test/pacc/bind3.pacc
 test/pacc/bind4.pacc
 test/pacc/bind5.pacc
+test/pacc/bind6.pacc
+test/pacc/bind7.pacc
+test/pacc/bind8.pacc
 test/pacc/blit0.pacc
 test/pacc/blit1.pacc
 test/pacc/blit2.pacc
@@ -163,6 +167,7 @@ test/pacc/class4.pacc
 test/pacc/class5.pacc
 test/pacc/class6.pacc
 test/pacc/class7.pacc
+test/pacc/class8.pacc
 test/pacc/code0.pacc
 test/pacc/comment0.pacc
 test/pacc/comment1.pacc
@@ -181,6 +186,7 @@ test/pacc/guard4.pacc
 test/pacc/guard5.pacc
 test/pacc/guard6.pacc
 test/pacc/guard7.pacc
+test/pacc/heisen0.pacc
 test/pacc/lex0.pacc
 test/pacc/lex1.pacc
 test/pacc/lit0.pacc
@@ -216,6 +222,7 @@ test/pacc/tut0.pacc
 test/pacc/tut1.pacc
 test/pacc/tut2.pacc
 test/pacc/tut3.pacc
+test/pacc/tut4a.pacc
 test/pacc/tut4.pacc
 test/pacc/tut5.pacc
 test/pacc/tut6.pacc
@@ -240,3 +247,5 @@ test/pacc/val8.pacc
 test/self/minus.pacc
 test/self/minus.test
 test/self/run.sh
+test/warn/reach0.pacc
+test/warn/run.sh

@@ -8,7 +8,7 @@ Files to update for a release include:
 
 Tag the release:
 
- git ...
+ git tag -s v0.2
 
 Build the tarball:
 
