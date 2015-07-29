@@ -11,7 +11,7 @@ For this release:
 Nothing is automatically installed; here's a reasonable set of commands to copy
 and paste for a FHS-compliant system.
 
- cp pacc /usr/local/bin
- cp doc/pacc.man /usr/local/share/man/man1/pacc.1
- cp doc/pacc.info /usr/local/share/info &&
-   gzip /usr/local/share/info/pacc.info
+ prefix=/usr/local
+ cp pacc $prefix/bin
+ cp doc/pacc.man $prefix/share/man/man1/pacc.1
+ cp doc/pacc.info $prefix/share/info && gzip $prefix/share/info/pacc.info

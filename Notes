@@ -1,0 +1,15 @@
+Release
+=======
+
+Files to update for a release include:
+
+ arg.c
+ README
+
+Tag the release:
+
+ git ...
+
+Build the tarball:
+
+ make release
