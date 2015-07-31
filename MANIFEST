@@ -174,6 +174,8 @@ test/pacc/comment1.pacc
 test/pacc/comment2.pacc
 test/pacc/coord0.pacc
 test/pacc/coord1.pacc
+test/pacc/coord2.pacc
+test/pacc/coord3.pacc
 test/pacc/end0.pacc
 test/pacc/eps0.pacc
 test/pacc/err0.pacc
