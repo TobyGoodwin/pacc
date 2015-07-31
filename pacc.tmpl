@@ -35,6 +35,16 @@ enum pacc_status {
 
 typedef size_t *ref_t;
 
+struct _pacc_coord {
+    unsigned int line;
+    unsigned int col;
+};
+
+struct _pacc_coord_memo {
+    size_t n;
+    struct _pacc_coord c;
+};
+
 #EMIT_DECLARATIONS
 
 /* an intermediate result, or "mid" */
@@ -399,16 +409,6 @@ static int _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
     return 0; /* for the fail() macro */
 }
 
-struct _pacc_coord {
-    unsigned int line;
-    unsigned int col;
-};
-
-struct _pacc_coord_memo {
-    size_t n;
-    struct _pacc_coord c;
-};
-
 /* Given a parser p, and a column col, return the "coordinates" in a
  * struct _pacc_coord. Both line and col are 1-based. */
 
@@ -444,8 +444,8 @@ static struct _pacc_coord _pacc_coords(struct pacc_parser *p, size_t col) {
     c = cs + lo; c->n = col;
     if (lo > 0) {
         /* start from last position */
-        struct _pacc_coord *l = cs + lo - 1;
-        y = l->c[0]; x = l->c[1]; i = l->n;
+        struct _pacc_coord_memo *l = cs + lo - 1;
+        y = l->c.line; x = l->c.col; i = l->n;
     } else {
         /* 1-based counting for rows and columns */
         y = 1; x = 1; i = 0;

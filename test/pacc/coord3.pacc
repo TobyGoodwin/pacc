@@ -7,9 +7,9 @@ parse naab 8
 
 /* reallocating coords list used to break old pointers */
 
-S ← "n"+ a:A &{ a[1] > 2 } → 17
-  / "n"+ a:A &{ a[1] < 3 } b:B → { a[1] * b[1] }
+S ← "n"+ a:A &{ a.col > 2 } → 17
+  / "n"+ a:A &{ a.col < 3 } b:B → { a.col * b.col }
 
-A :: int * ← "a"+ → PACC_COORDS
-B ← "b"+ → PACC_COORDS
+A :: struct _pacc_coord ← "a"+ → { _pacc_coords(_pacc, _x) }
+B ← "b"+ → { _pacc_coords(_pacc, _x) }
 
