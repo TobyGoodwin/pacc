@@ -1,13 +1,15 @@
 /*
 type int
 parse nna 17
-parse na 2
+parse nab 6
+parse naab 8
 */
 
 /* reallocating coords list used to break old pointers */
 
-S ← "n"+ a:A &{ printf("%d\n", a[1]), a[1] > 2 } → 17
-  / "n"+ b:A &{ b[1] < 3 } → { b[1] }
+S ← "n"+ a:A &{ a[1] > 2 } → 17
+  / "n"+ a:A &{ a[1] < 3 } b:B → { a[1] * b[1] }
 
 A :: int * ← "a"+ → PACC_COORDS
+B ← "b"+ → PACC_COORDS
 
