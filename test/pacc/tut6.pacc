@@ -8,8 +8,8 @@ parse '(((2+3)*4)*(2+3))' 100
 */
 
 Sum <- p:Product "+" s:Sum -> { p + s }
-    / p:Product -> p
+    / Product
 Product <- t:Term "*" p:Product -> { t * p }
-    / t:Term -> t
-Term <- d:Decimal -> d / "(" s:Sum ")" -> s
+    / Term
+Term <- Decimal / "(" s:Sum ")" -> s
 Decimal <- [0-9]+ -> { atoi(ref_str()) }

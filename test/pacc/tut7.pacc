@@ -11,11 +11,12 @@ parse '12+34' 46
 noparse '1 2 + 3 4' 'Plus, or end-of-input' 3
 */
 
-Sum <- _ p:Product Plus s:Sum -> { p + s }
-       / p:Product -> p
+Expression <- _ s:Sum -> s
+Sum <- p:Product Plus s:Sum -> { p + s }
+       / Product
 Product <- t:Term Star p:Product -> { t * p }
-         / t:Term -> t
-Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
+         / Term
+Term <- Decimal / lBrace s:Sum rBrace -> s
 # lexical elements
 Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
 Plus :: void <- "+" _

@@ -10,7 +10,7 @@ noparse 4+ Sum 3
 */
 
 Sum <- p:Product "+" s:Sum -> { p + s }
-    / p:Product -> p
+    / Product
 Product <- d:Decimal "*" p:Product -> { d * p }
-    / d:Decimal -> d
+    / Decimal
 Decimal <- [0-9]+ -> { atoi(ref_str()) }

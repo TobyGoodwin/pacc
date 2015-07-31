@@ -6,10 +6,10 @@ parse 35  '(' '' 2+3 ' )' '*' '(3 +' '4)' =
 */
 Expression <- _ s:Sum $ Equals -> s
 Sum <- p:Product $ Plus $ s:Sum -> { p + s }
-     / p:Product -> p
+     / Product
 Product <- t:Term $ Star $ p:Product -> { t * p }
-         / t:Term -> t
-Term <- d:Decimal -> d / lBrace $ s:Sum $ rBrace -> s
+         / Term
+Term <- Decimal / lBrace $ s:Sum $ rBrace -> s
 # lexical elements
 Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
 Plus :: void <- "+" _

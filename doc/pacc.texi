@@ -85,8 +85,8 @@ This manual is for GNU pacc (version @value{VERSION}, @value{UPDATED}).
 A @dfn{parser} is a computer program that interprets the utterances of a
 @dfn{computer language}.  A computer language is more properly known as a
 @dfn{formal language}.  (Formal languages are almost entirely @emph{un}like
-natural languages---@emph{English}, @emph{Pǔtōnghuà}, @emph{Castellano}, etc;
-it is usually a mistake to make analogies or comparisons between human
+natural languages---@emph{English}, @emph{Pǔtōnghuà}, @emph{Castellano}, etc.
+It is usually a mistake to make analogies or comparisons between human
 languages and computer languages.)
 
 A computer language is a (usually) infinite set of @dfn{utterances} or
@@ -618,9 +618,9 @@ calculator.
 
 @verbatim
 Sum <- p:Product "+" s:Sum -> { p + s }
-     / p:Product -> p
+    / Product
 Product <- d:Decimal "*" p:Product -> { d * p }
-    / d:Decimal -> d
+    / Decimal
 Decimal <- [0-9]+ -> { atoi(ref_str()) }
 @end verbatim
 
@@ -634,10 +634,10 @@ override it with brackets.  That's easy to implement too.
 
 @verbatim
 Sum <- p:Product "+" s:Sum -> { p + s }
-     / p:Product -> p
+    / Product
 Product <- t:Term "*" p:Product -> { t * p }
-    / t:Term -> t
-Term <- d:Decimal -> d / "(" s:Sum ")" -> s
+    / Term
+Term <- Decimal / "(" s:Sum ")" -> s
 Decimal <- [0-9]+ -> { atoi(ref_str()) }
 @end verbatim
 
@@ -680,10 +680,10 @@ looks like.
 @verbatim
 Expression <- _ s:Sum -> s
 Sum <- p:Product Plus s:Sum -> { p + s }
-     / p:Product -> p
+       / Product
 Product <- t:Term Star p:Product -> { t * p }
-         / t:Term -> t
-Term <- d:Decimal -> d / lBrace s:Sum rBrace -> s
+         / Term
+Term <- Decimal / lBrace s:Sum rBrace -> s
 # lexical elements
 Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
 Plus :: void <- "+" _
@@ -711,7 +711,7 @@ grammar, our first adder, which looks like this:
 
 @verbatim
 Sum <- d:Decimal "+" s:Sum -> { d + s }
-     / d:Decimal -> d
+    / Decimal
 Decimal <- [0-9]+ -> { atoi(ref_str()) }
 @end verbatim
 
@@ -721,7 +721,7 @@ Implementing subtraction looks simple; add another alternative to the
 @verbatim
 Sum <- d:Decimal "+" s:Sum -> { d + s }
      / d:Decimal "-" s:Sum -> { d - s }
-     / d:Decimal -> d
+     / Decimal
 @end verbatim
 
 This correctly evaluates @samp{3-2} giving the answer 1.  Unfortunately, if we
@@ -737,7 +737,7 @@ whether or not we rearrange the first branch of the rule.)
 @verbatim
 Sum <- d:Decimal "+" s:Sum -> { d + s }
      / s:Sum "-" d:Decimal -> { s - d }
-     / d:Decimal -> d
+     / Decimal
 @end verbatim
 
 But this won't work in a PEG.  When we try to compile it, pacc tells us:
@@ -915,10 +915,10 @@ Here's what the complete grammar for the interactive calculator will look like,
 @verbatim
 Expression <- _ s:Sum $ Equals -> s
 Sum <- p:Product $ Plus $ s:Sum -> { p + s }
-     / p:Product -> p
+     / Product
 Product <- t:Term $ Star $ p:Product -> { t * p }
-         / t:Term -> t
-Term <- d:Decimal -> d / lBrace $ s:Sum $ rBrace -> s
+         / Term
+Term <- Decimal / lBrace $ s:Sum $ rBrace -> s
 # lexical elements
 Decimal <- [0-9]+ _ -> { atoi(ref_str()) }
 Plus :: void <- "+" _
@@ -1024,11 +1024,11 @@ quite differently from regular expression matchers.
 @cindex regular expression
 @cindex backtracking
 
-For one thing, in regular expressions @samp{.} does not (usually) match the
-newline character.  Pacc is more uniform: @samp{.} always matches @emph{any}
-single character.  But this is a minor detail.  What I really what to
-demonstrate is how pacc's matching rules are different from those of regular
-expressions.
+For one thing, in regular expressions @samp{.} does not (usually) match
+the newline character.  Pacc is more uniform: @samp{.} always matches
+@emph{any} single character.  But this is a minor detail.  What I really
+want to demonstrate is how pacc's matching rules are different from
+those of regular expressions.
 
 Let's look at an example.  Consider the regular expression @samp{/.*X/}.  Under
 regular expression rules, @samp{*} is said to be @dfn{greedy}, which means that
@@ -1739,17 +1739,15 @@ may use in the C code snippets in a @samp{.pacc} file.
 
 @table @code
 
-@item int *PACC_COORDS
-is a macro that returns a pointer to a pair of @code{int}s, representing
-the line number and column of the first character matched by the current
-rule. The @code{int}s pointed to are in space belonging to the pacc
-parser, which will be freed on @code{pacc_destroy()}, so you should copy
-the coordinates into your AST.
+@item int PACC_LINE
+@item int PACC_COL
+are a pair of macros that return @code{int}s, representing the line
+number and column of the first character matched by the current rule.
 
 @item void pacc_nomem(void)
 prints the message @samp{pacc: panic: out of memory} to @code{stderr},
-and exits. The parser engine calls @samp{pacc_nomem} whenever a call to
-@samp{realloc()} fails.
+and exits. The parser engine calls @code{pacc_nomem()} whenever a call
+to @code{realloc()} fails.
 
 @item void pacc_panic(const char *error)
 prints @samp{pacc: panic: } followed by @code{error} to @code{stderr}
@@ -1765,10 +1763,13 @@ parser engine.
 In addition, the name @samp{ref}, and all names beginning @samp{ref_}
 are reserved.
 
+Bug: currently the parser engine uses some other names, such as
+@samp{cur} and @samp{_status}.
+
 All allocation of memory done by the pacc parser engine uses only
-@code{realloc()} and @code{free()} interface. Thus, an alternative
-memory manager can be used with @samp{#define realloc(x,s) ... #define
-free(x) ...} in the preamble.
+@code{realloc()} and @code{free()}. Thus, an alternative memory manager
+can be used with @samp{#define realloc(x,s) ... #define free(x) ...} in
+the preamble.
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License
