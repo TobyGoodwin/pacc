@@ -6,9 +6,7 @@ parse xxx 3
 parse xxxx 4
 */
 
-/* it's a bit contrived, but this does actually manage to exercise the
- * memmove() code in _pacc_coords()
- */
+/* test that we calculate x values correctly in _pacc_coords */
 
 S ← a:X X X d:X → { a[1] * d[1] }
   / a:X X c:X → { a[1] * c[1] }
