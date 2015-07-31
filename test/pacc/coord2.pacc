@@ -15,4 +15,4 @@ S ← a:X X X d:X → { a[1] * d[1] }
   / a:X b:X → { a[1] * b[1] }
   / a:X → {a[1]}
 
-X :: int * ← &{ !!PACC_COORDS } "x" → { PACC_COORDS }
+X :: int * ← "x" → { PACC_COORDS }

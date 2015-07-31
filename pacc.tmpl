@@ -440,9 +440,14 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
 
     /* find the coordinates */
     c = cs + lo; c->n = col;
-    if (lo > 0) { y = cs[lo - 1].c[0]; i = cs[lo - 1].n; }
-    else { y = 1; /* line numbering is 1-based, natch */ i = 0; }
-    x = 1;
+    if (lo > 0) {
+        /* start from last position */
+        struct _pacc_coord *l = cs + lo - 1;
+        y = l->c[0]; x = l->c[1]; i = l->n;
+    } else {
+        /* 1-based counting for rows and columns */
+        y = 1; x = 1; i = 0;
+    }
     while (i < col) {
 	uint32_t c;
 	int l = _pacc_utf8_char(p->string + i, p->input_length - i, &c);
@@ -454,7 +459,6 @@ static int *_pacc_coords(struct pacc_parser *p, size_t col) {
 
     /* memoize them */
     c->c[0] = y;
-    /* column numbering is also 1-based; start points to \n */
     c->c[1] = x;
     return c->c;
 }
