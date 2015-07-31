@@ -1,0 +1,12 @@
+/*
+type int
+parse nna 17
+parse na 2
+*/
+
+/* reallocating coords list used to break old pointers */
+
+S ← "n"+ a:A &{ printf("%d\n", a[1]), a > 2 } → 17 / "n"+ b:A &{ b < 3 } → b
+
+A :: int * ← "a"+ → PACC_COORDS
+
