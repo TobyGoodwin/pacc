@@ -8,9 +8,9 @@ parse xxxx 4
 
 /* test that we calculate x values correctly in _pacc_coords */
 
-S ← a:X X X d:X → { a[1] * d[1] }
-  / a:X X c:X → { a[1] * c[1] }
-  / a:X b:X → { a[1] * b[1] }
-  / a:X → {a[1]}
+S ← a:X X X d:X → { a * d }
+  / a:X X c:X → { a * c }
+  / a:X b:X → { a * b }
+  / a:X → { a }
 
-X :: int * ← "x" → { PACC_COORDS }
+X ← "x" → { PACC_COL }
