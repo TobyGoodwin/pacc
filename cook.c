@@ -54,7 +54,8 @@ static void dexpr(struct s_node *n, struct s_node *par, struct s_node *sib) {
             sib->next = n->next;
         else
             par->first = 0;
-	free(n); /* XXX and its children */
+        /* at this point we should free(n) and its children, but we can't do
+         * that inside the loop */
     }
 
     /* XXX in principle, we could remove all bindings *except* those
