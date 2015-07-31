@@ -44,6 +44,9 @@ script_from() {
     rm $t
 }
 
+# try to find malloc bugs:
+export MALLOC_PERTURB_=1
+
 ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc icalc/ pacc/*.pacc self/*.pacc}
 
 for t in $ts; do
