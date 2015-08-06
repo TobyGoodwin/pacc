@@ -1499,7 +1499,7 @@ in semantic guards and expressions. @xref{Binding}.
 
 @item Bound literal: @samp{"string":e} (3)
 Matches if @samp{e} matches and the value of @samp{e} (which must be of type
-@samp{char *}) is equal to @samp{string}.
+@code{char *} or @code{ref_t}) is equal to @samp{string}.
 
 @item Sequencing: @samp{e f} (2)
 Matches @samp{e} followed by @samp{f}.

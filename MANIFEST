@@ -28,11 +28,12 @@ template.sh
 utf8.c
 utf8.h
 version
-doc/pacc.texi
 doc/fdl.texi
-doc/version.texi
-doc/pacc.pdf
 doc/pacc.info
+doc/pacc.man
+doc/pacc.pdf
+doc/pacc.texi
+doc/version.texi
 test/feeder.c
 test/harness.c
 test/parse.h-chars

@@ -1,4 +1,4 @@
 @set UPDATED 31 July 2015
 @set UPDATED-MONTH July 2015
-@set EDITION v0.2-11-ge0edeb5
-@set VERSION v0.2-11-ge0edeb5
+@set EDITION v0.2
+@set VERSION v0.2
