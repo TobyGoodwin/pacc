@@ -12,4 +12,3 @@ Equals <- "=" _
 lBrace <- "(" _
 rBrace <- ")" _
 _ <- [ \t\n]*
-
