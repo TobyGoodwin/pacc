@@ -47,6 +47,9 @@ script_from() {
 # try to find malloc bugs:
 export MALLOC_PERTURB_=1
 
+# make gcc's errors predictable:
+export LANG=
+
 ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc icalc/ pacc/*.pacc self/*.pacc}
 
 for t in $ts; do
@@ -59,8 +62,14 @@ count() {
     stat '--printf=%s' $1
 }
 
+p=$(count $passes)
+f=$(count $fails)
+e=$(count $expfails)
+
 echo
-echo $(count $passes) passes
-echo $(count $fails) fails,  expected $(count $expfails)
+echo $p passes
+echo $f fails,  expected $e
 rm $passes $fails $expfails
 #make -C.. test/clean
+
+test $f -eq $e # exit code

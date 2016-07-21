@@ -4,6 +4,8 @@ For this release:
 
 - to build pacc, and perform the pacc3 basic sanity check: make
 
+- to build the documentation: make doc
+
 - to run the test suite: make check
 
 - to run an individual test: cd test; ./run.sh emit/mk-class0.c

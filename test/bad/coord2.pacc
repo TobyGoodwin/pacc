@@ -1,5 +1,5 @@
 /*
-nocc 'parse.pacc:9:14: error: ‘q’ undeclared (first use in this function)'
+nocc "parse.pacc:9:14: error: 'q' undeclared (first use in this function)"
 */
 
 /* XXX what we really want to test is that the #line directives are right (e.g.

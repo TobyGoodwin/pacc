@@ -3,6 +3,7 @@ arg.h
 boot.c
 cook.c
 cook.h
+COPYING
 emit.c
 emit.h
 error.c
