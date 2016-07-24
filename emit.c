@@ -238,14 +238,14 @@ static void grammar_post(__attribute__((unused)) struct s_node *n) {
 
 static void debug_pre(char *type, struct s_node *n) {
     c_str("PACC_TRACE fprintf(stderr, \""); c_str(type); c_str(" ");
-    c_long(n->id); c_strln(" @ col %ld?\\n\", _x);");
+    c_long(n->id); c_strln(" @ col %zu?\\n\", _x);");
 }
 
 static void debug_post(char *type, struct s_node *n) {
     //printf("PACC_TRACE fprintf(stderr, \"%s %ld @ col %%ld => %%s\\n\", _x, status != no_parse ? \"yes\" : \"no\");\n",
 	    //type, n->id);
     c_str("PACC_TRACE fprintf(stderr, \""); c_str(type); c_str(" "); c_long(n->id);
-    c_strln(" %ld => %s\\n\", _x, _status != no_parse ? \"yes\" : \"no\");");
+    c_strln(" %zu => %s\\n\", _x, _status != no_parse ? \"yes\" : \"no\");");
 
 }
 
@@ -278,7 +278,7 @@ static void literal(struct s_node *n) {
     }
     debug_pre("lit", n);
     c_str("PACC_TRACE fprintf(stderr, \"lit "); c_long(n->id);
-    c_strln(" @ col %ld => \", _x);");
+    c_strln(" @ col %zu => \", _x);");
     c_str("if (_x+"); c_int(l); c_str(" <= _pacc->input_length && ");
     c_str("memcmp(\""); c_str(n->text); c_str("\", _pacc->string + _x, ");
     c_int(l); c_str(") == 0)"); c_open();
@@ -308,7 +308,7 @@ static void rule_pre(struct s_node *n) {
     c_str("case "); c_long(n->id); c_str(": /* "); c_str(n->text);
     c_strln(" */");
     c_str("PACC_TRACE fprintf(stderr, \"rule "); c_long(n->id);
-    c_str(" ("); c_str(n->text); c_str(") col %ld\\n\", _x)"); c_semi();
+    c_str(" ("); c_str(n->text); c_str(") col %zu\\n\", _x)"); c_semi();
     c_strln("_x_rule = _x;");
     c_str("cur = _pacc_result(_pacc, _x, "); c_int(cur_rule->id); c_strln(");");
     c_str("if ((cur->rule & 3) == uncomputed)"); c_open(); /* memoization ON */
@@ -348,7 +348,7 @@ static void accept_col(void) {
 static void seq_pre(struct s_node *n) {
     frame_start();
     c_str("PACC_TRACE fprintf(stderr, \"seq "); c_long(n->id);
-    c_strln(" @ col %ld?\\n\", _x);");
+    c_strln(" @ col %zu?\\n\", _x);");
     c_strln("_pacc_Push(_cont);");
     c_str("_cont = "); c_long(n->id); c_semi();
     c_strln("_status = parsed;");
@@ -365,7 +365,7 @@ static void seq_post(struct s_node *n) {
     c_strln("_pacc_Pop(_cont);");
     c_str("PACC_TRACE fprintf(stderr, \"seq "); c_long(n->id); 
     c_strln(" @ col %ld => %s\\n\", _x_rule, _status!=no_parse?\"yes\":\"no\");");
-    c_strln("PACC_TRACE fprintf(stderr, \"col is %ld\\n\", _x);");
+    c_strln("PACC_TRACE fprintf(stderr, \"col is %zu\\n\", _x);");
     frame_end();
 }
 
@@ -402,7 +402,7 @@ static void bind_pre(struct s_node *n) {
     associating = 1;
     c_str("PACC_TRACE fprintf(stderr, \"will bind "); c_str(n->text);
     c_str(" @ rule "); c_long(n->first->first->id);
-    c_strln(", col %ld\\n\", _x);");
+    c_strln(", col %zd\\n\", _x);");
 }
 
 static void bind_post(struct s_node *n) {
@@ -575,16 +575,16 @@ static void alt_pre(struct s_node *n) {
 
 static void alt_mid(struct s_node *n) {
     c_str("PACC_TRACE fprintf(stderr, \"alt "); c_long(n->id);
-    c_strln(" @ col %ld => %s\\n\", _x, _status!=no_parse?\"yes\":\"no\");");
+    c_strln(" @ col %zu => %s\\n\", _x, _status!=no_parse?\"yes\":\"no\");");
     c_str("if (_status != no_parse)"); c_open();
     accept_col();
     c_strln("goto contin;");
     c_close();
     restcol();
     savecol();
-    c_strln("PACC_TRACE fprintf(stderr, \"col restored to %ld\\n\", _x);");
+    c_strln("PACC_TRACE fprintf(stderr, \"col restored to %zu\\n\", _x);");
     c_str("PACC_TRACE fprintf(stderr, \"alt "); c_long(n->id);
-    c_strln(" @ col %ld? (next alternative)\\n\", _x);");
+    c_strln(" @ col %zu? (next alternative)\\n\", _x);");
 }
 
 static void alt_post(struct s_node *n) {
@@ -596,8 +596,8 @@ static void alt_post(struct s_node *n) {
     c_str("case "); c_long(n->id); c_strln(":");
     c_strln("_pacc_Pop(_cont);");
     c_str("PACC_TRACE fprintf(stderr, \"alt "); c_long(n->id);
-    c_strln(" @ col %ld => %s\\n\", _x, _status!=no_parse?\"yes\":\"no\");");
-    c_strln("PACC_TRACE fprintf(stderr, \"col is %ld\\n\", _x);");
+    c_strln(" @ col %zu => %s\\n\", _x, _status!=no_parse?\"yes\":\"no\");");
+    c_strln("PACC_TRACE fprintf(stderr, \"col is %zu\\n\", _x);");
 }
 
 static void cclass_pre(struct s_node *n) {
