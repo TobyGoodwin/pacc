@@ -352,7 +352,7 @@ static struct pacc_mid *_pacc_result(struct pacc_parser *p,
     struct pacc_mid *r;
 
     assert(col < p->input_length + 1);
-    PACC_TRACE fprintf(stderr, "_pacc_result(%ld, %zu)\n", col, rule);
+    PACC_TRACE fprintf(stderr, "_pacc_result(%zu, %ld)\n", col, rule);
     h = (col + (rule << 6) + (rule << 16) - rule) % p->m_bkt_cnt;
     bkt = p->m_bkt + h;
     blk = bkt->blk;

@@ -365,7 +365,8 @@ static void seq_post(struct s_node *n) {
     c_str("case "); c_long(n->id); c_strln(":");
     c_strln("_pacc_Pop(_cont);");
     c_str("PACC_TRACE fprintf(stderr, \"seq "); c_long(n->id); 
-    c_strln(" @ col %ld => %s\\n\", _x_rule, _status!=no_parse?\"yes\":\"no\");");
+    c_strln(" @ col %zu => %s\\n\", _x_rule,
+            _status != no_parse ? \"yes\" : \"no\" );");
     c_strln("PACC_TRACE fprintf(stderr, \"col is %zu\\n\", _x);");
     frame_end();
 }
@@ -471,7 +472,7 @@ static void bindings(struct s_node *n) {
 	c_str("_pos = "); c_int(p1); c_semi();
 
 	c_str("PACC_TRACE fprintf(stderr, \"binding of "); c_str(p->text);
-	c_strln(": pos %ld holds col %zu\\n\", _pos, _pacc_p->evlis[_pos].col);");
+	c_strln(": pos %zu holds col %zu\\n\", _pos, _pacc_p->evlis[_pos].col);");
 
 	c_str("PACC_TRACE fprintf(stderr, \"bind "); c_str(p->text);
 	c_str(" to r"); c_long(a_stack[p0].value->id);
