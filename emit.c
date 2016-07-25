@@ -365,8 +365,7 @@ static void seq_post(struct s_node *n) {
     c_str("case "); c_long(n->id); c_strln(":");
     c_strln("_pacc_Pop(_cont);");
     c_str("PACC_TRACE fprintf(stderr, \"seq "); c_long(n->id); 
-    c_strln(" @ col %zu => %s\\n\", _x_rule,
-            _status != no_parse ? \"yes\" : \"no\" );");
+    c_strln(" @ col %zu => %s\\n\",_x_rule,_status!=no_parse?\"yes\":\"no\");");
     c_strln("PACC_TRACE fprintf(stderr, \"col is %zu\\n\", _x);");
     frame_end();
 }
