@@ -85,7 +85,8 @@ static void c_code(struct s_node *n, enum opt_assign a) {
     putchar('('); c_raw(n->text); putchar(')');
     if (a) putchar(';');
     c_raw("\n");
-    c_str("#line "); c_long(nr);
+    /* now a #line to take us back to the C output; line number of next line */
+    c_str("#line "); c_long(nr + 1);
     c_str(" \""); c_str(arg_output()); c_strln("\"");
 }
 

@@ -135,6 +135,7 @@ test/icalc/icalc.pacc
 test/icalc/main.c
 test/icalc/Makefile
 test/icalc/run.sh
+test/misc/run.sh
 test/pacc/alt0.pacc
 test/pacc/alt1.pacc
 test/pacc/alt2.pacc

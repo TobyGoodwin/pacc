@@ -1,9 +1,11 @@
 /*
-nocc "parse.pacc:9:14: error: 'q' undeclared (first use in this function)"
+nocc "parse.pacc:11:14: error: 'q' undeclared (first use in this function)"
 */
 
 /* XXX what we really want to test is that the #line directives are right (e.g.
  * that #line 532 "parse.c" actually is on line 532) */
+/* actually, line 53_1_, since #line tells you the line number of the *next*
+ * line of the file; this check is now performed by misc/run.sh */
 
 S <- T { 0 }
 T <- "foo" { q }
