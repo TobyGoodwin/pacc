@@ -6,7 +6,11 @@ if make -C icalc; then
 	if < $in ./icalc/icalc 2>&1 | cmp -s $out; then
 	    pass $in
 	else
-	    fail $out
+	    echo got:
+		< $in ./icalc/icalc
+	    echo expected:
+		cat $out
+	    fail $in
 	fi
     done
 else
