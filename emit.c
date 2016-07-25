@@ -470,11 +470,11 @@ static void bindings(struct s_node *n) {
 	c_str("_pos = "); c_int(p1); c_semi();
 
 	c_str("PACC_TRACE fprintf(stderr, \"binding of "); c_str(p->text);
-	c_strln(": pos %ld holds col %ld\\n\", _pos, _pacc_p->evlis[_pos].col);");
+	c_strln(": pos %ld holds col %zu\\n\", _pos, _pacc_p->evlis[_pos].col);");
 
 	c_str("PACC_TRACE fprintf(stderr, \"bind "); c_str(p->text);
 	c_str(" to r"); c_long(a_stack[p0].value->id);
-	c_strln(" @ c%ld\\n\", _pacc_p->evlis[_pos].col);");
+	c_strln(" @ c%zu\\n\", _pacc_p->evlis[_pos].col);");
 	c_str("cur = _pacc_result(_pacc, _pacc_p->evlis[_pos].col, ");
 	c_long(a_stack[p0].value->id); c_strln(");");
 
@@ -490,7 +490,7 @@ static void bindings(struct s_node *n) {
 	c_semi();
 	c_str("PACC_TRACE fprintf(stderr, \"bound "); c_str(p->text);
 	c_str(" to r"); c_long(a_stack[p0].value->id);
-	c_strln(" @ c%ld ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[_pos].col, cur->value.u0);");
+	c_strln(" @ c%zu ==> \" TYPE_PRINTF \"\\n\", _pacc_p->evlis[_pos].col, cur->value.u0);");
     }
 }
 
@@ -515,7 +515,7 @@ static void emit_expr(struct s_node *n) {
     c_strln("cur = _pacc_p;");
     c_str("cur->value.u"); c_int(rule_u(cur_rule));
     c_code(n, assign);
-    c_str("PACC_TRACE fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%ld, ");
+    c_str("PACC_TRACE fprintf(stderr, \"stash \" TYPE_PRINTF \" to (%zu, ");
     c_int(cur_rule->id); c_strln(")\\n\", cur->value.u0, _x);");
     c_strln("goto _pacc_expr_done;");
     c_close();

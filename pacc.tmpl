@@ -81,7 +81,7 @@ static struct pacc_mid *cur;
 
 static void _pacc_save_core() __attribute__((unused));
 static void _pacc_save_core(long c, size_t col) {
-    PACC_TRACE fprintf(stderr, "_pacc_save_core(%ld, %ld)\n", c, col);
+    PACC_TRACE fprintf(stderr, "_pacc_save_core(%ld, %zu)\n", c, col);
     if (cur->ev_valid == cur->ev_alloc) {
         cur->ev_alloc = cur->ev_alloc * 2 + 1;
         cur->evlis = realloc(cur->evlis, cur->ev_alloc * sizeof(*cur->evlis));
@@ -352,7 +352,7 @@ static struct pacc_mid *_pacc_result(struct pacc_parser *p,
     struct pacc_mid *r;
 
     assert(col < p->input_length + 1);
-    PACC_TRACE fprintf(stderr, "_pacc_result(%ld, %ld)\n", col, rule);
+    PACC_TRACE fprintf(stderr, "_pacc_result(%ld, %zu)\n", col, rule);
     h = (col + (rule << 6) + (rule << 16) - rule) % p->m_bkt_cnt;
     bkt = p->m_bkt + h;
     blk = bkt->blk;
@@ -386,7 +386,7 @@ static struct pacc_mid *_pacc_result(struct pacc_parser *p,
 static int _pacc_error(struct pacc_parser *_pacc, char *what, size_t col) {
     int doit, append;
 
-    PACC_TRACE fprintf(stderr, "_pacc_error(%s, %ld)\n", what, col);
+    PACC_TRACE fprintf(stderr, "_pacc_error(%s, %zu)\n", what, col);
     append = doit = 1;
     if (col > _pacc->err_col) append = 0;
     else if (col == _pacc->err_col) {

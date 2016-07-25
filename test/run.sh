@@ -50,7 +50,7 @@ export MALLOC_PERTURB_=1
 # make gcc's errors predictable:
 export LANG=
 
-ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc icalc/ pacc/*.pacc self/*.pacc}
+ts=${*:-bad/*.pacc emit/mk-*.c feed/*.pacc icalc/ misc/run.sh pacc/*.pacc self/*.pacc}
 
 for t in $ts; do
     target=$t
