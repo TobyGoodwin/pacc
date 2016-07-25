@@ -561,7 +561,8 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
         _evaling = 1;
         _pacc_ev_i = 0;
     eval_loop:
-        PACC_TRACE fprintf(stderr, "eval loop with _pacc_ev_i == %ld\n", _pacc_ev_i);
+        PACC_TRACE fprintf(stderr, "eval loop with _pacc_ev_i == %zu\n",
+                _pacc_ev_i);
         stack_save = _pacc->sp;
     eval1:
         while (_pacc_ev_i < cur->ev_valid) {
@@ -614,8 +615,8 @@ int PACC_SYM(parse)(struct pacc_parser *_pacc) {
         fprintf(stderr, "used %u buckets\n", _pacc->m_bkt_cnt);
         fprintf(stderr, "chain length from %d to %d\n", min, max);
         fprintf(stderr, "total used/allocated: %ld/%ld\n", v, a);
-        fprintf(stderr, "coord_valid: %ld\n", _pacc->coord_valid);
-        fprintf(stderr, "coord_alloc: %ld\n", _pacc->coord_alloc);
+        fprintf(stderr, "coord_valid: %zu\n", _pacc->coord_valid);
+        fprintf(stderr, "coord_alloc: %zu\n", _pacc->coord_alloc);
     }
 
     if ((cur->rule & 3) == evaluated) {
