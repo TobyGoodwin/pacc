@@ -1,4 +1,4 @@
-CFLAGS = -std=c99
+CFLAGS = -std=c99 -g
 PACC = ../../pacc
 
 icalc: parse1.o parse2.o main.o

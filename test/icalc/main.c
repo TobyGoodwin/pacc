@@ -22,7 +22,7 @@ int main(void) {
 	printf("%s", prompt); fflush(stdout);
 	if (!fgets(line, LINE, stdin)) break;
 	len += strlen(line);
-	text = realloc(text, len);
+	text = realloc(text, len + 1);
 	if (!text) exit(1);
 	strcat(text, line);
 
