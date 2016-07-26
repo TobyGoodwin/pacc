@@ -9,4 +9,4 @@ noparse ax S 1
  * the case.
  */
 
-S <- "ab" { /* don't push me */ ref_str() }
+S :: char * <- "ab" { /* don't push me */ ref_str() }

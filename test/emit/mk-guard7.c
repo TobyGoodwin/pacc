@@ -18,7 +18,7 @@ int pacc_wrap(const char *ign0, char *ign1, off_t ign2, struct s_node **result) 
     p = s_new(any); p->next = q; q = p;
     p = s_new(seq); p->first = q; q = p;
     p = s_new(type); p->text = "char *"; p->next = q; q = p;
-    p = s_new(rule); p->text = "Char"; p->first = q; p->next = r; r = p;
+    p = s_new(rule); p->text = "Char"; p->first = q; p->next = 0; r = p;
 
     /* _ ← (" " / "\n" ) * */
     p = s_new(lit); p->text = "\\n"; q = p;
