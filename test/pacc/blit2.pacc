@@ -2,8 +2,8 @@
 chars
 parse foofoo foofoo
 noparse '' S 1
-noparse foo 'S:_pacc_bl103:0:*:0' 4
-noparse foofoofoo 'S:_pacc_bl103:0:*:0' 10
+noparse foo 'S:_pacc_bl105:0:*:0' 4
+noparse foofoofoo 'S:_pacc_bl105:0:*:0' 10
 */
 
 /* Bound literal is lower precedence than repetition. */
