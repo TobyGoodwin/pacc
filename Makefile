@@ -103,7 +103,7 @@ test/parsefeed.c test/parsefeed.h test/partial.c: test/parsefeed.pacc
 
 test/solo: test/solo.pacc
 	./pacc test/solo.pacc
-	$(CC) -o $@ test/solo.c $(LIBS)
+	$(CC) $(CFLAGS) -o $@ test/solo.c $(LIBS)
 
 .PHONY: test/clean
 test/clean: 
