@@ -1,11 +1,14 @@
-CC = c99
-CFLAGS = -g -Wall -Wextra -I.
+# We require the C compiler to support anonymous unions, which are in the C11
+# standard, and were widely support before then.
+CC = gcc
+CFLAGS = -std=c11 -g -Wall -Wextra -I.
 LDFLAGS = -g
 
 .PHONY: all
 all: pacc
 
-OBJS = arg.o cook.o emit.o error.o load.o main.o preen.o sugar.o syntax.o template.o utf8.o
+OBJS = arg.o cook.o emit.o error.o load.o main.o \
+        preen.o sugar.o syntax.o template.o utf8.o
 
 pacc0: $(OBJS) pacc0.o
 	$(CC) $(LDFLAGS) -o $@ $^
