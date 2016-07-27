@@ -1,6 +1,6 @@
 Name:           pacc
 Version:        0.3
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        pacc: a compiler-compiler for PEGs
 
 License:        GPLv3+
@@ -11,7 +11,6 @@ BuildRequires:	bash
 BuildRequires:	binutils
 BuildRequires:	coreutils
 BuildRequires:	diffutils
-BuildRequires:	dwz
 BuildRequires:	elfutils
 BuildRequires:	findutils
 BuildRequires:	gawk
