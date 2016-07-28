@@ -1,8 +1,11 @@
-# We require the C compiler to support anonymous unions, which are in the C11
-# standard, and were widely support before then.
+# We require the C compiler to support various C99 features, and also
+# anonymous unions, which are in the C11 standard, and were widely
+# supported before then. Assuming gcc, I'd prefer `-std=c11` here, but
+# there are still versions of gcc widely deployed (e.g. RHEL6) that do
+# not understand `-std=c11` so we use `-std=gnu99`
+
 CC = gcc
-CFLAGS = -std=c11 -g -Wall -Wextra -I.
-LDFLAGS = -g
+CFLAGS = -std=gnu99 -g -Wall -Wextra -I.
 
 .PHONY: all
 all: pacc
