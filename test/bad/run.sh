@@ -2,21 +2,6 @@
 
 # This code does not handle spacy filenames, nor should it.
 
-# We don't control the output of the C compiler, so can't be too picky about
-# what it says. nocc tests are gcc specific, but hopefully not gcc-version
-# specific.
-acheck() {
-    if echo "$1" | grep -q -F -e "$2"; then
-	pass "$target: $1"
-    else
-	fail "$target: $1 (expected match on $2)"
-    fi
-}
-
-contains() {
-    echo "$1" | grep -q -F -e "$2"
-}
-
 nopacc() {
     loc=$1 err=$2
     echo $pacc parse.pacc
@@ -39,17 +24,14 @@ nofeed() {
     check "$r" "$err"
 }
 
-nocc() {
-    err=$1
-    cflags=$2
-    echo $pacc parse.pacc
-    $pacc parse.pacc || fail 'pacc failed on nocc test'
-    echo c99 parse.c
-    r=$(c99 $cflags parse.c 2>&1 && echo 'compiled bad grammar by mistake!')
-    acheck "$r" "$err"
+# We don't control the output of the C compiler, so can't be too picky about
+# what it says. nocc tests are gcc specific, but hopefully not gcc-version
+# specific.
+contains() {
+    echo "$1" | grep -q -F -e "$2"
 }
 
-nocc1() {
+nocc() {
     line=$1
     col=$2
     err=$3
@@ -68,7 +50,7 @@ nocc1() {
 }
 
 noccwarn() {
-    nocc "$1" '-Werror'
+    nocc "$1" "$2" "$3" '-Werror'
 }
 
 case $target in

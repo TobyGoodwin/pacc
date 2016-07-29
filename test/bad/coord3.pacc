@@ -1,5 +1,5 @@
 /*
-nocc1 8 15  "error: 'q' undeclared (first use in this function)"
+nocc 8 15  "error: 'q' undeclared (first use in this function)"
 */
 
 /* test that C errors are reported at the right place in the pacc file for

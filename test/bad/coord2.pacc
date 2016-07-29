@@ -1,5 +1,5 @@
 /*
-nocc1 11 14 "error: 'q' undeclared (first use in this function)"
+nocc 11 14 "error: 'q' undeclared (first use in this function)"
 */
 
 /* XXX what we really want to test is that the #line directives are right (e.g.
