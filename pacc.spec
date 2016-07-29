@@ -1,7 +1,10 @@
 Name:           pacc
 Version:        0.3
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        pacc: a compiler-compiler for PEGs
+
+# Group is now obsolete, but still required by RHEL5
+Group:          Development/Tools
 
 License:        GPLv3+
 URL:            http://paccrat.org/
