@@ -1,5 +1,5 @@
 /*
-noccwarn 10 31 "note: in expansion of macro 'ref_dup'"
+noccspecial "error: passing argument 1 of '_pacc_ref_dup' from incompatible pointer type"
 */
 
 /* This is a slightly modified version of real user code. Obviously it's

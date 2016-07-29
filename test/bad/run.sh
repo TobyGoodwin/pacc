@@ -35,7 +35,6 @@ nocc() {
     line=$1
     col=$2
     err=$3
-    cflags=$4
     echo $pacc parse.pacc
     $pacc parse.pacc || fail 'pacc failed on nocc test'
     echo c99 $cflags parse.c
@@ -49,8 +48,20 @@ nocc() {
     echo "$r"
 }
 
-noccwarn() {
-    nocc "$1" "$2" "$3" '-Werror'
+noccspecial() {
+    line=$1
+    col=$2
+    err=$3
+    echo $pacc parse.pacc
+    $pacc parse.pacc || fail 'pacc failed on nocc test'
+    echo c99 -Werror parse.c
+    r=$(c99 -Werror parse.c 2>&1 && echo 'compiled bad grammar by mistake!')
+    if contains "$r" "$err"; then
+	pass $target
+    else
+	fail "$target: did not find [$err] in"
+    fi
+    echo "$r"
 }
 
 case $target in
