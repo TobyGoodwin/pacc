@@ -1,6 +1,5 @@
 /*
-nocc "parse.pacc: In function 'pacc_parse':
-parse.pacc:9:32: error: incompatible types when assigning to type 'struct nonsense' from type 'int'"
+nocc1 8 32  "error: incompatible types when assigning to type 'struct nonsense' from type 'int'"
 */
 
 /* Test that braceless numbers carry coords. */

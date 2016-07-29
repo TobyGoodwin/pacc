@@ -13,6 +13,10 @@ acheck() {
     fi
 }
 
+contains() {
+    echo "$1" | grep -q -F -e "$2"
+}
+
 nopacc() {
     loc=$1 err=$2
     echo $pacc parse.pacc
@@ -43,6 +47,24 @@ nocc() {
     echo c99 parse.c
     r=$(c99 $cflags parse.c 2>&1 && echo 'compiled bad grammar by mistake!')
     acheck "$r" "$err"
+}
+
+nocc1() {
+    line=$1
+    col=$2
+    err=$3
+    cflags=$4
+    echo $pacc parse.pacc
+    $pacc parse.pacc || fail 'pacc failed on nocc test'
+    echo c99 $cflags parse.c
+    r=$(c99 $cflags parse.c 2>&1 && echo 'compiled bad grammar by mistake!')
+    if contains "$r" "parse.pacc:$line:$col: $err" ||
+	    contains "$r" "parse.pacc:$line: $err"; then
+	pass $target
+    else
+	fail "$target: did not find [parse.pacc:$line:$col: $err] in"
+    fi
+    echo "$r"
 }
 
 noccwarn() {

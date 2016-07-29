@@ -1,5 +1,5 @@
 /*
-nocc "parse.pacc:7:14: error: 'q' undeclared (first use in this function)"
+nocc1 7 14  "error: 'q' undeclared (first use in this function)"
 */
 
 /* test that C errors are reported at the right place in the pacc file */
