@@ -97,10 +97,10 @@ static void usage(void) {
 }
 
 static void version(void) {
-    puts("pacc 0.2 (ashigaru)");
-    puts("Written by Tobold Jayne Goodwin <toby@paccrat.org>");
+    puts("pacc 0.3 (bugyō)");
+    puts("Written by Tobold Leto Goodwin <toby@paccrat.org>");
     puts("");
-    puts("Copyright (C) 2012 - 2015 Free Software Foundation, Inc.");
+    puts("Copyright (C) 2012 - 2016 Free Software Foundation, Inc.");
     puts("This is free software; see the source for copying conditions.  There is NO");
     puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
     exit(0);
